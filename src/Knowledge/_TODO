@@ -1,0 +1,19 @@
+Syntax Beispiel:
+
+$list = $knowledge
+		->from(LI_COUNTRY)
+		->select(FI_COUNTRY_ID)
+		->select(FI_COUNTRY_NAME)
+		->select(FI_COUNTRY_AREA);
+
+
+$list = $knowledge
+		->from(LI_COUNTRY)
+		->select(FI_COUNTRY_ID)
+		->select(FI_COUNTRY_NAME)
+		->select(FI_COUNTRY_AREA)
+		->where(
+			$knowledge->fn(FN_LT, FI_COUNTRY_AREA, 1000000)
+		)
+		->order(FI_COUNTRY_AREA, SO_DESC)
+		->limit(0, 50);

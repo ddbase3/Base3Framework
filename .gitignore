@@ -1,0 +1,23 @@
+# General Patterns
+*.bak
+.DS_Store
+*~
+.svn
+*.swp
+*.swo
+
+# Directories
+/local
+/plugin
+/tmp
+/userfiles
+/.well-known
+
+# Files
+/.htaccess
+/favicon.ico
+/robots.txt
+/cnf/config.ini
+
+# Content
+/userfiles/*

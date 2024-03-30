@@ -1,0 +1,40 @@
+; Konfigurationen
+
+[base]
+url = "https://mysite.com/"
+intern = ""
+
+[session]
+extensions[] = "php"
+extensions[] = "json"
+cookiedomain = ".mysite.com"
+
+[scriptlock]
+; declineremoteaddr[] = "123.456."
+; declineremoteaddr[] = "123.457."
+; declineacceptlanguage[] = "zn"
+
+[database]
+; host = "localhost"
+; user = "mydbuser"
+; pass = "MyPa55w0rd!"
+; name = "mydatabase"
+
+[singleauth]
+; user = "dd"
+; pass = "--my-passwords-sha1-hash--"
+
+[language]
+; main = "en"
+; languages[] = "en"
+; languages[] = "de"
+; languages[] = "fr"
+
+[worker]
+; active = true
+; priority = 1
+
+[microservice]
+; name = "MySite"
+; masterurl = "https://master.mysite.com/"
+; masterpass = "StrongHmacPassword"
