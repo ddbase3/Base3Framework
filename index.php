@@ -1,7 +1,7 @@
 <?php
 
 /* Debug mode - 0: aus, 1: an, ggfs noch höhere Stufen? */
-DEFINE("DEBUG", 1);
+DEFINE("DEBUG", 0);
 
 /* error handling */
 ini_set('display_errors', DEBUG ? 1 : 0);
