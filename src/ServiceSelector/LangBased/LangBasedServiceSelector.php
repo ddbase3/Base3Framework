@@ -68,7 +68,7 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 
 		$url = $configuration->get('base')["url"];
 		$intern = $configuration->get('base')["intern"];
-		if (strlen($accesscontrol->getUserId()) && strlen($intern) && $name == "index") {
+		if ($accesscontrol && strlen($accesscontrol->getUserId()) && strlen($intern) && $name == "index") {
 			header("Location: " . $url . $intern);
 			exit;
 		}
