@@ -35,7 +35,7 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 
 	public function go() {
 		$middlewares = $this->servicelocator->get('middlewares');
-		if (count($middlewares) == 0) {
+		if (!$middlewares || count($middlewares) == 0) {
 			echo $this->process();
 			return;
 		}
