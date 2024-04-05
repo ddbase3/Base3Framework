@@ -7,6 +7,7 @@ use Microservice\AbstractMicroservice;
 
 class DelegateCacheMicroservice extends AbstractMicroservice implements ICache {
 
+	private $servicelocator;
 	private $cache;
 
 	public function __construct($cnf = null) {

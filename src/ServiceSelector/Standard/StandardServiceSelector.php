@@ -67,14 +67,14 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 
 		$url = $configuration->get('base')["url"];
 		$intern = $configuration->get('base')["intern"];
-		if (strlen($accesscontrol->getUserId()) && isset($intern) && strlen($intern) && $name == "index") {
+		if (!empty($accesscontrol->getUserId()) && !empty($intern) && $name == "index") {
 			header("Location: " . $url . $intern);
 			exit;
 		}
 
-		$instance = strlen($app)
-			? $classmap->getInstanceByAppInterfaceName($app, "Api\\IOutput", $name)
-			: $classmap->getInstanceByInterfaceName("Api\\IOutput", $name);
+		$instance = empty($app)
+			? $classmap->getInstanceByInterfaceName("Api\\IOutput", $name)
+			: $classmap->getInstanceByAppInterfaceName($app, "Api\\IOutput", $name);
 		if ($instance == null) {
 			$instances = $classmap->getInstancesByInterface("Page\\Api\\IPageCatchall");
 			$instance = reset($instances);
