@@ -23,8 +23,8 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 	        if (isset($options["out"])) $_REQUEST["out"] = $_GET["out"] = $options["out"];
 	}
  
-	private function __clone() {}
- 	private function __wakeup() {}
+	// private function __clone() {}
+ 	// private function __wakeup() {}
 
 	public static function getInstance() {
 		if (self::$instance === null) self::$instance = new self();
@@ -35,7 +35,7 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 
 	public function go() {
 		$middlewares = $this->servicelocator->get('middlewares');
-		if (count($middlewares) == 0) {
+		if (!isset($middlewares) || count($middlewares) == 0) {
 			echo $this->process();
 			return;
 		}
@@ -68,16 +68,16 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 
 		$url = $configuration->get('base')["url"];
 		$intern = $configuration->get('base')["intern"];
-		if (strlen($accesscontrol->getUserId()) && strlen($intern) && $name == "index") {
+		if (!empty($accesscontrol->getUserId()) && !empty($intern) && $name == "index") {
 			header("Location: " . $url . $intern);
 			exit;
 		}
 
 		if (strlen($data) == 2) $language->setLanguage($data);
 
-		$instance = strlen($app)
-			? $classmap->getInstanceByAppInterfaceName($app, "Api\\IOutput", $name)
-			: $classmap->getInstanceByInterfaceName("Api\\IOutput", $name);
+		$instance = empty($app)
+			? $classmap->getInstanceByInterfaceName("Api\\IOutput", $name)
+			: $classmap->getInstanceByAppInterfaceName($app, "Api\\IOutput", $name);
 		if ($instance == null) {
 			$instances = $classmap->getInstancesByInterface("Page\\Api\\IPageCatchall");
 			$instance = reset($instances);

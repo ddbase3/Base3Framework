@@ -7,6 +7,7 @@ use Microservice\AbstractMicroservice;
 
 class DelegateXrmMicroservice extends AbstractMicroservice implements IXrm {
 
+	private $servicelocator;
 	private $xrm;
 
 	public function __construct($cnf = null) {

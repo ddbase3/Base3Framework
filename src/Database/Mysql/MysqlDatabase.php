@@ -25,8 +25,8 @@ class MysqlDatabase implements IDatabase, ICheck {
 		$this->name = $name;
 	}
 
-	private function __clone() {}
-	private function __wakeup() {}
+	// private function __clone() {}
+	// private function __wakeup() {}
 
 	public static function getInstance($cnf = null) {
 
