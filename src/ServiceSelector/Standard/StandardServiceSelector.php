@@ -67,7 +67,7 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 
 		$url = $configuration->get('base')["url"];
 		$intern = $configuration->get('base')["intern"];
-		if (!empty($accesscontrol->getUserId()) && !empty($intern) && $name == "index") {
+		if (!is_null($accesscontrol) && !empty($accesscontrol->getUserId()) && !empty($intern) && $name == "index") {
 			header("Location: " . $url . $intern);
 			exit;
 		}
