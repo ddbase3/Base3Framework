@@ -22,7 +22,7 @@ class ClassMap {
 	public function generate($regenerate = false) {
 		if (!$regenerate && file_exists($this->filename)) return;
 
-		if (!is_writable($this->filename)) die('Directory /tmp has to be writable.');
+		if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
 
 		$fp = fopen($this->filename, "w");
 		$str = "<?php return ";
