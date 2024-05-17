@@ -18,9 +18,9 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 
 		if (php_sapi_name() != "cli") return;
 		$options = getopt("", array("app:", "name:", "out:"));
-	        if (isset($options["app"])) $_REQUEST["app"] = $_GET["app"] = $options["app"];
-        	if (isset($options["name"])) $_REQUEST["name"] = $_GET["name"] = $options["name"];
-	        if (isset($options["out"])) $_REQUEST["out"] = $_GET["out"] = $options["out"];
+	        if (isset($options["app"])) $_GET["app"] = $options["app"];
+        	if (isset($options["name"])) $_GET["name"] = $options["name"];
+	        if (isset($options["out"])) $_GET["out"] = $options["out"];
 	}
 
 	// private function __clone() {}
@@ -60,10 +60,10 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 		$configuration = $this->servicelocator->get('configuration');
 		$accesscontrol = $this->servicelocator->get('accesscontrol');
 
-		$out = $_REQUEST['out'] = isset($_REQUEST['out']) && strlen($_REQUEST['out']) ? $_REQUEST['out'] : 'html';
-		$data = $_REQUEST['data'] = isset($_REQUEST['data']) && strlen($_REQUEST['data']) ? $_REQUEST['data'] : '';
-		$app = $_REQUEST['app'] = isset($_REQUEST['app']) && strlen($_REQUEST['app']) ? $_REQUEST['app'] : '';
-		$name = $_REQUEST['name'] = isset($_REQUEST['name']) && strlen($_REQUEST['name']) ? $_REQUEST['name'] : 'index';
+		$out = $_GET['out'] = isset($_GET['out']) && strlen($_GET['out']) ? $_GET['out'] : 'html';
+		$data = $_GET['data'] = isset($_GET['data']) && strlen($_GET['data']) ? $_GET['data'] : '';
+		$app = $_GET['app'] = isset($_GET['app']) && strlen($_GET['app']) ? $_GET['app'] : '';
+		$name = $_GET['name'] = isset($_GET['name']) && strlen($_GET['name']) ? $_GET['name'] : 'index';
 
 		$url = $configuration->get('base')["url"];
 		$intern = $configuration->get('base')["intern"];
