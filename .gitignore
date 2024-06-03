@@ -12,5 +12,8 @@
 # Files
 /.htaccess
 /favicon.ico
-/robots.txt
 /cnf/config.ini
+/robots.txt
+/sitemap-*.txt
+/sitemap-*.xml
+
