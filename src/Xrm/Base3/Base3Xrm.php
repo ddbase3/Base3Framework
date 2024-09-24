@@ -31,12 +31,15 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$this->database->connect();
 
-		$sql = "SELECT e.`id`, e.`data_id`, t.`dbtable`, t.`primary`
+		$sql = "SELECT e.`id`, e.`data_id`, t.`dbtable`, t.`primary`, e.`dellock`
 			FROM `base3system_sysentry` e
 			INNER JOIN `base3system_systype` t ON t.`id` = e.`type_id`
 			WHERE e.`uuid` = 0x" . $id;
 		$sysentry = $this->database->singleQuery($sql);
 		if ($sysentry == null) return false;
+
+		// check delete lock
+		if ($sysentry["dellock"] > 0) return false;
 
 		if ($sysentry["dbtable"] == "base3system_entryfile") {
 			// erst Datei löschen
