@@ -17,7 +17,7 @@ class PluginClassMap {
 	}
 
 	public function generate($regenerate = false) {
-		if (!$regenerate && file_exists($this->filename)) return;
+		if (!$regenerate && file_exists($this->filename) && filesize($this->filename) > 0) return;
 
 		if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
 

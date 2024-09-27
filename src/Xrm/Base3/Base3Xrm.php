@@ -31,7 +31,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$this->database->connect();
 
-		$sql = "SELECT e.`id`, e.`data_id`, t.`dbtable`, t.`primary`, e.`dellock`
+		$sql = "SELECT e.`id`, t.`dbtable`, t.`primary`, e.`dellock`
 			FROM `base3system_sysentry` e
 			INNER JOIN `base3system_systype` t ON t.`id` = e.`type_id`
 			WHERE e.`uuid` = 0x" . $id;
@@ -54,9 +54,6 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 				if (file_exists($fullfile)) unlink($fullfile);
 			}
 		}
-
-		$sql = "DELETE FROM `" . $sysentry["dbtable"] . "` WHERE `" . $sysentry["primary"] . "` = " . $sysentry["data_id"];
-		$this->database->nonQuery($sql);
 
 		if (!$moveonly) {
 			$sql = "DELETE FROM `base3system_sysallocdatachar`
@@ -217,10 +214,9 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		if ($entryexists) {
 
-			$sql = "SELECT `id`, `data_id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $newEntry->id;
+			$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $newEntry->id;
 			$sysentry = $this->database->singleQuery($sql);
 			$entryid = $sysentry["id"];
-			$dataid = $sysentry["data_id"];
 
 			// sysentry
 			$sql = "UPDATE `base3system_sysentry` SET
@@ -236,7 +232,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 			$sql = "UPDATE `" . $systype["dbtable"] . "` SET ";
 			foreach ($entry->data as $n => $v) $sql .= "`" . $n . "` = '" . $this->database->escape($v) . "', ";
 			$sql = substr($sql, 0, -2);
-			$sql .= " WHERE `" . $systype["primary"] . "` = " . $dataid;
+			$sql .= " WHERE `" . $systype["primary"] . "` = " . $entryid;
 			$this->database->nonQuery($sql);
 
 			// syslog
@@ -258,21 +254,12 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		} else {
 
-			// corresponding data table
-			// TODO ggfs überschüssige Daten in sysmetadata speichern (vorher Tabellen-Signatur holen)
-			$sql = "INSERT INTO `" . $systype["dbtable"] . "` SET ";
-			foreach ($entry->data as $n => $v) $sql .= "`" . $n . "` = '" . $this->database->escape($v) . "', ";
-			$sql = substr($sql, 0, -2);
-			$this->database->nonQuery($sql);
-			$dataid = $this->database->insertId();
-
 			// sysentry
 			// TODO nur varbinary(16)-IDs können aktuell gespeichert werden ... PRÜFEN/LÖSEN !!!
 			// TODO check if already exists
 			$sql = "INSERT INTO `base3system_sysentry` SET
 					`uuid` = 0x" . $this->database->escape($newEntry->id) . ",
 					`type_id` = " . $systype["id"] . ",
-					`data_id` = " . $dataid . ",
 					`archive` = " . $archive . ",
 					`connections` = 0,
 					`etag` = 0x" . $this->database->escape($newEntry->etag) . ",
@@ -280,6 +267,14 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 					`changed` = '" . $newEntry->changed . "'";
 			$this->database->nonQuery($sql);
 			$entryid = $this->database->insertId();
+
+			// corresponding data table
+			// TODO ggfs überschüssige Daten in sysmetadata speichern (vorher Tabellen-Signatur holen)
+			$sql = "INSERT INTO `" . $systype["dbtable"] . "` SET ";
+			$sql = "`" . $systype["primary"] . "` = " . $entryid . ", ";
+			foreach ($entry->data as $n => $v) $sql .= "`" . $n . "` = '" . $this->database->escape($v) . "', ";
+			$sql = substr($sql, 0, -2);
+			$this->database->nonQuery($sql);
 
 			// syslog
 			// TODO ggfs neuen User ohne Passwort anlegen (kann sich schließlich per SSO anmelden)
@@ -404,7 +399,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$this->database->connect();
 
-		$sql = "SELECT e.`id`, LOWER(HEX(e.`uuid`)) AS `uuid`, e.`data_id`, e.`archive`, LOWER(HEX(e.`etag`)) AS `etag`, e.`created`, e.`changed`, t.`alias` AS `type`, t.`dbtable`, t.`primary`
+		$sql = "SELECT e.`id`, LOWER(HEX(e.`uuid`)) AS `uuid`, e.`archive`, LOWER(HEX(e.`etag`)) AS `etag`, e.`created`, e.`changed`, t.`alias` AS `type`, t.`dbtable`, t.`primary`
 			FROM `base3system_sysentry` e
 			INNER JOIN `base3system_systype` t ON t.`id` = e.`type_id`
 			WHERE e.`type_id` != 1 AND e.`uuid` IN (0x" . implode(", 0x", $selids) . ")";
@@ -416,9 +411,9 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		foreach ($sysentries as $sysentry) {
 			if (!isset($entrytypes[$sysentry["type"]])) $entrytypes[$sysentry["type"]] = array("data_ids" => array(), "dbtable" => $sysentry["dbtable"], "primary" => $sysentry["primary"]);
-			$entrytypes[$sysentry["type"]]["data_ids"][] = $sysentry["data_id"];
+			$entrytypes[$sysentry["type"]]["data_ids"][] = $sysentry["id"];
 
-			$entryback[$sysentry["type"]][$sysentry["data_id"]] = $sysentry["id"];
+			$entryback[$sysentry["type"]][$sysentry["id"]] = $sysentry["id"];
 
 			$entryids[] = $sysentry["id"];
 
