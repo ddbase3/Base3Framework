@@ -51,7 +51,7 @@ class SingleSignOnServerAuth extends AbstractAuth implements ICheck {
 		$url = isset($_SESSION["ssocont"]) ? $_SESSION["ssocont"] : $_SESSION["ssoreferer"];
 		if ($userid != null && $this->externDomain()) {
 			$ssocode = $this->ssotoken->create("singlesignon", $userid, $this->ssoHashLength, $this->ssoTimeout);
-			$url .= ( strpos($url, "?") === false ? "?" : "&" ) . "userid=" . urlencode($userid) . "&ssocode=" . urlencode($ssocode) . "&_continueauth=" . urlencode($_SESSION["ssocont"]);
+			$url .= ( strpos($url, "?") === false ? "?" : "&" ) . "userid=" . urlencode((string) $userid) . "&ssocode=" . urlencode((string) $ssocode) . "&_continueauth=" . urlencode((string) $_SESSION["ssocont"]);
 		}
 		unset($_SESSION["ssoreferer"]);
 		unset($_SESSION["ssocont"]);

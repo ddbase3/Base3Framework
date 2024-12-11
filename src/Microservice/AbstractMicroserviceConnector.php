@@ -63,9 +63,9 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 		$time = time();
 		$token = $this->generateToken();
 		$header = array(
-			"user: " . urlencode($user),
-			"time: " . urlencode($time),
-			"token: " . urlencode($token),
+			"user: " . urlencode((string) $user),
+			"time: " . urlencode((string) $time),
+			"token: " . urlencode((string) $token),
 			"hash: " . urlencode(sha1($pass . $time . $token))
 		);
 
