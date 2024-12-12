@@ -35,7 +35,7 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 
 	public function go() {
 		$middlewares = $this->servicelocator->get('middlewares');
-		if (!isset($middlewares) || count($middlewares) == 0) {
+		if (empty($middlewares)) {
 			echo $this->process();
 			return;
 		}
