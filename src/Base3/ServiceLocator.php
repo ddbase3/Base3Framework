@@ -10,6 +10,9 @@ class ServiceLocator {
 
 	private static $instance;
 	private $container = array();
+
+	public const SHARED = 1;
+	public const NOOVERWRITE = 2;
  
 	private function __construct() {}
  
@@ -34,9 +37,23 @@ class ServiceLocator {
 	 * Einen Service hinterlegen.
 	 * @param string                       $name            Name des Service.
 	 * @param string|object|callable|array $classDefinition Definition wie die Instanz zu erstellen ist. Kann ein Klassenname oder eine Funktion sein. Auch Array möglich (Instanzen werden nicht erzeugt).
-	 * @param bool                         $shared          Gibt es nur eine Instanz für alle, oder bekommt jeder eine eigene.
+	 * @param bool                         $shared          Gibt es nur eine Instanz für alle, oder bekommt jeder eine eigene.// DEPRECATED
+	 * @param int $flags Einstellungen gem. Konstanten
 	 */
-	public function set($name, $classDefinition, $shared = false) {
+	public function set($name, $classDefinition, $flags = 0) {
+
+		$shared = false;
+		$nooverwrite = false;
+		if (is_bool($flags)) {
+			// DEPRECATED
+			$shared = $flags;
+		} else {
+			$shared = $flags & self::SHARED != 0;
+			$nooverwrite = $flags & self::NOOVERWRITE != 0;
+		}
+
+		if ($nooverwrite && $this->has($name)) return $this;
+
 		$this->container[$name] = (object) array('def' => $classDefinition, 'shared' => $shared, 'instance' => null);
 
 		return $this;
