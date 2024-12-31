@@ -19,6 +19,9 @@ DEFINE("DIR_TMP", DIR_ROOT . "tmp" . DIRECTORY_SEPARATOR);
 DEFINE("DIR_TPL", DIR_ROOT . "tpl" . DIRECTORY_SEPARATOR);
 DEFINE("DIR_USERFILES", DIR_ROOT . "userfiles" . DIRECTORY_SEPARATOR);
 
+/* uses */
+use Base3\ServiceLocator;
+
 /* autoloader */
 require DIR_SRC . "Autoloader.php";
 Autoloader::register();
@@ -26,10 +29,10 @@ require DIR_SRC . "PluginAutoloader.php";
 PluginAutoloader::register();
 
 /* service locator */
-$servicelocator = \Base3\ServiceLocator::getInstance()
-	->set('configuration', new \Configuration\ConfigFile\ConfigFile, true)
-	->set('classmap', new \Base3\PluginClassMap, true)
-	->set('serviceselector', \ServiceSelector\Standard\StandardServiceSelector::getInstance(), true)
+$servicelocator = ServiceLocator::getInstance()
+	->set('configuration', new \Configuration\ConfigFile\ConfigFile, ServiceLocator::SHARED)
+	->set('classmap', new \Base3\PluginClassMap, ServiceLocator::SHARED)
+	->set('serviceselector', \ServiceSelector\Standard\StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
 	;
 $plugins = $servicelocator->get('classmap')->getInstancesByInterface("Api\\IPlugin");
 foreach ($plugins as $plugin) $plugin->init();
