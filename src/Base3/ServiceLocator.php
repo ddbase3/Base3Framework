@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Base3;
 
@@ -19,7 +19,7 @@ class ServiceLocator {
 	// private function __clone() {}
  	// private function __wakeup() {}
 
-	public static function getInstance() {
+	public static function getInstance(): self {
 		if (self::$instance === null) self::$instance = new self();
 		return self::$instance;
 	}
@@ -27,7 +27,7 @@ class ServiceLocator {
 	/**
 	 * Get list of registered service names
 	 */
-	public function getServiceList() {
+	public function getServiceList(): array {
 		$list = array();
 		foreach ($this->container as $name => $_) $list[] = $name;
 		return $list;
@@ -40,7 +40,7 @@ class ServiceLocator {
 	 * @param bool                         $shared          Gibt es nur eine Instanz für alle, oder bekommt jeder eine eigene.// DEPRECATED
 	 * @param int $flags Einstellungen gem. Konstanten
 	 */
-	public function set($name, $classDefinition, $flags = 0) {
+	public function set(string $name, $classDefinition, $flags = 0): self {
 
 		$shared = false;
 		$nooverwrite = false;
@@ -64,7 +64,7 @@ class ServiceLocator {
 	 * (isset ist bereits vergeben von PHP)
 	 * @return bool
 	 */
-	public function has($name) {
+	public function has(string $name): bool {
 		return array_key_exists($name, $this->container);
 	}
 
@@ -73,7 +73,7 @@ class ServiceLocator {
 	 * @param string $name
 	 * @return object
 	 */
-	public function get($name) {
+	public function get(string $name) {
 
 		if (!isset($this->container[$name])) {
 			return null;
@@ -107,7 +107,7 @@ class ServiceLocator {
 	 * @param bool                   $shared
 	 * @return object
 	 */
-	private function createInstance($definition, $shared) {
+	private function createInstance($definition, bool $shared) {
 
 		if (is_callable($definition)) {
 			// Benutzer hat eine Funktion hinterlegt, die die Klasse erstellt.
