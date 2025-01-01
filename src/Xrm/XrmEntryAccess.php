@@ -13,7 +13,7 @@ class XrmEntryAccess {
 		// wenn $data schon ein XrmEntryAccess ist, dann direkt zurückgeben
 		if (is_object($data) && is_a($data, 'Xrm\XrmEntryAccess')) return $data;
 
-		if (is_string($data)) $data = json_decode($data, 1);
+		if (is_string($data)) $data = json_decode($data, true);
 		if (is_object($data)) $data = (array) $data;
 
 		$xrmentry = new self();

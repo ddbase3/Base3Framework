@@ -13,7 +13,7 @@ class DevStatusMicroservice extends AbstractMicroservice implements IKnowledge {
 		$file = DIR_LOCAL . "devstatus.json";
 		if (file_exists($file)) {
 			$content = file_get_contents($file);
-			$this->data = json_decode($content, 1);
+			$this->data = json_decode($content, true);
 		} else {
 			$this->data = array();
 		}

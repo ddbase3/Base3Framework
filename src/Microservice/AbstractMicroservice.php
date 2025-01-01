@@ -21,7 +21,7 @@ abstract class AbstractMicroservice implements IMicroservice {
 		$binarystream = isset($_REQUEST["binarystream"]) ? !!$_REQUEST["binarystream"] : false;
 
 		$callparams = array();
-		if (isset($_REQUEST["params"])) $_REQUEST["params"] = json_decode($_REQUEST["params"], 1);  // $params per JSON gesendet, da nur max. 1000 Parameter gesendet werden
+		if (isset($_REQUEST["params"])) $_REQUEST["params"] = json_decode($_REQUEST["params"], true);  // $params per JSON gesendet, da nur max. 1000 Parameter gesendet werden
 		$params = isset($_REQUEST["params"]) ? $_REQUEST["params"] : array();
 
 		$rm = new \ReflectionMethod(get_class($this), $_REQUEST["call"]);
