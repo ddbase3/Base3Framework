@@ -57,7 +57,7 @@ class CookieAuth extends AbstractAuth implements ICheck {
 			"token" => $this->authtoken->create("authentication", $userid, $this->cookieHashLength, $this->cookieTimeout)
 		);
 		// TODO see additional parameters for more security (https://www.w3schools.com/php/func_http_setcookie.asp)
-		setcookie("authentication", json_encode($cookieContent), time() + $this->cookieTimeout, "", $this->cookieDomain);
+		setcookie("authentication", json_encode($cookieContent), time() + $this->cookieTimeout, "", $this->cookieDomain ?? '');
 		if ($this->verbose) echo "User " . $userid . " keeped<br />";
 	}
 
