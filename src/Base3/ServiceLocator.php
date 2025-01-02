@@ -48,8 +48,8 @@ class ServiceLocator {
 			// DEPRECATED
 			$shared = $flags;
 		} else {
-			$shared = $flags & self::SHARED != 0;
-			$nooverwrite = $flags & self::NOOVERWRITE != 0;
+			$shared = ($flags & self::SHARED) != 0;
+			$nooverwrite = ($flags & self::NOOVERWRITE) != 0;
 		}
 
 		if ($nooverwrite && $this->has($name)) return $this;
