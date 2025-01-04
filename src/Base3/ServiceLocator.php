@@ -8,12 +8,12 @@ namespace Base3;
  */
 class ServiceLocator {
 
+	const SHARED = 1;
+	const NOOVERWRITE = 2;
+ 
 	private static $instance;
 	private $container = array();
 
-	public const SHARED = 1;
-	public const NOOVERWRITE = 2;
- 
 	private function __construct() {}
  
 	// private function __clone() {}
