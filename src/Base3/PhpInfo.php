@@ -18,6 +18,9 @@ class PhpInfo implements IOutput {
 	// Implementation of IOutput
 
 	public function getOutput($out = "html") {
+
+                if (!DEBUG) return '';
+
 		return phpinfo();
 	}
 

@@ -91,6 +91,9 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 				die("404 Not Found\n");
 
 			case $out == "help":
+
+                                if (!DEBUG) exit;
+
 				$output = $instance->getHelp();
 				break;
 
