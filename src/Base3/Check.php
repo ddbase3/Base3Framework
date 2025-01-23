@@ -4,40 +4,49 @@ namespace Base3;
 
 use Api\IOutput;
 use Api\ICheck;
+use Base3\ServiceLocator;
 
 class Check implements IOutput, ICheck {
 
 	protected $servicelocator;
 
+	private $checks;
+
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 	}
 
 	// Implementation of IBase
 
-	public function getName() {
+	public function getName(): string {
 		return "check";
 	}
 
 	// Implementation of IOutput
 
-	public function getOutput($out = "html") {
-		// $c = $this->servicelocator->get('check')->check();
-		$c = $this->check();
+	public function getOutput($out = "html"): string {
+		$this->check();
 		$out = '<html>';
 		$out .= '<head>';
 		$out .= '<style>* { font-family:Arial,sans-serif; }</style>';
 		$out .= '</head>';
 		$out .= '<body>';
 		$out .= '<h1>Check</h1><table cellpadding="5">';
-		foreach ($c as $service => $data) {
-			$out .= '<tr><td colspan="2" bgcolor="#333333" style="color:#ffffff; font-weight:bold;">' . $service . '</td></tr>';
-			if ($data == null) {
+		foreach ($this->checks as $service) {
+			$out .= '<tr>'
+				. '<td bgcolor="#333333" style="color:#ffffff; font-weight:bold;">' . $service['title'] . '</td>'
+				. '<td bgcolor="#333333" style="color:#ffffff; font-weight:bold;">' . $service['class'] . '</td>'
+				. '</tr>';
+			if ($service['data'] == null) {
 				$out .= '<tr><td colspan="2" bgcolor="#ffcccc">not defined</td></tr>';
-			} else if (is_array($data)) {
-				foreach ($data as $k => $v) $out .= '<tr><td bgcolor="#ccffcc">' . $k . '</td><td bgcolor="#ccccff">' . $v . '</td></tr>';
+			} else if (is_array($service['data'])) {
+				foreach ($service['data'] as $k => $v)
+					$out .= '<tr>'
+						. '<td bgcolor="#ccffcc">' . $k . '</td>'
+						. '<td bgcolor="' . ($v == 'Ok' ? '#ccccff' : '#ffcccc') . '">' . $v . '</td>'
+						. '</tr>';
 			} else {
-				$out .= '<tr><td colspan="2" bgcolor="#eeeeee">' . $data . '</td></tr>';
+				$out .= '<tr><td colspan="2" bgcolor="#eeeeee">' . $service['data'] . '</td></tr>';
 			}
 		}
 		$out .= '</table>';
@@ -46,13 +55,13 @@ class Check implements IOutput, ICheck {
 		return $out;
 	}
 
-	public function getHelp() {
+	public function getHelp(): string {
 		return 'Help of Check' . "\n";
 	}
 
 	// Implementation of ICheck
 
-	public function checkDependencies() {
+	public function checkDependencies(): array {
 		return array(
 			"tmp_dir_writable" => is_writable(DIR_TMP) ? "Ok" : "tmp dir not writable"
 		);
@@ -60,23 +69,49 @@ class Check implements IOutput, ICheck {
 
 	// Private methods
 
-	private function check() {
-		$result = array();
+	private function check(): void {
+		$this->checks = array();
 		$services = $this->servicelocator->getServiceList();
 		foreach ($services as $name) {
 			$service = $this->servicelocator->get($name);
-			if ($service == null) {
-				$result[$name] = null;
-				continue;
-			}
-			if (!($service instanceof \Api\ICheck)) {
-				$result[$name] = "no check";
-				continue;
-			}
-			$result[$name] = $service->checkDependencies();
-			if (!sizeof($result[$name])) $result[$name] = "empty check";
+			$this->checkService($service, $name);
 		}
-		return $result;
+	}
+
+	private function checkService($service, string $name): void {
+		switch (true) {
+
+			case $service == null:
+				$this->checks[] = array('title' => $name, 'class' => '', 'data' => 'no service');
+				break;
+
+			case is_callable($service):
+				$instance = $service();
+				if ($instance instanceof ICheck) $this->checkInstance($instance, $name);
+				break;
+
+			case $service instanceof ICheck:
+				$this->checkInstance($service, $name);
+				break;
+
+			case is_array($service):
+				for ($i = 0; $i < sizeof($service); $i++)
+					$this->checkService($service[$i], $name . '[' . $i . ']');
+				break;
+
+			default:
+				$this->checks[] = array('title' => $name, 'class' => '', 'data' => 'no check');
+		}
+	}
+
+	private function checkInstance($instance, string $name) {
+		$data = $instance->checkDependencies();
+		$this->checks[] = array(
+			'title' => $name,
+			'class' => get_class($instance),
+			'data' => empty($data) ? 'empty check' : $data
+		);
 	}
 
 }
+
