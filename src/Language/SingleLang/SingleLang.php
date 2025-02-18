@@ -34,6 +34,10 @@ class SingleLang implements ILanguage, ICheck {
 		// do nothing
 	}
 
+	public function getLanguages() {
+		return [ $this->language ];
+	}
+
 	// Implementation of ICheck
 
 	public function checkDependencies() {

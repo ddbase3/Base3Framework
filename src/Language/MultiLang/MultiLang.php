@@ -2,31 +2,30 @@
 
 namespace Language\MultiLang;
 
+use Base3\ServiceLocator;
 use Language\Api\ILanguage;
 use Api\ICheck;
 
 class MultiLang implements ILanguage, ICheck {
 
-	private $servicelocator;
-
 	private $cnf;
 	private $language;
+	private $languages;
 
 	public function __construct($cnf = null) {
+		$servicelocator = ServiceLocator::getInstance();
 
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$configuration = $servicelocator->get('configuration');
+		if ($configuration != null)
+			$this->cnf = $configuration->get('language');
 
-		if ($cnf == null) {
-			$configuration = $this->servicelocator->get('configuration');
-			if ($configuration != null) $this->cnf = $configuration->get('language');
-		}
+		$this->languages = $this->cnf != null && $this->cnf['languages'] != null ? $this->cnf['languages'] : [];
 
 		if (isset($_SESSION["language"])) {
 			$this->language = $_SESSION["language"];
 		} else {
 			if ($this->cnf != null) $this->language = $this->cnf["main"];
 		}
-
 	}
 
 	// Implementation of ILanguage
@@ -38,6 +37,10 @@ class MultiLang implements ILanguage, ICheck {
 	public function setLanguage($language) {
 		if (!in_array($language, $this->cnf["languages"])) return;
 		$this->language = $_SESSION["language"] = $language;
+	}
+
+	public function getLanguages() {
+		return $this->languages;
 	}
 
 	// Implementation of ICheck
