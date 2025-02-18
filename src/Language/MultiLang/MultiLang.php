@@ -8,14 +8,16 @@ use Api\ICheck;
 
 class MultiLang implements ILanguage, ICheck {
 
+	private $servicelocator;
+
 	private $cnf;
 	private $language;
 	private $languages;
 
 	public function __construct($cnf = null) {
-		$servicelocator = ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 
-		$configuration = $servicelocator->get('configuration');
+		$configuration = $this->servicelocator->get('configuration');
 		if ($configuration != null)
 			$this->cnf = $configuration->get('language');
 
