@@ -98,8 +98,8 @@ class Check implements IOutput, ICheck {
 				break;
 
 			case is_array($service):
-				for ($i = 0; $i < sizeof($service); $i++)
-					$this->checkService($service[$i], $name . '[' . $i . ']');
+				foreach ($service as $key => $srv)
+					$this->checkService($srv, $name . '[' . $key . ']');
 				break;
 
 			default:
