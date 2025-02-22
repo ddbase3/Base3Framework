@@ -26,7 +26,8 @@ cookiedomain = ".mysite.com"
 
 [language]
 ; main = "en"
-; languages[] = "en"
+; languages[] = "en-gb"
+; languages[] = "en-us"
 ; languages[] = "de"
 ; languages[] = "fr"
 
