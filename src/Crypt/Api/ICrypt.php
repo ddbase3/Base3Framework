@@ -4,8 +4,8 @@ namespace Crypt\Api;
 
 interface ICrypt {
 
-	public function encrypt($str, $secret);
-	public function decrypt($str, $secret);
+	public function encrypt(string $str, string $secret): string;
+	public function decrypt(string $str, string $secret): string;
 
 }
 

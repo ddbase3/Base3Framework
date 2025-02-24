@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+
 namespace Language\SingleLang;
 
 use Language\Api\ILanguage;
@@ -26,15 +27,15 @@ class SingleLang implements ILanguage, ICheck {
 
 	// Implementation of ILanguage
 
-	public function getLanguage() {
+	public function getLanguage(): string {
 		return $this->language;
 	}
 
-	public function setLanguage($language) {
+	public function setLanguage(string language) {
 		// do nothing
 	}
 
-	public function getLanguages() {
+	public function getLanguages(): array {
 		return [ $this->language ];
 	}
 

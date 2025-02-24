@@ -32,16 +32,16 @@ class MultiLang implements ILanguage, ICheck {
 
 	// Implementation of ILanguage
 
-	public function getLanguage() {
+	public function getLanguage(): string {
 		return $this->language;
 	}
 
-	public function setLanguage($language) {
+	public function setLanguage(string $language) {
 		if (!in_array($language, $this->cnf["languages"])) return;
 		$this->language = $_SESSION["language"] = $language;
 	}
 
-	public function getLanguages() {
+	public function getLanguages(): array {
 		return $this->languages;
 	}
 

@@ -15,6 +15,8 @@ class BasicSession implements ISession, ICheck {
 
 		$this->servicelocator = \Base3\ServiceLocator::getInstance();
 
+		$this->started = false;
+
 		if ($cnf == null) {
 			$configuration = $this->servicelocator->get('configuration');
 			$cnf = $configuration == null
@@ -28,7 +30,7 @@ class BasicSession implements ISession, ICheck {
 		$this->started = true;
 	}
 
-	public function started() {
+	public function started(): bool {
 		return $this->started;
 	}
 

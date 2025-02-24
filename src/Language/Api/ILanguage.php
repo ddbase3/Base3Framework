@@ -4,8 +4,8 @@ namespace Language\Api;
 
 interface ILanguage {
 
-	public function getLanguage();
-	public function setLanguage($language);
-	public function getLanguages();
+	public function getLanguage(): string;
+	public function setLanguage(string $language);
+	public function getLanguages(): array;
 
 }

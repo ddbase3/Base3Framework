@@ -11,14 +11,14 @@ class OpensslCrypt implements ICrypt, ICheck {
 
 	// Implementation of ICrypt
 
-	public function encrypt($str, $secret) {
+	public function encrypt(string $str, string $secret): string {
 		$key = hash('sha256', $secret);
 		$iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($this->method));
 		$crypt = openssl_encrypt($str, $this->method, $key, 0, $iv);
 		return $crypt . ':' . base64_encode($iv);
 	}
 
-	public function decrypt($str, $secret) {
+	public function decrypt(string $str, string $secret): string {
 		$output = false;
 		$key = hash('sha256', $secret);
 		$parts = explode(':' , $str);

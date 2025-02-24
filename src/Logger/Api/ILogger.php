@@ -4,9 +4,9 @@ namespace Logger\Api;
 
 interface ILogger {
 
-	public function log($scope, $log, $timestamp = null);
-	public function getScopes();
+	public function log(string $scope, $log, $timestamp = null): bool;
+	public function getScopes(): array;
 	public function getNumOfScopes();
-	public function getLogs($scope, $num = 50, $reverse = true);
+	public function getLogs(string $scope, int $num = 50, bool $reverse = true): array;
 
 }

@@ -18,7 +18,7 @@ class FileLogger implements ILogger {
 	// Parameter timestamp ist optional, alternativ wird der aktuelle Server-Timestamp verwendet
 	// Beispiel: http://www.base3.de/base3xrmlogger/filelogger.json?call=log&params[scope]=test&params[log]=Blub&params[timestamp]=1566282924
 	// Beispiel: php index.php name=filelogger out=json call=log params[scope]=test params[log]=EinTestLog params[timestamp]=1566282924
-	public function log($scope, $log, $timestamp = null) {
+	public function log(string $scope, string $log, $timestamp = null): bool {
 		if ($timestamp == null) $timestamp = time();
 		$dir = $this->dir . DIRECTORY_SEPARATOR . "FileLogger";
 		if (!is_dir($dir)) mkdir($dir, 0777, true);
@@ -28,7 +28,7 @@ class FileLogger implements ILogger {
 		return true;
 	}
 
-	public function getScopes() {
+	public function getScopes(): array {
 		$dir = $this->dir . DIRECTORY_SEPARATOR . "FileLogger";
 		if ($handle = opendir($dir)) {
 			$scopes = array();
@@ -46,7 +46,7 @@ class FileLogger implements ILogger {
 		return sizeof($this->getScopes());
 	}
 
-	public function getLogs($scope, $num = 50, $reverse = true) {
+	public function getLogs(string $scope, int $num = 50, bool $reverse = true): array {
 		$logs = array();
 		$dir = $this->dir . DIRECTORY_SEPARATOR . "FileLogger";
 		$file = $dir . DIRECTORY_SEPARATOR . $scope . ".log";
