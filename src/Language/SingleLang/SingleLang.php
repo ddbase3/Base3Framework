@@ -31,7 +31,7 @@ class SingleLang implements ILanguage, ICheck {
 		return $this->language;
 	}
 
-	public function setLanguage(string language) {
+	public function setLanguage(string $language) {
 		// do nothing
 	}
 
