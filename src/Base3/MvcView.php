@@ -10,26 +10,25 @@ class MvcView {
 	private $template = 'default';
 
 	/**
-	 * Enthält die Variablen, die in das Template eingebetet 
-	 * werden sollen.
+	 * Enthält die Variablen, die in das Template eingebetet werden sollen.
 	 */
 	private $_ = array();
 
-	public function __construct($path = '.') {
+	public function __construct(string $path = '.') {
 		$this->setPath($path);
 	}
 
-	public function setPath($path = '.') {
+	public function setPath(string $path = '.') {
 		$this->path = rtrim($path, DIRECTORY_SEPARATOR);
 	}
 
 	/**
 	 * Ordnet eine Variable einem bestimmten Schl&uuml;ssel zu.
 	 *
-	 * @param String $key Schlüssel
-	 * @param String $value Variable
+	 * @param string $key Schlüssel
+	 * @param mixed $value Variable
 	 */
-	public function assign($key, $value) {
+	public function assign(string $key, $value) {
 		$this->_[$key] = $value;
 	}
 
@@ -39,7 +38,7 @@ class MvcView {
 	 *
 	 * @param String $template Name des Templates.
 	 */
-	public function setTemplate($template = 'default'){
+	public function setTemplate(string $template = 'default') {
 		$this->template = $template;
 	}
 
@@ -50,34 +49,30 @@ class MvcView {
 	 * 						über steTemplate() zugewiesen wurde).
 	 * @return string Der Output des Templates.
 	 */
-	public function loadTemplate(){
+	public function loadTemplate(): string {
 		$tpl = $this->template;
 		// Pfad zum Template erstellen & überprüfen ob das Template existiert.
 		// TODO DIR_TPL nutzen
 		$file = $this->path . DIRECTORY_SEPARATOR . 'tpl' . DIRECTORY_SEPARATOR . $tpl;  // . '.php';
-		$exists = file_exists($file);
 
-		if ($exists){
-			// Der Output des Scripts wird n einen Buffer gespeichert, d.h.
-			// nicht gleich ausgegeben.
-			ob_start();
-				
-			// Das Template-File wird eingebunden und dessen Ausgabe in 
-			// $output gespeichert.
-			include $file;
-			$output = ob_get_contents();
-			ob_end_clean();
-			
-			// Output zurückgeben.
-			return $output;
-		}
-		else {
-			// Template-File existiert nicht-> Fehlermeldung.
+		if (!file_exists($file)) {
+			// Template-File existiert nicht -> Fehlermeldung.
 			return 'Unable to find template';
 		}
+
+		// Der Output des Scripts wird n einen Buffer gespeichert, d.h. nicht gleich ausgegeben.
+		ob_start();
+				
+		// Das Template-File wird eingebunden und dessen Ausgabe in $output gespeichert.
+		include $file;
+		$output = ob_get_contents();
+		ob_end_clean();
+			
+		// Output zurückgebe
+		return $output;
 	}
 
-	public function loadBricks($set, $language = "") {
+	public function loadBricks(string $set, string $language = '') {
 		if (!strlen($language)) {
 			$servicelocator = \Base3\ServiceLocator::getInstance();
 			$language = $servicelocator->get('language')->getLanguage();
@@ -89,7 +84,7 @@ class MvcView {
 		$this->assign("bricks", $bricks);
 	}
 
-	public function getBricks($set) {
+	public function getBricks(string $set): ?array {
 		if (!isset($this->_["bricks"]) || !isset($this->_["bricks"][$set])) return null;
 		return $this->_["bricks"][$set];
 	}
