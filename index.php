@@ -29,7 +29,7 @@ Autoloader::register();
 /* service locator */
 $servicelocator = ServiceLocator::getInstance()
 	->set('configuration', new \Configuration\ConfigFile\ConfigFile, ServiceLocator::SHARED)
-	->set('classmap', new \Base3\PluginClassMap, ServiceLocator::SHARED)
+	->set('classmap', new \Core\PluginClassMap, ServiceLocator::SHARED)
 	->set('serviceselector', \ServiceSelector\Standard\StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
 	;
 $plugins = $servicelocator->get('classmap')->getInstancesByInterface('Api\\IPlugin');

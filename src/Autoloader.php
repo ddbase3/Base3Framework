@@ -19,14 +19,14 @@ class Autoloader {
 	public static function __autoloadClass($class) {
 
                 // Core
-		$filePath = self::_transformClassNameToFilename($class, DIR_SRC);
+		$filePath = self::_transformClassNameToFilename($class);
 		if (file_exists($filePath)) {
 			require $filePath;
 			return;
 		}
 
 		// Plugin
-		$filePath = self::_transformPluginClassNameToFilename($class, DIR_PLUGIN);
+		$filePath = self::_transformPluginClassNameToFilename($class);
 		if (file_exists($filePath)) {
 			require $filePath;
 			return;
@@ -40,14 +40,14 @@ class Autoloader {
 	public static function loadFunction($func) {
 
 		// Core
-		$filePath = self::_transformClassNameToFilename($func, DIR_SRC);
+		$filePath = self::_transformClassNameToFilename($func);
 		if (file_exists($filePath)) {
 			require_once $filePath;
 			return;
 		}
 
 		// Plugin
-		$filePath = self::_transformPluginClassNameToFilename($func, DIR_PLUGIN);
+		$filePath = self::_transformPluginClassNameToFilename($func);
 		if (file_exists($filePath)) {
 			require_once $filePath;
 			return;
@@ -58,11 +58,10 @@ class Autoloader {
 	 * Transform class namespace to class filename
 	 * @see https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md
 	 * @param $className
-	 * @param $directory
 	 *
 	 * @return string
 	 */
-	private static function _transformClassNameToFilename($className, $directory) {
+	private static function _transformClassNameToFilename($className) {
 		$className	= ltrim($className, '\\');
 		$fileName	= '';
 		if ($lastNsPos	= strrpos($className, '\\')) {
@@ -72,18 +71,17 @@ class Autoloader {
 		}
 		$fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
 
-		return $directory . $fileName;
+		return DIR_SRC . $fileName;
 	}
 
 	/**
 	 * Transform plugin class namespace to class filename
 	 * @see https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md
 	 * @param $className
-	 * @param $directory
 	 *
 	 * @return string
 	 */
-	private static function _transformPluginClassNameToFilename($className, $directory) {
+	private static function _transformPluginClassNameToFilename($className) {
 		$className	= ltrim($className, '\\');
 		$fileName	= '';
 		if ($lastNsPos	= strrpos($className, '\\')) {
@@ -98,6 +96,6 @@ class Autoloader {
 			$fileName = substr($fileName, 0, $firstDsPos) . DIRECTORY_SEPARATOR . 'src' . substr($fileName, $firstDsPos);
 		}
 
-		return $directory . $fileName;
+		return DIR_PLUGIN . $fileName;
 	}
 }
