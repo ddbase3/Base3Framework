@@ -25,8 +25,6 @@ use Base3\ServiceLocator;
 /* autoloader */
 require DIR_SRC . 'Autoloader.php';
 Autoloader::register();
-require DIR_SRC . 'PluginAutoloader.php';
-PluginAutoloader::register();
 
 /* service locator */
 $servicelocator = ServiceLocator::getInstance()
