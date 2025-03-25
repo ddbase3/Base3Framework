@@ -1,6 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Base3;
+namespace Core;
+
+use Base3\ServiceLocator;
 
 class MvcView {
 
@@ -74,7 +76,7 @@ class MvcView {
 
 	public function loadBricks(string $set, string $language = '') {
 		if (!strlen($language)) {
-			$servicelocator = \Base3\ServiceLocator::getInstance();
+			$servicelocator = ServiceLocator::getInstance();
 			$language = $servicelocator->get('language')->getLanguage();
 		}
 		// TODO DIR_LANG nutzen

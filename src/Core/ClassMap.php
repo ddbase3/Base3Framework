@@ -1,23 +1,26 @@
 <?php declare(strict_types=1);
 
-namespace Base3;
+namespace Core;
 
-class PluginClassMap {
+class ClassMap {
 
+	private $path;
 	private $filename;
 	private $map;
 
-	public function __construct($filename = null) {
+	public function __construct($path = null, $filename = null) {
 
+		if ($path == null) $path = DIR_SRC;
 		if ($filename == null) $filename = DIR_TMP . "classmap.php";
 
+		$this->path = rtrim($path, DIRECTORY_SEPARATOR);
 		$this->filename = $filename;
 		$this->generate();
 		$this->map = require $this->filename;
 	}
 
 	public function generate($regenerate = false) {
-		if (!$regenerate && file_exists($this->filename) && filesize($this->filename) > 0) return;
+		if (!$regenerate && file_exists($this->filename)) return;
 
 		if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
 
@@ -25,27 +28,19 @@ class PluginClassMap {
 		$str = "<?php return ";
 
 		$this->map = array();
-
-		$data = array(
-			array("basedir" => DIR_SRC, "subdir" => ""),
-			array("basedir" => DIR_PLUGIN, "subdir" => "src")
-		);
-		foreach ($data as $d) {
-			$apps = $this->getEntries($d["basedir"]);
-			foreach ($apps as $app) {
-				$apppath = $d["basedir"] . DIRECTORY_SEPARATOR . $app;
-				if (!empty($d["subdir"])) $apppath .= DIRECTORY_SEPARATOR . $d["subdir"];
-				if (!is_dir($apppath)) continue;
-				$classes = array();
-				$this->getClasses($classes, $d["basedir"], $app, $d["subdir"]);
-				foreach ($classes as $c) {
-					foreach ($c["interfaces"] as $interface) {
-						$this->map[$app]["interface"][$interface][] = $c["class"];
-						if ($interface == "Api\\IBase") {
-							$instance = new $c["class"];
-							$name = $instance->getName();
-							$this->map[$app]["name"][$name] = $c["class"];
-						}
+		$apps = $this->getEntries($this->path);
+		foreach ($apps as $app) {
+			$apppath = $this->path . DIRECTORY_SEPARATOR . $app;
+			if (!is_dir($apppath)) continue;
+			$classes = array();
+			$this->getClasses($classes, $apppath);
+			foreach ($classes as $c) {
+				foreach ($c["interfaces"] as $interface) {
+					$this->map[$app]["interface"][$interface][] = $c["class"];
+					if ($interface == "Api\\IBase") {
+						$instance = new $c["class"];
+						$name = $instance->getName();
+						$this->map[$app]["name"][$name] = $c["class"];
 					}
 				}
 			}
@@ -59,15 +54,6 @@ class PluginClassMap {
 
 	public function getApps() {
 		return array_keys($this->map);
-	}
-
-	public function getPlugins() {
-		$plugins = array();
-		foreach ($this->map as $app => $appdata) {
-			if (!isset($appdata['interface'])) continue;
-			if (in_array('Api\\IPlugin', array_keys($appdata['interface']))) $plugins[] = $app;
-		}
-		return $plugins;
 	}
 
 	public function &getInstancesByInterface($interface) {
@@ -144,24 +130,20 @@ class PluginClassMap {
 		return $this->getInstanceByAppInterfaceName($app, $interface, $name, true);
 	}
 
-	private function getClasses(&$classes, $basedir, $app, $subdir = "", $path = "") {
-		$fullpath = $basedir . DIRECTORY_SEPARATOR . $app . DIRECTORY_SEPARATOR . $subdir . DIRECTORY_SEPARATOR . $path;
-		$entries = $this->getEntries($fullpath);
+	private function getClasses(&$classes, $path) {
+		$path = rtrim($path, DIRECTORY_SEPARATOR);
+		$entries = $this->getEntries($path);
 		foreach ($entries as $entry) {
-			$fullentry = $fullpath . DIRECTORY_SEPARATOR . $entry;
+			$fullentry = $path . DIRECTORY_SEPARATOR . $entry;
 			if (is_dir($fullentry)) {
-				$this->getClasses($classes, $basedir, $app, $subdir, $path . DIRECTORY_SEPARATOR . $entry);
+				$this->getClasses($classes, $fullentry);
 			} else {
 				if (strrchr($entry, ".") != ".php" || strchr($entry, ".") != ".php") continue;  // nur ein Punkt im Dateinamen!
 
 				require_once($fullentry);
 
-				$nsparts = array($app);
-				$pathparts = explode(DIRECTORY_SEPARATOR, $path);
-				foreach ($pathparts as $pp) if (!empty($pp)) $nsparts[] = $pp;
-				$namespace = implode("\\", $nsparts);
+				$namespace = substr(str_replace(DIRECTORY_SEPARATOR, "\\", $path), strlen($this->path) + 1);
 				$classname = $namespace . "\\" . substr($entry, 0, strrpos($entry, "."));
-
 				if (!class_exists($classname, false)) continue;
 
 				$rc = new \ReflectionClass($classname);

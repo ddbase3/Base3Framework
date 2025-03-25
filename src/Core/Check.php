@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Base3;
+namespace Core;
 
 use Api\IOutput;
 use Api\ICheck;
