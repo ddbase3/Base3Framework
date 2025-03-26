@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\Cache;
+namespace Base3\Xrm\Cache;
 
-use Xrm\Api\IXrmFilterModule;
+use Base3\Core\ServiceLocator;
+use Base3\Xrm\Api\IXrmFilterModule;
 
 class CacheNameXrmFilterModule implements IXrmFilterModule {
 
@@ -10,7 +11,7 @@ class CacheNameXrmFilterModule implements IXrmFilterModule {
 	private $database;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->database = $this->servicelocator->get('database');
 	}
 
@@ -23,7 +24,7 @@ class CacheNameXrmFilterModule implements IXrmFilterModule {
 	// Implementation of IXrmFilterModule
 
 	public function match($xrm, $filter) {
-		return $filter->attr == "name" && get_class($xrm) == "Xrm\\Cache\\CacheXrm" ? 2 : 0;
+		return $filter->attr == "name" && get_class($xrm) == "Base3\\Xrm\\Cache\\CacheXrm" ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {

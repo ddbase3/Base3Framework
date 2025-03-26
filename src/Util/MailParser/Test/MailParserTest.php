@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Util\MailParser\Test;
+namespace Base3\Util\MailParser\Test;
 
-use Page\Api\IPage;
+use Base3\Page\Api\IPage;
 
 class MailParserTest implements IPage {
 
@@ -22,7 +22,7 @@ class MailParserTest implements IPage {
 
 	public function getOutput($out = "html") {
 		$mailfile = $_REQUEST["file"];
-		$mp = new \Util\MailParser\MailParser($mailfile);
+		$mp = new \Base3\Util\MailParser\MailParser($mailfile);
 		$str = $mp->toString();
 		return '<pre>' . $str . '</pre>';
 	}

@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Microservice\Extern;
+namespace Base3\Microservice\Extern;
 
-use Microservice\AbstractMicroserviceConnector;
-use Api\ICheck;
+use Base3\Microservice\AbstractMicroserviceConnector;
+use Base3\Api\ICheck;
 
 class MicroserviceExternConnector extends AbstractMicroserviceConnector implements ICheck {
 

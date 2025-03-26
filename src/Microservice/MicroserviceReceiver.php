@@ -1,15 +1,16 @@
 <?php declare(strict_types=1);
 
-namespace Microservice;
+namespace Base3\Microservice;
 
-use Microservice\Api\IMicroserviceReceiver;
+use Base3\Core\ServiceLocator;
+use Base3\Microservice\Api\IMicroserviceReceiver;
 
 class MicroserviceReceiver extends AbstractMicroservice implements IMicroserviceReceiver {
 
 	private $servicelocator;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 	}
 
 	// Implementation of IBase

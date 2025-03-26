@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Util\DeviceDetect\Test;
+namespace Base3\Util\DeviceDetect\Test;
 
-use Page\Api\IPage;
+use Base3\Page\Api\IPage;
 
 class DeviceDetectTest implements IPage {
 
@@ -22,7 +22,7 @@ class DeviceDetectTest implements IPage {
 
 	public function getOutput($out = "html") {
 		$str = '<h1>DeviceDetectTest</h1>';
-		$dd = new \Util\DeviceDetect\DeviceDetect;
+		$dd = new \Base3\Util\DeviceDetect\DeviceDetect;
 		$str .= $dd->getDevice();
 		return $str;
 	}

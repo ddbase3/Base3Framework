@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Microservice\Extern;
+namespace Base3\Microservice\Extern;
 
-use Microservice\Api\IMicroserviceHelper;
+use Base3\Microservice\Api\IMicroserviceHelper;
 
 class MicroserviceExternHelper implements IMicroserviceHelper {
 

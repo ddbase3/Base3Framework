@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Session\DomainSession;
+namespace Base3\Session\DomainSession;
 
-use Session\Api\ISession;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Session\Api\ISession;
+use Base3\Api\ICheck;
 
 class DomainSession implements ISession, ICheck {
 
@@ -13,7 +14,7 @@ class DomainSession implements ISession, ICheck {
 
 	public function __construct($cnf = null) {
 
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 
 		$this->started = false;
 

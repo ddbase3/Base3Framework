@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Cache;
+namespace Base3\Cache;
 
-use Cache\Api\ICache;
+use Base3\Core\ServiceLocator;
+use Base3\Cache\Api\ICache;
 
 class FileCache implements ICache {
 
@@ -12,7 +13,7 @@ class FileCache implements ICache {
 	private $timeout;
 
 	public function __construct($cnf = null) {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->database = $this->servicelocator->get('database');
 		$configuration = $this->servicelocator->get('configuration');
 		$this->cnf = $configuration == null ? array("url" => "") : $configuration->get('base');

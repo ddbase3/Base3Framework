@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\Cache;
+namespace Base3\Xrm\Cache;
 
-use Api\ICheck;
-use Xrm\AbstractXrm;
+use Base3\Api\ICheck;
+use Base3\Xrm\AbstractXrm;
 
 class CacheXrm extends AbstractXrm implements ICheck {
 

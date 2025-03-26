@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Usermanager;
+namespace Base3\Usermanager;
 
 class User {
 

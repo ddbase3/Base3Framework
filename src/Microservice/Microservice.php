@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Microservice;
+namespace Base3\Microservice;
 
-use Api\IOutput;
+use Base3\Core\ServiceLocator;
+use Base3\Api\IOutput;
 
 class Microservice implements IOutput {
 
@@ -10,7 +11,7 @@ class Microservice implements IOutput {
 
 	public function __construct() {
 		// could also be exported multiple times to different masters
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 	}
 
 	// Implementation of IBase

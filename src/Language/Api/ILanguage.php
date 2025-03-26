@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Language\Api;
+namespace Base3\Language\Api;
 
 interface ILanguage {
 

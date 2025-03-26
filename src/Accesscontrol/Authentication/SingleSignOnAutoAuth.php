@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Accesscontrol\Authentication;
+namespace Base3\Accesscontrol\Authentication;
 
-use Accesscontrol\AbstractAuth;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Accesscontrol\AbstractAuth;
+use Base3\Api\ICheck;
 
 class SingleSignOnAutoAuth extends AbstractAuth implements ICheck {
 
@@ -13,7 +14,7 @@ class SingleSignOnAutoAuth extends AbstractAuth implements ICheck {
 	private $cnf;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->session = $this->servicelocator->get('session');
 		$this->loginpage = $this->servicelocator->get('loginpage');
 		$this->cnf = $this->servicelocator->get('configuration')->get('base');

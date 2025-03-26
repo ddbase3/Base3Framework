@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\File;
+namespace Base3\Xrm\File;
 
-use Xrm\Api\IXrmFilterModule;
+use Base3\Xrm\Api\IXrmFilterModule;
 
 class FileArchiveXrmFilterModule implements IXrmFilterModule {
 
@@ -15,7 +15,7 @@ class FileArchiveXrmFilterModule implements IXrmFilterModule {
 	// Implementation of IXrmFilterModule
 
 	public function match($xrm, $filter) {
-		return $filter->attr == "archive" && get_class($xrm) == "Xrm\\File\\FileXrm" ? 2 : 0;
+		return $filter->attr == "archive" && get_class($xrm) == "Base3\\Xrm\\File\\FileXrm" ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {

@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Xrm;
+namespace Base3\Xrm;
 
-use Xrm\AbstractXrmFilterModule;
+use Base3\Xrm\AbstractXrmFilterModule;
 
 class ArchiveXrmFilterModule extends AbstractXrmFilterModule {
 

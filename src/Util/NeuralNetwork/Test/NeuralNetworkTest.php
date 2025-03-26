@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Util\NeuralNetwork\Test;
+namespace Base3\Util\NeuralNetwork\Test;
 
-use Page\Api\IPage;
+use Base3\Page\Api\IPage;
 
 class NeuralNetworkTest implements IPage {
 
@@ -32,7 +32,7 @@ class NeuralNetworkTest implements IPage {
 		$str .= '<pre>' . $nn->toString() . '</pre>';
 */
 
-		$nn = new \Util\NeuralNetwork\NeuralNetwork(array(
+		$nn = new \Base3\Util\NeuralNetwork\NeuralNetwork(array(
 			"layers" => array(2, 3, 5),
 			"bias" => true /* ,
 			"weights" => array(

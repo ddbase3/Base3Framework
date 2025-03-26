@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\Media;
+namespace Base3\Xrm\Media;
 
-use Api\ICheck;
-use Xrm\AbstractXrm;
+use Base3\Api\ICheck;
+use Base3\Xrm\AbstractXrm;
 
 class MediaXrm extends AbstractXrm implements ICheck {
 
@@ -63,7 +63,7 @@ class MediaXrm extends AbstractXrm implements ICheck {
 
 		$entry->access = array();
 		if (isset($result["access"])) foreach ($result["access"] as $data) {
-			$access = new \Xrm\XrmEntryAccess;
+			$access = new \Base3\Xrm\XrmEntryAccess;
 			$access->mode = $data["mode"];
 			$access->usergroup = $data["usergroup"];
 			$access->id = $data["id"];
@@ -72,7 +72,7 @@ class MediaXrm extends AbstractXrm implements ICheck {
 
 		$entry->log = array();
 		if (isset($result["log"])) foreach ($result["log"] as $data) {
-			$log = new \Xrm\XrmEntryLog;
+			$log = new \Base3\Xrm\XrmEntryLog;
 			$log->action = $data["action"];
 			$log->user = $data["user"];
 			$log->timestamp = $data["timestamp"];
@@ -108,7 +108,7 @@ class MediaXrm extends AbstractXrm implements ICheck {
 		if ($entry && $this->getAccess($entry) != "none" && $entry->alloc) $allocs = $entry->alloc;
 
 		// probieren, alle Allocs zu holen (dabei wird Berechtigung geprüft)
-		$filter = new \Xrm\XrmFilter("ids", "in", $allocs);
+		$filter = new \Base3\Xrm\XrmFilter("ids", "in", $allocs);
 		$entries = $this->xrmglobal->getEntriesIntern($filter, true);
 
 		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "num" => sizeof($allocs))));

@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\Base3;
+namespace Base3\Xrm\Base3;
 
-use Api\ICheck;
-use Xrm\AbstractXrm;
+use Base3\Api\ICheck;
+use Base3\Xrm\AbstractXrm;
 
 class Base3Xrm extends AbstractXrm implements ICheck {
 
@@ -147,7 +147,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 		$newEntry = null;
 		$entryexists = false;
 		if ($entry->id == null) {
-			$newEntry = new \Xrm\XrmEntry;
+			$newEntry = new \Base3\Xrm\XrmEntry;
 			$newEntry->id = $this->uuid();
 			$newEntry->created = $dt;
 		} else {
@@ -156,7 +156,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 				if ($this->getAccess($newEntry) != "write") return null;
 				$entryexists = true;
 			} else {
-				$newEntry = new \Xrm\XrmEntry;
+				$newEntry = new \Base3\Xrm\XrmEntry;
 				$newEntry->id = $entry->id;
 				$newEntry->created = $entry->created;
 			}
@@ -178,7 +178,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$newEntry->access = $entry->access == null ? array() : $entry->access;
 		if ($entry->id == null) {
-			$access = new \Xrm\XrmEntryAccess;
+			$access = new \Base3\Xrm\XrmEntryAccess;
 			$access->mode = "owner";
 			$access->usergroup = "user";
 			$access->id = $userid;
@@ -187,7 +187,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		if (substr($entry->id, 0, 2) != "xx") {
 			$newEntry->log = $entry->log == null ? array() : $entry->log;
-			$log = new \Xrm\XrmEntryLog;
+			$log = new \Base3\Xrm\XrmEntryLog;
 			$log->action = $entry->id == null ? "created" : "changed";
 			$log->user = $userid;
 			$log->timestamp = $dt;
@@ -417,7 +417,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 			$entryids[] = $sysentry["id"];
 
-			$entry = new \Xrm\XrmEntry;
+			$entry = new \Base3\Xrm\XrmEntry;
 			$entry->id = $sysentry["uuid"];
 			$entry->type = $sysentry["type"];
 			$entry->archive = $sysentry["archive"] ? 1 : 0;
@@ -487,7 +487,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 			WHERE ga.`entry_id` IN (" . implode(", ", $entryids) . ")";
 		$sysentries = $this->database->multiQuery($sql);
 		foreach ($sysentries as $sysentry) {
-			$access = new \Xrm\XrmEntryAccess;
+			$access = new \Base3\Xrm\XrmEntryAccess;
 			$access->mode = $accessmodes[$sysentry["mode"]];
 			$access->usergroup = $sysentry["usergroup"];
 			$access->id = $sysentry["xid"];
@@ -500,7 +500,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 			WHERE l.`action` != 'read' AND l.`entry_id` IN (" . implode(", ", $entryids) . ")";
 		$sysentries = $this->database->multiQuery($sql);
 		foreach ($sysentries as $sysentry) {
-			$log = new \Xrm\XrmEntryLog;
+			$log = new \Base3\Xrm\XrmEntryLog;
 			$log->action = $sysentry["action"];
 			$log->user = $sysentry["name"];
 			$log->timestamp = $sysentry["timestamp"];
@@ -605,7 +605,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 */
 
 		// probieren, alle Allocs zu holen (dabei wird Berechtigung geprüft)
-		$filter = new \Xrm\XrmFilter("ids", "in", $entries);
+		$filter = new \Base3\Xrm\XrmFilter("ids", "in", $entries);
 		$es = $this->xrmglobal->getEntriesIntern($filter, true);
 
 		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "num" => sizeof($entries), "entries" => $entries)));

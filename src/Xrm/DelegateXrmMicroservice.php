@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Xrm;
+namespace Base3\Xrm;
 
-use Xrm\Api\IXrm;
-use Microservice\AbstractMicroservice;
+use Base3\Core\ServiceLocator;
+use Base3\Xrm\Api\IXrm;
+use Base3\Microservice\AbstractMicroservice;
 
 class DelegateXrmMicroservice extends AbstractMicroservice implements IXrm {
 
@@ -11,7 +12,7 @@ class DelegateXrmMicroservice extends AbstractMicroservice implements IXrm {
 	private $xrm;
 
 	public function __construct($cnf = null) {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->xrm = $this->servicelocator->get('xrm');
 	}
 

@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Worker;
+namespace Base3\Worker;
 
-use Worker\Api\IWorker;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Worker\Api\IWorker;
+use Base3\Api\ICheck;
 
 class DelegateWorker implements IWorker, ICheck {
 
@@ -15,7 +16,7 @@ class DelegateWorker implements IWorker, ICheck {
 	private $priority;
 
 	public function __construct($cnf = null) {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->classmap = $this->servicelocator->get('classmap');
 		$this->configuration = $this->servicelocator->get('configuration');
 
@@ -47,7 +48,7 @@ class DelegateWorker implements IWorker, ICheck {
 
 	public function getJobs() {
 		$joblist = array();
-		$jobs = $this->classmap->getInstancesByInterface("Worker\\Api\\IJob");
+		$jobs = $this->classmap->getInstancesByInterface("Base3\\Worker\\Api\\IJob");
 		foreach ($jobs as $job) {
 			$name = $job->getName();
 			$priority = $job->getPriority();
@@ -57,7 +58,7 @@ class DelegateWorker implements IWorker, ICheck {
 	}
 
 	public function doJob($job) {
-		$job = $this->classmap->getInstanceByInterfaceName('Worker\\Api\\IJob', $job);
+		$job = $this->classmap->getInstanceByInterfaceName('Base3\\Worker\\Api\\IJob', $job);
 		if ($job == null) return null;
 		if (($job instanceof \Worker\Api\ICron) && !$this->checkCron($job)) return null;
 		return $job->go();

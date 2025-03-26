@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Util\MobileDetect\Test;
+namespace Base3\Util\MobileDetect\Test;
 
-use Page\Api\IPage;
+use Base3\Page\Api\IPage;
 
 class MobileDetectTest implements IPage {
 
@@ -23,7 +23,7 @@ class MobileDetectTest implements IPage {
 	public function getOutput($out = "html") {
 		$str = '<h1>MobileDetectTest</h1>';
 
-		$md = new \Util\MobileDetect\MobileDetect;
+		$md = new \Base3\Util\MobileDetect\MobileDetect;
 		$str .= '<p>mobile? - ' . ( $md->isMobile() ? 'yes' : 'no' ) . '</p>';
 		$str .= '<p>tablet? - ' . ( $md->isTablet() ? 'yes' : 'no' ) . '</p>';
 		$str .= '<p>phone? - ' . ( $md->isMobile() && !$md->isTablet() ? 'yes' : 'no' ) . '</p>';

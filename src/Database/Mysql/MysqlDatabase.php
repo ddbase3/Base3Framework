@@ -2,8 +2,9 @@
 
 namespace Database\Mysql;
 
-use Database\Api\IDatabase;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Database\Api\IDatabase;
+use Base3\Api\ICheck;
 
 class MysqlDatabase implements IDatabase, ICheck {
 
@@ -31,7 +32,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 	public static function getInstance($cnf = null) {
 
 		if ($cnf == null) {
-			self::$servicelocator = \Base3\ServiceLocator::getInstance();
+			self::$servicelocator = ServiceLocator::getInstance();
 			$configuration = self::$servicelocator->get('configuration');
 			if ($configuration != null) $cnf = $configuration->get('database');
 		}

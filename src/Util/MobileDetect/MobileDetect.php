@@ -21,7 +21,7 @@
  * @version 2.8.33
  */
 
-namespace Util\MobileDetect;
+namespace Base3\Util\MobileDetect;
 
 class MobileDetect
 {

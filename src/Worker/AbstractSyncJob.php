@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Worker;
+namespace Base3\Worker;
 
-use Worker\Api\ICron;
+use Base3\Core\ServiceLocator;
+use Base3\Worker\Api\ICron;
 
 abstract class AbstractSyncJob implements ICron {
 
@@ -15,7 +16,7 @@ abstract class AbstractSyncJob implements ICron {
 	protected $failed;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->logger = $this->servicelocator->get('logger');
 
 		$this->lists = array();

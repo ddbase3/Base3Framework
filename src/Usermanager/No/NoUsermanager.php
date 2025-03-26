@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Usermanager\No;
+namespace Base3\Usermanager\No;
 
-use Usermanager\Api\IUsermanager;
+use Base3\Usermanager\Api\IUsermanager;
 
 class NoUsermanager implements IUsermanager {
 

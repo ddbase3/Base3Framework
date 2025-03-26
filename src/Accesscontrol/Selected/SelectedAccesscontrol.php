@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Accesscontrol\Selected;
+namespace Base3\Accesscontrol\Selected;
 
-use Accesscontrol\Api\IAccesscontrol;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Accesscontrol\Api\IAccesscontrol;
+use Base3\Api\ICheck;
 
 class SelectedAccesscontrol implements IAccesscontrol, ICheck {
 
@@ -13,7 +14,7 @@ class SelectedAccesscontrol implements IAccesscontrol, ICheck {
 	private $userid = null;
 
 	public function __construct($cnf = null) {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->authentications = $this->servicelocator->get('authentications');
 
 		$verbose = isset($_REQUEST["checkaccesscontrol"]);

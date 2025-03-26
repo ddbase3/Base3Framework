@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Util\NeuralNetwork;
+namespace Base3\Util\NeuralNetwork;
 
 interface INeuralNetworkActFunc {
 

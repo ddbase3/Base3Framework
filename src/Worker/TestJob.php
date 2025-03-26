@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Worker;
+namespace Base3\Worker;
 
-use Api\IOutput;
+use Base3\Core\ServiceLocator;
+use Base3\Api\IOutput;
 
 class TestJob implements IOutput {
 
@@ -10,7 +11,7 @@ class TestJob implements IOutput {
 	private $classmap;
 
 	public function __construct($cnf = null) {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->classmap = $this->servicelocator->get('classmap');
 
 		if (php_sapi_name() == "cli") {
@@ -34,7 +35,7 @@ class TestJob implements IOutput {
 			return;
 		}
 
-		$job = $this->classmap->getInstanceByInterfaceName('Worker\\Api\\IJob', $_REQUEST["job"]);
+		$job = $this->classmap->getInstanceByInterfaceName('Base3\\Worker\\Api\\IJob', $_REQUEST["job"]);
 		$res = $job->go();
 
 		return '<p>' . $res . '</p>';

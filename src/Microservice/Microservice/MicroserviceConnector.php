@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Microservice\Microservice;
+namespace Base3\Microservice\Microservice;
 
-use Microservice\AbstractMicroserviceConnector;
-use Api\ICheck;
+use Base3\Microservice\AbstractMicroserviceConnector;
+use Base3\Api\ICheck;
 
 class MicroserviceConnector extends AbstractMicroserviceConnector implements ICheck {
 

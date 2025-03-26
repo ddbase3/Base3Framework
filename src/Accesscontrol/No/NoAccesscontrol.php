@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Accesscontrol\No;
+namespace Base3\Accesscontrol\No;
 
-use Accesscontrol\Api\IAccesscontrol;
+use Base3\Accesscontrol\Api\IAccesscontrol;
 
 class NoAccesscontrol implements IAccesscontrol {
 

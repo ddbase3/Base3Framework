@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Microservice;
+namespace Base3\Microservice;
 
-use Microservice\Api\IMicroservice;
+use Base3\Microservice\Api\IMicroservice;
 
 abstract class AbstractMicroservice implements IMicroservice {
 

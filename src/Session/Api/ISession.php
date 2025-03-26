@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Session\Api;
+namespace Base3\Session\Api;
 
 interface ISession {
 

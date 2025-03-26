@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Page\Api;
+namespace Base3\Page\Api;
 
 interface IPageModuleHeader extends IPageModule {
 

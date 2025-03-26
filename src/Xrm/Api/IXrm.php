@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\Api;
+namespace Base3\Xrm\Api;
 
 interface IXrm {
 

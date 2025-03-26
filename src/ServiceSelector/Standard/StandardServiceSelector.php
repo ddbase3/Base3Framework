@@ -1,10 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace ServiceSelector\Standard;
+namespace Base3\ServiceSelector\Standard;
 
-use ServiceSelector\Api\IServiceSelector;
-use Middleware\Api\IMiddleware;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\ServiceSelector\Api\IServiceSelector;
+use Base3\Middleware\Api\IMiddleware;
+use Base3\Api\ICheck;
 
 class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 
@@ -14,7 +15,7 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 
 	private function __construct() {
 
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 
 		if (php_sapi_name() != "cli") return;
 		$options = getopt("", array("app:", "name:", "out:"));
@@ -73,10 +74,10 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 		}
 
 		$instance = empty($app)
-			? $classmap->getInstanceByInterfaceName("Api\\IOutput", $name)
-			: $classmap->getInstanceByAppInterfaceName($app, "Api\\IOutput", $name);
+			? $classmap->getInstanceByInterfaceName("Base3\\Api\\IOutput", $name)
+			: $classmap->getInstanceByAppInterfaceName($app, "Base3\\Api\\IOutput", $name);
 		if ($instance == null) {
-			$instances = $classmap->getInstancesByInterface("Page\\Api\\IPageCatchall");
+			$instances = $classmap->getInstancesByInterface("Base3\\Page\\Api\\IPageCatchall");
 			$instance = reset($instances);
 		}
 

@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Worker\Api;
+namespace Base3\Worker\Api;
 
-use Api\IBase;
+use Base3\Api\IBase;
 
 interface IWorker extends IBase {
 

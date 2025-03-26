@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Core;
+namespace Base3\Core;
 
-use Api\IOutput;
+use Base3\Api\IOutput;
 
 class PhpInfo implements IOutput {
 

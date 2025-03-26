@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Xrm;
+namespace Base3\Xrm;
 
-use Xrm\Api\IXrmFilterModule;
+use Base3\Xrm\Api\IXrmFilterModule;
 
 class BaseXrmFilterModule implements IXrmFilterModule {
 
@@ -39,13 +39,13 @@ class BaseXrmFilterModule implements IXrmFilterModule {
 
 		} else if ($filter->attr == "app" && $filter->op == "eq") {  // $filter->val ist String
 
-			$f = new \Xrm\XrmFilter("alloc", "with", "xxap" . strtolower($filter->val));
+			$f = new \Base3\Xrm\XrmFilter("alloc", "with", "xxap" . strtolower($filter->val));
 			$entries = $xrm->getEntriesIntern($f, $idsonly);
 
 		} else if ($filter->attr == "app" && $filter->op == "neq") {  // $filter->val ist String
 
 			$all = $xrm->getAllEntryIds();
-			$f = new \Xrm\XrmFilter("app", "eq", $filter->val);
+			$f = new \Base3\Xrm\XrmFilter("app", "eq", $filter->val);
 			$es = $this->getEntries($xrm, $f, true);
 			$ids = array_diff($all, $es);
 			$entries = $idsonly ? $ids : $xrm->getEntries($ids);

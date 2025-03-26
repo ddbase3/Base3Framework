@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Cache;
+namespace Base3\Cache;
 
-use Cache\Api\ICache;
-use Microservice\AbstractMicroservice;
+use Base3\Core\ServiceLocator;
+use Base3\Cache\Api\ICache;
+use Base3\Microservice\AbstractMicroservice;
 
 class DelegateCacheMicroservice extends AbstractMicroservice implements ICache {
 
@@ -11,7 +12,7 @@ class DelegateCacheMicroservice extends AbstractMicroservice implements ICache {
 	private $cache;
 
 	public function __construct($cnf = null) {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->cache = $this->servicelocator->get('cache');
 	}
 

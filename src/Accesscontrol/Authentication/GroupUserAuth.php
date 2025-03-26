@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Accesscontrol\Authentication;
+namespace Base3\Accesscontrol\Authentication;
 
-use Accesscontrol\AbstractAuth;
+use Base3\Accesscontrol\AbstractAuth;
 
 class GroupUserAuth extends AbstractAuth {
 

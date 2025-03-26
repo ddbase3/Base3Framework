@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Middleware\ExecutionTime;
+namespace Base3\Middleware\ExecutionTime;
 
-use Middleware\Api\IMiddleware;
+use Base3\Middleware\Api\IMiddleware;
 
 class ExecutionTimeMiddleware implements IMiddleware {
 

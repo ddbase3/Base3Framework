@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\File;
+namespace Base3\Xrm\File;
 
-use Api\ICheck;
-use Xrm\AbstractXrm;
+use Base3\Api\ICheck;
+use Base3\Xrm\AbstractXrm;
 
 class FileXrm extends AbstractXrm implements ICheck {
 
@@ -52,14 +52,14 @@ class FileXrm extends AbstractXrm implements ICheck {
 
 		$newEntry = null;
 		if ($entry->id == null) {
-			$newEntry = new \Xrm\XrmEntry;
+			$newEntry = new \Base3\Xrm\XrmEntry;
 			$newEntry->id = $this->uuid();
 		} else {
 			$newEntry = $this->getEntry($entry->id);
 			if ($newEntry) {
 				if ($this->getAccess($newEntry) != "write") return null;
 			} else {
-				$newEntry = new \Xrm\XrmEntry;
+				$newEntry = new \Base3\Xrm\XrmEntry;
 				$newEntry->id = $entry->id;
 			}
 		}
@@ -93,7 +93,7 @@ class FileXrm extends AbstractXrm implements ICheck {
 
 		$newEntry->access = $entry->access == null ? array() : $entry->access;
 		if ($entry->id == null) {
-			$access = new \Xrm\XrmEntryAccess;
+			$access = new \Base3\Xrm\XrmEntryAccess;
 			$access->mode = "owner";
 			$access->usergroup = "user";
 			$access->id = $userid;
@@ -102,7 +102,7 @@ class FileXrm extends AbstractXrm implements ICheck {
 
 		if (substr($entry->id, 0, 2) != "xx") {
 			$newEntry->log = $entry->log == null ? array() : $entry->log;
-			$log = new \Xrm\XrmEntryLog;
+			$log = new \Base3\Xrm\XrmEntryLog;
 			$log->action = $entry->id == null ? "created" : "changed";
 			$log->user = $userid;
 			$log->timestamp = date("Y-m-d H:i:s");
@@ -135,7 +135,7 @@ class FileXrm extends AbstractXrm implements ICheck {
 			}
 		}
 
-		$entry = new \Xrm\XrmEntry;
+		$entry = new \Base3\Xrm\XrmEntry;
 		if (isset($result["id"])) $entry->id = $result["id"];
 		if (isset($result["type"])) $entry->type = $result["type"];
 		if (isset($result["name"])) $entry->name = $result["name"];
@@ -145,7 +145,7 @@ class FileXrm extends AbstractXrm implements ICheck {
 
 		$entry->access = array();
 		if (isset($result["access"])) foreach ($result["access"] as $data) {
-			$access = new \Xrm\XrmEntryAccess;
+			$access = new \Base3\Xrm\XrmEntryAccess;
 			$access->mode = $data["mode"];
 			$access->usergroup = $data["usergroup"];
 			$access->id = $data["id"];
@@ -154,7 +154,7 @@ class FileXrm extends AbstractXrm implements ICheck {
 
 		$entry->log = array();
 		if (isset($result["log"])) foreach ($result["log"] as $data) {
-			$log = new \Xrm\XrmEntryLog;
+			$log = new \Base3\Xrm\XrmEntryLog;
 			$log->action = $data["action"];
 			$log->user = $data["user"];
 			$log->timestamp = $data["timestamp"];
@@ -193,7 +193,7 @@ class FileXrm extends AbstractXrm implements ICheck {
 		if ($entry && $this->getAccess($entry) != "none" && $entry->alloc) $allocs = $entry->alloc;
 
 		// probieren, alle Allocs zu holen (dabei wird Berechtigung geprüft)
-		$filter = new \Xrm\XrmFilter("ids", "in", $allocs);
+		$filter = new \Base3\Xrm\XrmFilter("ids", "in", $allocs);
 		$entries = $this->xrmglobal->getEntriesIntern($filter, true);
 
 		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "num" => sizeof($allocs))));

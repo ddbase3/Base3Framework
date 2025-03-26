@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Xrm;
+namespace Base3\Xrm;
 
 class XrmEntry {
 
@@ -28,7 +28,7 @@ class XrmEntry {
 	public static function unserialize($data) {
 
 		// wenn $data schon ein XrmEntry ist, dann direkt zurückgeben
-		if (is_object($data) && is_a($data, 'Xrm\XrmEntry')) return $data;
+		if (is_object($data) && is_a($data, 'Base3\\Xrm\\XrmEntry')) return $data;
 
 		if (is_string($data)) $data = json_decode($data, true);
 		if (is_object($data)) $data = (array) $data;
@@ -46,11 +46,11 @@ class XrmEntry {
 
 		if (isset($data["access"]))
 			foreach ($data["access"] as $access)
-				$xrmentry->access[] = \Xrm\XrmEntryAccess::unserialize($access);
+				$xrmentry->access[] = \Base3\Xrm\XrmEntryAccess::unserialize($access);
 
 		if (isset($data["log"]))
 			foreach ($data["log"] as $log)
-				$xrmentry->log[] = \Xrm\XrmEntryLog::unserialize($log);
+				$xrmentry->log[] = \Base3\Xrm\XrmEntryLog::unserialize($log);
 
 		if (isset($data["xrmnames"])) $xrmentry->xrmnames = $data["xrmnames"];
 

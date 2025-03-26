@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Xrm;
+namespace Base3\Xrm;
 
 class XrmFilter {
 

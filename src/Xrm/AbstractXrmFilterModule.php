@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Xrm;
+namespace Base3\Xrm;
 
-use Xrm\Api\IXrmFilterModule;
+use Base3\Xrm\Api\IXrmFilterModule;
 
 abstract class AbstractXrmFilterModule implements IXrmFilterModule {
 

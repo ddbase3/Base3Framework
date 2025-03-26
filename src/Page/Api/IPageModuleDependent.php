@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Page\Api;
+namespace Base3\Page\Api;
 
-use Api\IBase;
+use Base3\Api\IBase;
 
 interface IPageModuleDependent extends IPageModule {
 

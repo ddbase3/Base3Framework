@@ -1,15 +1,16 @@
 <?php declare(strict_types=1);
 
-namespace Xrm;
+namespace Base3\Xrm;
 
-use Api\IOutput;
+use Base3\Core\ServiceLocator;
+use Base3\Api\IOutput;
 
 class XrmSearchService implements IOutput {
 
 	private $servicelocator;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 	}
 
 	// Implementation of IBase
@@ -27,7 +28,7 @@ class XrmSearchService implements IOutput {
 		$scope = isset($_REQUEST["x"]) && $_REQUEST["x"] == "global" ? 'xrmglobal' : 'xrm';
 		$xrm = $this->servicelocator->get($scope);
 
-		$filter = new \Xrm\XrmFilter;
+		$filter = new \Base3\Xrm\XrmFilter;
 		$filter->fromJson($_REQUEST["q"]);
 
 		$format = isset($_REQUEST["fo"]) ? $_REQUEST["fo"] : "ids";  // ids | data | teaser | display
@@ -46,7 +47,7 @@ class XrmSearchService implements IOutput {
 				$entries = $xrm->getFilteredEntries($filter);
 				$entrydisplays = array();
 				foreach ($entries as $entry) {
-					$display = new \Custom\Display\XrmEntryDisplay;
+					$display = new \Base3\Custom\Display\XrmEntryDisplay;
 					$display->setData(array("xrmentry" => $entry, "teaser" => $format != "display"));
 					$entrydisplays[] = $display->getOutput();
 				}

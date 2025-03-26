@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Token\Api;
+namespace Base3\Token\Api;
 
 interface IToken {
 

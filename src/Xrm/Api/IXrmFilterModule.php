@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\Api;
+namespace Base3\Xrm\Api;
 
-use Api\IBase;
+use Base3\Api\IBase;
 
 interface IXrmFilterModule extends IBase {
 

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Worker\Api;
+namespace Base3\Worker\Api;
 
 interface ICron extends IJob {
 

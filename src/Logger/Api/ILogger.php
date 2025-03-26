@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Logger\Api;
+namespace Base3\Logger\Api;
 
 interface ILogger {
 

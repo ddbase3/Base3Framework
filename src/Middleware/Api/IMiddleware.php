@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Middleware\Api;
+namespace Base3\Middleware\Api;
 
 interface IMiddleware {
 

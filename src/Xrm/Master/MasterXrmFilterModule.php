@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\Master;
+namespace Base3\Xrm\Master;
 
-use Xrm\AbstractXrmFilterModule;
+use Base3\Core\ServiceLocator;
+use Base3\Xrm\AbstractXrmFilterModule;
 
 class MasterXrmFilterModule extends AbstractXrmFilterModule {
 
@@ -13,7 +14,7 @@ class MasterXrmFilterModule extends AbstractXrmFilterModule {
 	private $filterlist;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->xrms = $this->getXrms();
 		$this->logger = $this->servicelocator->get('logger');
 
@@ -30,7 +31,7 @@ class MasterXrmFilterModule extends AbstractXrmFilterModule {
 
 	public function match($xrm, $filter) {
 		return in_array($filter->attr, $this->filterlist)
-			&& get_class($xrm) == "Xrm\\Master\\MasterXrm" ? 2 : 0;
+			&& get_class($xrm) == "Core\\Xrm\\Master\\MasterXrm" ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {
@@ -42,7 +43,7 @@ class MasterXrmFilterModule extends AbstractXrmFilterModule {
 			$this->xrms = $this->getXrms();
 			foreach ($this->xrms as $name => $xrmclosure) {
 				$x = $xrmclosure();
-				$f = new \Xrm\XrmFilter($filter->attr, $filter->op, $filter->val);
+				$f = new \Base3\Xrm\XrmFilter($filter->attr, $filter->op, $filter->val);
 				$es = $x->getEntriesIntern($f, true);
 
 				if ($es != null && sizeof($es)) $ids = array_merge($ids, $es);

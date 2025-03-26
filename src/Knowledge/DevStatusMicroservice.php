@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Knowledge;
+namespace Base3\Knowledge;
 
-use Knowledge\Api\IKnowledge;
-use Microservice\AbstractMicroservice;
+use Base3\Knowledge\Api\IKnowledge;
+use Base3\Microservice\AbstractMicroservice;
 
 class DevStatusMicroservice extends AbstractMicroservice implements IKnowledge {
 

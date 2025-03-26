@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\Base3;
+namespace Base3\Xrm\Base3;
 
-use Xrm\Api\IXrmFilterModule;
+use Base3\Core\ServiceLocator;
+use Base3\Xrm\Api\IXrmFilterModule;
 
 class Base3LogXrmFilterModule implements IXrmFilterModule {
 
@@ -10,7 +11,7 @@ class Base3LogXrmFilterModule implements IXrmFilterModule {
 	private $database;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->database = $this->servicelocator->get('database');
 	}
 
@@ -24,7 +25,7 @@ class Base3LogXrmFilterModule implements IXrmFilterModule {
 
 	public function match($xrm, $filter) {
 		return in_array($filter->attr, array("owner", "created", "changed"))
-			&& get_class($xrm) == "Xrm\\Base3\\Base3Xrm" ? 2 : 0;
+			&& get_class($xrm) == "Base3\\Xrm\\Base3\\Base3Xrm" ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {

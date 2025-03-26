@@ -1,5 +1,7 @@
 <?php declare(strict_types=1);
 
+namespace Base3\Core;
+
 class Autoloader {
 
 	/**
@@ -63,6 +65,7 @@ class Autoloader {
 	 */
 	private static function _transformClassNameToFilename($className) {
 		$className	= ltrim($className, '\\');
+		if (substr($className, 0, 6) == 'Base3\\') $className = substr($className, 6);
 		$fileName	= '';
 		if ($lastNsPos	= strrpos($className, '\\')) {
 			$namespace	= substr($className, 0, $lastNsPos);

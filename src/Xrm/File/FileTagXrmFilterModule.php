@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\File;
+namespace Base3\Xrm\File;
 
-use Xrm\AbstractXrmFilterModule;
+use Base3\Xrm\AbstractXrmFilterModule;
 
 class FileTagXrmFilterModule extends AbstractXrmFilterModule {
 
@@ -37,7 +37,7 @@ class FileTagXrmFilterModule extends AbstractXrmFilterModule {
 		} else if ($filter->attr == "tag" && $filter->op == "notconn") {
 
 			$all = $xrm->getAllEntryIds();
-			$f = new \Xrm\XrmFilter("tag", "conn", $filter->val);
+			$f = new \Base3\Xrm\XrmFilter("tag", "conn", $filter->val);
 			$es = $this->getEntries($xrm, $f, true);
 			$ids = array_diff($all, $es);
 /*

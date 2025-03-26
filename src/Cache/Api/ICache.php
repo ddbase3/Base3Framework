@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Cache\Api;
+namespace Base3\Cache\Api;
 
 interface ICache {
 

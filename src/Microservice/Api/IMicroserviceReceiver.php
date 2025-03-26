@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Microservice\Api;
+namespace Base3\Microservice\Api;
 
 interface IMicroserviceReceiver {
 

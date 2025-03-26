@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Configuration\ConfigFile;
+namespace Base3\Configuration\ConfigFile;
 
-use Api\ICheck;
-use Configuration\Api\IConfiguration;
+use Base3\Api\ICheck;
+use Base3\Configuration\Api\IConfiguration;
 
 class ConfigFile implements IConfiguration, ICheck {
 

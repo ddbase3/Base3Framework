@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace ServiceSelector\Api;
+namespace Base3\ServiceSelector\Api;
 
 interface IServiceSelector {
 

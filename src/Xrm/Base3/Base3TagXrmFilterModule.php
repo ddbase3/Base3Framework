@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\Base3;
+namespace Base3\Xrm\Base3;
 
-use Xrm\Api\IXrmFilterModule;
+use Base3\Core\ServiceLocator;
+use Base3\Xrm\Api\IXrmFilterModule;
 
 class Base3TagXrmFilterModule implements IXrmFilterModule {
 
@@ -11,7 +12,7 @@ class Base3TagXrmFilterModule implements IXrmFilterModule {
 	private $logger;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->database = $this->servicelocator->get('database');
 		$this->logger = $this->servicelocator->get('logger');
 	}
@@ -25,7 +26,7 @@ class Base3TagXrmFilterModule implements IXrmFilterModule {
 	// Implementation of IXrmFilterModule
 
 	public function match($xrm, $filter) {
-		return $filter->attr == "tag" && get_class($xrm) == "Xrm\\Base3\\Base3Xrm" ? 2 : 0;
+		return $filter->attr == "tag" && get_class($xrm) == "Base3\\Xrm\\Base3\\Base3Xrm" ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {

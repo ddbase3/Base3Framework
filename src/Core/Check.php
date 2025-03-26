@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Core;
+namespace Base3\Core;
 
-use Api\IOutput;
-use Api\ICheck;
-use Base3\ServiceLocator;
+use Base3\Api\IOutput;
+use Base3\Api\ICheck;
+use Base3\Core\ServiceLocator;
 
 class Check implements IOutput, ICheck {
 

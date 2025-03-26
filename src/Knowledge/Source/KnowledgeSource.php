@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Knowledge\Source;
+namespace Base3\Knowledge\Source;
 
-use Knowledge\Api\IKnowledge;
+use Base3\Knowledge\Api\IKnowledge;
 
 class KnowledgeSource implements IKnowledge {
 

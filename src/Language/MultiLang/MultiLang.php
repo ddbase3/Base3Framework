@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Language\MultiLang;
+namespace Base3\Language\MultiLang;
 
-use Base3\ServiceLocator;
-use Language\Api\ILanguage;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Language\Api\ILanguage;
+use Base3\Api\ICheck;
 
 class MultiLang implements ILanguage, ICheck {
 

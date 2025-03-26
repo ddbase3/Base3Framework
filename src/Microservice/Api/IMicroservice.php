@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
-namespace Microservice\Api;
+namespace Base3\Microservice\Api;
 
-use Api\IOutput;
+use Base3\Api\IOutput;
 
 interface IMicroservice extends IOutput {}

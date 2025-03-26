@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Usermanager\Base3System;
+namespace  Base3\Usermanager\Base3System;
 
-use Usermanager\Api\IUsermanager;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Usermanager\Api\IUsermanager;
+use Base3\Api\ICheck;
 
 class Base3SystemUsermanager implements IUsermanager, ICheck {
 
@@ -16,7 +17,7 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 	private $groups;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->database = $this->servicelocator->get('database');
 		$this->accesscontrol = $this->servicelocator->get('accesscontrol');
 		$this->session = $this->servicelocator->get('session');
@@ -39,7 +40,7 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 
 		if ($userid == "internal") {
 
-			$this->user = new \Usermanager\User;
+			$this->user = new \Base3\Usermanager\User;
 			$this->user->id = "internal";
 			$this->user->name = "internal";
 			$this->user->role = "admin";
@@ -60,7 +61,7 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 
 			$roles = array(0 => "visit", 1 => "member", 2 => "admin");
 
-			$this->user = new \Usermanager\User;
+			$this->user = new \Base3\Usermanager\User;
 			$this->user->id = $row["userid"];
 			$this->user->name = $row["fullname"];
 			$this->user->email = $row["email"];
@@ -93,7 +94,7 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		$rows = $this->database->multiQuery($sql);
 		$this->groups = array();
 		foreach ($rows as $row) {
-			$group = new \Usermanager\Group;
+			$group = new \Base3\Usermanager\Group;
 			$group->id = $row["groupid"];
 			$group->name = $row["info"];
 			$this->groups[] = $group;
@@ -142,7 +143,7 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 
 		$users = array();
 		foreach ($rows as $row) {
-			$user = new \Usermanager\User;
+			$user = new \Base3\Usermanager\User;
 			$user->id = $row["userid"];
 			$user->name = $row["fullname"];
 			$user->email = $row["email"];

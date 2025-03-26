@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Worker;
+namespace Base3\Worker;
 
-use Api\IOutput;
+use Base3\Core\ServiceLocator;
+use Base3\Api\IOutput;
 
 class MasterWorker implements IOutput {
 
@@ -11,7 +12,7 @@ class MasterWorker implements IOutput {
 	private $logger;
 
 	public function __construct($cnf = null) {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->workers = $this->servicelocator->get('workers');
 		$this->logger = $this->servicelocator->get('logger');
 	}

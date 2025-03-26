@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
+namespace Base3\Language\SingleLang;
 
-namespace Language\SingleLang;
-
-use Language\Api\ILanguage;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Language\Api\ILanguage;
+use Base3\Api\ICheck;
 
 /* Only use language as configured as "main" */
 class SingleLang implements ILanguage, ICheck {
@@ -15,7 +15,7 @@ class SingleLang implements ILanguage, ICheck {
 
 	public function __construct($cnf = null) {
 
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 
 		if ($cnf == null) {
 			$configuration = $this->servicelocator->get('configuration');

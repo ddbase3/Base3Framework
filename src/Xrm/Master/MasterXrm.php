@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Xrm\Master;
+namespace Base3\Xrm\Master;
 
-use Api\ICheck;
-use Xrm\AbstractXrm;
+use Base3\Api\ICheck;
+use Base3\Xrm\AbstractXrm;
 
 class MasterXrm extends AbstractXrm implements ICheck {
 

@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Accesscontrol\Authentication;
+namespace Base3\Accesscontrol\Authentication;
 
-use Accesscontrol\AbstractAuth;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Accesscontrol\AbstractAuth;
+use Base3\Api\ICheck;
 
 class CookieAuth extends AbstractAuth implements ICheck {
 
@@ -16,7 +17,7 @@ class CookieAuth extends AbstractAuth implements ICheck {
 	private $cookieDomain;
 
 	public function __construct($cnf = null) {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->classmap = $this->servicelocator->get('classmap');
 		$this->authtoken = $this->servicelocator->get('authtoken');
 

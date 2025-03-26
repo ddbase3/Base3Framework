@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Crypt\Openssl;
+namespace Base3\Crypt\Openssl;
 
-use Crypt\Api\ICrypt;
-use Api\ICheck;
+use Base3\Crypt\Api\ICrypt;
+use Base3\Api\ICheck;
 
 class OpensslCrypt implements ICrypt, ICheck {
 

@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Page\Api;
+namespace Base3\Page\Api;
 
-use Api\IOutput;
+use Base3\Api\IOutput;
 
 interface IPage extends IOutput {
 

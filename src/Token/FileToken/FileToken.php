@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Token\FileToken;
+namespace Base3\Token\FileToken;
 
-use Token\Api\IToken;
-use Api\ICheck;
+use Base3\Token\Api\IToken;
+use Base3\Api\ICheck;
 
 class FileToken implements IToken, ICheck {
 

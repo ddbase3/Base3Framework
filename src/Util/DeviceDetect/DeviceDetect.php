@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Util\DeviceDetect;
+namespace Base3\Util\DeviceDetect;
 
 class DeviceDetect {
 

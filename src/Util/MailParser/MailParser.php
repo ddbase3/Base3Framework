@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Util\MailParser;
+namespace Base3\Util\MailParser;
 
 class MailParser {
 

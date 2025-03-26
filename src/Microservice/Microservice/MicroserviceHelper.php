@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Microservice\Microservice;
+namespace Base3\Microservice\Microservice;
 
-use Microservice\Api\IMicroserviceHelper;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Microservice\Api\IMicroserviceHelper;
+use Base3\Api\ICheck;
 
 class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 
@@ -26,7 +27,7 @@ class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 
 		$this->flags = $flags;
 
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->configuration = $this->servicelocator->get('configuration');
 
 		if ($this->configuration == null) return;
@@ -49,7 +50,7 @@ class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 		if (strlen($this->masterurl)) {
 			$msrec = "microservicereceiver";
 			$url = $this->getUrl($this->masterurl, $msrec);
-			$conn = new MicroserviceConnector($url, $this->getService($msrec, "Microservice\\Api\\IMicroserviceReceiver"));
+			$conn = new MicroserviceConnector($url, $this->getService($msrec, "Base3\\Microservice\\Api\\IMicroserviceReceiver"));
 			$allservices = $conn->connect($services);
 		} else {
 			$allservices = $services;

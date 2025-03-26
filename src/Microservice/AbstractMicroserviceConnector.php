@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Microservice;
+namespace Base3\Microservice;
 
-use Microservice\Api\IMicroserviceConnector;
-use Microservice\Api\IMicroserviceFlags;
+use Base3\Core\ServiceLocator;
+use Base3\Microservice\Api\IMicroserviceConnector;
+use Base3\Microservice\Api\IMicroserviceFlags;
 
 abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, IMicroserviceFlags {
 
@@ -21,7 +22,7 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 		$this->service = $service;
 		$this->flags = $flags;
 
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->accesscontrol = $this->servicelocator->get('accesscontrol');
 		$configuration = $this->servicelocator->get('configuration');
 		$this->cnf = $configuration == null ? array("masterpass" => "") : $configuration->get('microservice');

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Accesscontrol\Api;
+namespace Base3\Accesscontrol\Api;
 
 interface IAccesscontrol {
 

@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Accesscontrol;
+namespace Base3\Accesscontrol;
 
-use Accesscontrol\Api\IAuthentication;
+use Base3\Accesscontrol\Api\IAuthentication;
 
 abstract class AbstractAuth implements IAuthentication {
 

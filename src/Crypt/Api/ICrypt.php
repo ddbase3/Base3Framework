@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Crypt\Api;
+namespace Base3\Crypt\Api;
 
 interface ICrypt {
 

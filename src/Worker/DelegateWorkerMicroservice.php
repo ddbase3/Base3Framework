@@ -1,16 +1,17 @@
 <?php declare(strict_types=1);
 
-namespace Worker;
+namespace Base3\Worker;
 
-use Worker\Api\IWorker;
-use Microservice\AbstractMicroservice;
+use Base3\Worker\DelegateWorker;
+use Base3\Worker\Api\IWorker;
+use Base3\Microservice\AbstractMicroservice;
 
 class DelegateWorkerMicroservice extends AbstractMicroservice implements IWorker {
 
 	private $worker;
 
 	public function __construct($cnf = null) {
-		$this->worker = new \Worker\DelegateWorker;
+		$this->worker = new DelegateWorker;
 	}
 
 	// Implementation of IWorker

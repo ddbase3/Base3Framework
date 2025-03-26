@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Util\Chronos\Test;
+namespace Base3\Util\Chronos\Test;
 
-use Page\Api\IPage;
+use Base3\Page\Api\IPage;
 
 class ChronosTest implements IPage {
 
@@ -40,7 +40,7 @@ class ChronosTest implements IPage {
 		$tx = str_replace([" ", ":"], "-", $tl);
 		$td = array_map("intval", explode("-", $tx));
 
-		$d = \Util\Chronos\Chronos::create($td[0], $td[1], $td[2], $td[3], $td[4], $td[5]);
+		$d = \Base3\Util\Chronos\Chronos::create($td[0], $td[1], $td[2], $td[3], $td[4], $td[5]);
 
 		// seconds
 		if ($d->getSecond() != 0) {

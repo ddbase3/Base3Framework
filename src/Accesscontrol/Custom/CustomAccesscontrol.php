@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Accesscontrol\Custom;
+namespace Base3\Accesscontrol\Custom;
 
-use Accesscontrol\Api\IAccesscontrol;
-use Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Accesscontrol\Api\IAccesscontrol;
+use Base3\Api\ICheck;
 
 class CustomAccesscontrol implements IAccesscontrol, ICheck {
 
@@ -13,12 +14,12 @@ class CustomAccesscontrol implements IAccesscontrol, ICheck {
 	private $userid = null;
 
 	public function __construct($cnf = null) {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->classmap = $this->servicelocator->get('classmap');
 
 		$verbose = isset($_REQUEST["checkaccesscontrol"]);
 
-		$authentications = $this->classmap->getInstancesByInterface("Accesscontrol\\Api\\IAuthentication");
+		$authentications = $this->classmap->getInstancesByInterface("Base3\\Accesscontrol\\Api\\IAuthentication");
 		foreach ($authentications as $authentication) $authentication->setVerbose($verbose);
 
 		if ($verbose) echo "=================================<br />LOGOUT<br />";

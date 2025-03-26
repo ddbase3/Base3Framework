@@ -1,8 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Xrm;
+namespace Base3\Xrm;
 
-use Xrm\Api\IXrm;
+use Base3\Core\ServiceLocator;
+use Base3\Xrm\Api\IXrm;
 
 abstract class AbstractXrm implements IXrm {
 
@@ -15,7 +16,7 @@ abstract class AbstractXrm implements IXrm {
 	protected $logging = false;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->classmap = $this->servicelocator->get('classmap');
 		$this->session = $this->servicelocator->get('session');
 		$this->usermanager = $this->servicelocator->get('usermanager');
@@ -74,7 +75,7 @@ abstract class AbstractXrm implements IXrm {
 
 		$bestprio = 0;
 		$filtermodule = null;
-		$instances = $this->classmap->getInstancesByInterface("Xrm\\Api\\IXrmFilterModule");
+		$instances = $this->classmap->getInstancesByInterface("Base3\\Xrm\\Api\\IXrmFilterModule");
 		foreach ($instances as $instance) {
 			$prio = $instance->match($this, $filter);
 			if (!$prio) continue;

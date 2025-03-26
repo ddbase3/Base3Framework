@@ -1,15 +1,16 @@
 <?php declare(strict_types=1);
 
-namespace Xrm;
+namespace Base3\Xrm;
 
-use Xrm\AbstractXrmFilterModule;
+use Base3\Core\ServiceLocator;
+use Base3\Xrm\AbstractXrmFilterModule;
 
 class AssignXrmFilterModule extends AbstractXrmFilterModule {
 
 	protected $servicelocator;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 	}
 
 	// Implementation of IBase

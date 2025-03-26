@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Logger\FileLogger;
+namespace Base3\Logger\FileLogger;
 
-use Logger\Api\ILogger;
+use Base3\Logger\Api\ILogger;
 
 class FileLogger implements ILogger {
 
