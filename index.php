@@ -20,19 +20,19 @@ define('DIR_TPL', DIR_ROOT . 'tpl' . DIRECTORY_SEPARATOR);
 define('DIR_USERFILES', DIR_ROOT . 'userfiles' . DIRECTORY_SEPARATOR);
 
 /* uses */
-use Base3\ServiceLocator;
+use Base3\Core\ServiceLocator;
 
 /* autoloader */
-require DIR_SRC . 'Autoloader.php';
-Autoloader::register();
+require DIR_SRC . 'Core/Autoloader.php';
+\Base3\Core\Autoloader::register();
 
 /* service locator */
 $servicelocator = ServiceLocator::getInstance()
-	->set('configuration', new \Configuration\ConfigFile\ConfigFile, ServiceLocator::SHARED)
-	->set('classmap', new \Core\PluginClassMap, ServiceLocator::SHARED)
-	->set('serviceselector', \ServiceSelector\Standard\StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
+	->set('configuration', new \Base3\Configuration\ConfigFile\ConfigFile, ServiceLocator::SHARED)
+	->set('classmap', new \Base3\Core\PluginClassMap, ServiceLocator::SHARED)
+	->set('serviceselector', \Base3\ServiceSelector\Standard\StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
 	;
-$plugins = $servicelocator->get('classmap')->getInstancesByInterface('Api\\IPlugin');
+$plugins = $servicelocator->get('classmap')->getInstancesByInterface('Base3\\Api\\IPlugin');
 foreach ($plugins as $plugin) $plugin->init();
 
 /* go */
