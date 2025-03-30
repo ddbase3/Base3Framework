@@ -68,7 +68,7 @@ abstract class AbstractXrm implements IXrm {
 		if (is_array($filter)) $filter = (object) $filter;
 		if (is_string($filter)) {
 			$f = $filter;
-			$filter = new \Xrm\XrmFilter;
+			$filter = new XrmFilter;
 			$filter->fromJson($f);
 		}
 		$entries = array();

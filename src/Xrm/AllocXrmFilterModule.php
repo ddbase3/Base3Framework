@@ -47,7 +47,7 @@ class AllocXrmFilterModule extends AbstractXrmFilterModule {
 		} else if ($filter->attr == "alloc" && $filter->op == "without") {
 
 			$all = $xrm->getAllEntryIds();
-			$f = new \Xrm\XrmFilter("alloc", "with", $filter->val);
+			$f = new XrmFilter("alloc", "with", $filter->val);
 			$es = $this->getEntries($xrm, $f, true);
 			$ids = array_diff($all, $es);
 
