@@ -32,7 +32,7 @@ $servicelocator = ServiceLocator::getInstance()
 	->set('classmap', new \Base3\Core\PluginClassMap, ServiceLocator::SHARED)
 	->set('serviceselector', \Base3\ServiceSelector\Standard\StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
 	;
-$plugins = $servicelocator->get('classmap')->getInstancesByInterface('Base3\\Api\\IPlugin');
+$plugins = $servicelocator->get('classmap')->getInstancesByInterface(\Base3\Api\IPlugin::class);
 foreach ($plugins as $plugin) $plugin->init();
 
 /* go */
