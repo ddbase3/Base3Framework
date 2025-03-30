@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Database\Mysql;
+namespace Base3\Database\Mysql;
 
 use Base3\Core\ServiceLocator;
 use Base3\Database\Api\IDatabase;
