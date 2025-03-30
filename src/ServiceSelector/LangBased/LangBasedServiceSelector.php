@@ -77,10 +77,10 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 		if (strlen($data) == 2) $language->setLanguage($data);
 
 		$instance = empty($app)
-			? $classmap->getInstanceByInterfaceName("Base3\\Api\\IOutput", $name)
-			: $classmap->getInstanceByAppInterfaceName($app, "Base3\\Api\\IOutput", $name);
+			? $classmap->getInstanceByInterfaceName(\Base3\Api\IOutput::class, $name)
+			: $classmap->getInstanceByAppInterfaceName($app, \Base3\Api\IOutput::class, $name);
 		if ($instance == null) {
-			$instances = $classmap->getInstancesByInterface("Base3\\Page\\Api\\IPageCatchall");
+			$instances = $classmap->getInstancesByInterface(\Base3\Page\Api\IPageCatchall::class);
 			$instance = reset($instances);
 		}
 

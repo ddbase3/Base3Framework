@@ -50,7 +50,7 @@ class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 		if (strlen($this->masterurl)) {
 			$msrec = "microservicereceiver";
 			$url = $this->getUrl($this->masterurl, $msrec);
-			$conn = new MicroserviceConnector($url, $this->getService($msrec, "Base3\\Microservice\\Api\\IMicroserviceReceiver"));
+			$conn = new MicroserviceConnector($url, $this->getService($msrec, \Base3\Microservice\Api\IMicroserviceReceiver::class));
 			$allservices = $conn->connect($services);
 		} else {
 			$allservices = $services;

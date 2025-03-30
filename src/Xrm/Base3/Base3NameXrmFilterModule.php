@@ -24,7 +24,7 @@ class Base3NameXrmFilterModule implements IXrmFilterModule {
 	// Implementation of IXrmFilterModule
 
 	public function match($xrm, $filter) {
-		return $filter->attr == "name" && get_class($xrm) == "Base3\\Xrm\\Base3\\Base3Xrm" ? 2 : 0;
+		return $filter->attr == "name" && get_class($xrm) == \Base3\Xrm\Base3\Base3Xrm::class ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {

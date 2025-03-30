@@ -31,7 +31,7 @@ class MasterXrmFilterModule extends AbstractXrmFilterModule {
 
 	public function match($xrm, $filter) {
 		return in_array($filter->attr, $this->filterlist)
-			&& get_class($xrm) == "Core\\Xrm\\Master\\MasterXrm" ? 2 : 0;
+			&& get_class($xrm) == \Core\Xrm\Master\MasterXrm::class ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {

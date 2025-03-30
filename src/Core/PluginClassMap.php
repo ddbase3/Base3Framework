@@ -41,7 +41,7 @@ class PluginClassMap {
 				foreach ($classes as $c) {
 					foreach ($c["interfaces"] as $interface) {
 						$this->map[$app]["interface"][$interface][] = $c["class"];
-						if ($interface == "Base3\\Api\\IBase") {
+						if ($interface == \Base3\Api\IBase::class) {
 							$instance = new $c["class"];
 							$name = $instance->getName();
 							$this->map[$app]["name"][$name] = $c["class"];
@@ -65,7 +65,7 @@ class PluginClassMap {
 		$plugins = array();
 		foreach ($this->map as $app => $appdata) {
 			if (!isset($appdata['interface'])) continue;
-			if (in_array('Base3\\Api\\IPlugin', array_keys($appdata['interface']))) $plugins[] = $app;
+			if (in_array(\Base3\Api\IPlugin::class, array_keys($appdata['interface']))) $plugins[] = $app;
 		}
 		return $plugins;
 	}

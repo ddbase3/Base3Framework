@@ -15,7 +15,7 @@ class FileArchiveXrmFilterModule implements IXrmFilterModule {
 	// Implementation of IXrmFilterModule
 
 	public function match($xrm, $filter) {
-		return $filter->attr == "archive" && get_class($xrm) == "Base3\\Xrm\\File\\FileXrm" ? 2 : 0;
+		return $filter->attr == "archive" && get_class($xrm) == \Base3\Xrm\File\FileXrm::class ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {

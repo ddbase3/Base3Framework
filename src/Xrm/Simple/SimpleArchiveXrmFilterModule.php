@@ -24,7 +24,7 @@ class SimpleArchiveXrmFilterModule implements IXrmFilterModule {
 	// Implementation of IXrmFilterModule
 
 	public function match($xrm, $filter) {
-		return $filter->attr == "archive" && get_class($xrm) == "Base3\\Xrm\\Simple\\SimpleXrm" ? 2 : 0;
+		return $filter->attr == "archive" && get_class($xrm) == \Base3\Xrm\Simple\SimpleXrm::class ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {

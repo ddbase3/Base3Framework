@@ -37,7 +37,7 @@ class ClassMap {
 			foreach ($classes as $c) {
 				foreach ($c["interfaces"] as $interface) {
 					$this->map[$app]["interface"][$interface][] = $c["class"];
-					if ($interface == "Base3\\Api\\IBase") {
+					if ($interface == \Base3\Api\IBase::class) {
 						$instance = new $c["class"];
 						$name = $instance->getName();
 						$this->map[$app]["name"][$name] = $c["class"];

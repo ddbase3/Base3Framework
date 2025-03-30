@@ -35,7 +35,7 @@ class TestJob implements IOutput {
 			return;
 		}
 
-		$job = $this->classmap->getInstanceByInterfaceName('Base3\\Worker\\Api\\IJob', $_REQUEST["job"]);
+		$job = $this->classmap->getInstanceByInterfaceName(\Base3\Worker\Api\IJob::class, $_REQUEST["job"]);
 		$res = $job->go();
 
 		return '<p>' . $res . '</p>';

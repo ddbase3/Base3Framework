@@ -15,7 +15,7 @@ class FileTagXrmFilterModule extends AbstractXrmFilterModule {
 	// Implementation of IXrmFilterModule
 
 	public function match($xrm, $filter) {
-		return $filter->attr == "tag" && get_class($xrm) == "Xrm\\File\\FileXrm" ? 2 : 0;
+		return $filter->attr == "tag" && get_class($xrm) == \Xrm\File\FileXrm::class ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {

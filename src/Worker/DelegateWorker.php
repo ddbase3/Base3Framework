@@ -48,7 +48,7 @@ class DelegateWorker implements IWorker, ICheck {
 
 	public function getJobs() {
 		$joblist = array();
-		$jobs = $this->classmap->getInstancesByInterface("Base3\\Worker\\Api\\IJob");
+		$jobs = $this->classmap->getInstancesByInterface(\Base3\Worker\Api\IJob::class);
 		foreach ($jobs as $job) {
 			$name = $job->getName();
 			$priority = $job->getPriority();
@@ -58,7 +58,7 @@ class DelegateWorker implements IWorker, ICheck {
 	}
 
 	public function doJob($job) {
-		$job = $this->classmap->getInstanceByInterfaceName('Base3\\Worker\\Api\\IJob', $job);
+		$job = $this->classmap->getInstanceByInterfaceName(\Base3\Worker\Api\IJob::class, $job);
 		if ($job == null) return null;
 		if (($job instanceof \Worker\Api\ICron) && !$this->checkCron($job)) return null;
 		return $job->go();

@@ -11,7 +11,7 @@ class XrmEntryAccess {
 	public static function unserialize($data) {
 
 		// wenn $data schon ein XrmEntryAccess ist, dann direkt zurückgeben
-		if (is_object($data) && is_a($data, 'Base3\\Xrm\\XrmEntryAccess')) return $data;
+		if (is_object($data) && is_a($data, \Base3\Xrm\XrmEntryAccess::class)) return $data;
 
 		if (is_string($data)) $data = json_decode($data, true);
 		if (is_object($data)) $data = (array) $data;

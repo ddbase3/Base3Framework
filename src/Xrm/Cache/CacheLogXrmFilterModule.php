@@ -25,7 +25,7 @@ class CacheLogXrmFilterModule implements IXrmFilterModule {
 
 	public function match($xrm, $filter) {
 		return in_array($filter->attr, array("owner", "created", "changed"))
-			&& get_class($xrm) == "Base3\\Xrm\\Cache\\CacheXrm" ? 2 : 0;
+			&& get_class($xrm) == \Base3\Xrm\Cache\CacheXrm::class ? 2 : 0;
 	}
 
 	public function getEntries($xrm, $filter, $idsonly = false) {

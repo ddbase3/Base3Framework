@@ -19,7 +19,7 @@ class CustomAccesscontrol implements IAccesscontrol, ICheck {
 
 		$verbose = isset($_REQUEST["checkaccesscontrol"]);
 
-		$authentications = $this->classmap->getInstancesByInterface("Base3\\Accesscontrol\\Api\\IAuthentication");
+		$authentications = $this->classmap->getInstancesByInterface(\Base3\Accesscontrol\Api\IAuthentication::class);
 		foreach ($authentications as $authentication) $authentication->setVerbose($verbose);
 
 		if ($verbose) echo "=================================<br />LOGOUT<br />";

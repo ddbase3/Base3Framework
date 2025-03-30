@@ -75,7 +75,7 @@ abstract class AbstractXrm implements IXrm {
 
 		$bestprio = 0;
 		$filtermodule = null;
-		$instances = $this->classmap->getInstancesByInterface("Base3\\Xrm\\Api\\IXrmFilterModule");
+		$instances = $this->classmap->getInstancesByInterface(\Base3\Xrm\Api\IXrmFilterModule::class);
 		foreach ($instances as $instance) {
 			$prio = $instance->match($this, $filter);
 			if (!$prio) continue;
