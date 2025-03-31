@@ -27,8 +27,8 @@ class PluginClassMap {
 		$this->map = array();
 
 		$data = array(
-			array("basedir" => DIR_SRC, "subdir" => ""),
-			array("basedir" => DIR_PLUGIN, "subdir" => "src")
+			array("basedir" => DIR_SRC, "subdir" => "", "subns" => "Base3"),
+			array("basedir" => DIR_PLUGIN, "subdir" => "src", "subns" => "")
 		);
 		foreach ($data as $d) {
 			$apps = $this->getEntries($d["basedir"]);
@@ -37,7 +37,7 @@ class PluginClassMap {
 				if (!empty($d["subdir"])) $apppath .= DIRECTORY_SEPARATOR . $d["subdir"];
 				if (!is_dir($apppath)) continue;
 				$classes = array();
-				$this->getClasses($classes, $d["basedir"], $app, $d["subdir"]);
+				$this->getClasses($classes, $d["basedir"], $app, $d["subdir"], $d["subns"]);
 				foreach ($classes as $c) {
 					foreach ($c["interfaces"] as $interface) {
 						$this->map[$app]["interface"][$interface][] = $c["class"];
@@ -144,19 +144,21 @@ class PluginClassMap {
 		return $this->getInstanceByAppInterfaceName($app, $interface, $name, true);
 	}
 
-	private function getClasses(&$classes, $basedir, $app, $subdir = "", $path = "") {
+	private function getClasses(&$classes, $basedir, $app, $subdir = "", $subns = "", $path = "") {
 		$fullpath = $basedir . DIRECTORY_SEPARATOR . $app . DIRECTORY_SEPARATOR . $subdir . DIRECTORY_SEPARATOR . $path;
 		$entries = $this->getEntries($fullpath);
 		foreach ($entries as $entry) {
 			$fullentry = $fullpath . DIRECTORY_SEPARATOR . $entry;
 			if (is_dir($fullentry)) {
-				$this->getClasses($classes, $basedir, $app, $subdir, $path . DIRECTORY_SEPARATOR . $entry);
+				$this->getClasses($classes, $basedir, $app, $subdir, $subns, $path . DIRECTORY_SEPARATOR . $entry);
 			} else {
 				if (strrchr($entry, ".") != ".php" || strchr($entry, ".") != ".php") continue;  // nur ein Punkt im Dateinamen!
 
 				require_once($fullentry);
 
-				$nsparts = array($app);
+				$nsparts = [];
+				if (!empty($subns)) $nsparts[] = $subns;
+				$nsparts[] = $app;
 				$pathparts = explode(DIRECTORY_SEPARATOR, $path);
 				foreach ($pathparts as $pp) if (!empty($pp)) $nsparts[] = $pp;
 				$namespace = implode("\\", $nsparts);

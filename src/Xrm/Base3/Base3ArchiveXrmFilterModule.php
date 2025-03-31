@@ -11,7 +11,7 @@ class Base3ArchiveXrmFilterModule implements IXrmFilterModule {
 	private $database;
 
 	public function __construct() {
-		$this->servicelocator = \Base3\ServiceLocator::getInstance();
+		$this->servicelocator = ServiceLocator::getInstance();
 		$this->database = $this->servicelocator->get('database');
 	}
 
