@@ -45,6 +45,8 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 			$this->url,
 			array("call" => $method, "params" => json_encode($params), "binarystream" => $binarystream));
 
+                if (!$response) return null;
+
 		return $binarystream ? $response : json_decode($response, true);
 	}
 
