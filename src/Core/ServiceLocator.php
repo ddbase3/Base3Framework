@@ -15,6 +15,7 @@ class ServiceLocator implements IContainer {
 
 	private $container = array();
 	private $aliases = array();
+	private $parameters = array();
 
 	public static function useInstance(self $instance) {
 		self::$externalInstance = $instance;
@@ -33,6 +34,7 @@ class ServiceLocator implements IContainer {
 		$list = array();
 		foreach ($this->container as $name => $_) $list[] = $name;
 		foreach ($this->aliases as $name => $_) $list[] = $name;
+		foreach ($this->parameters as $name => $_) $list[] = $name;
 		return $list;
 	}
 
@@ -48,6 +50,7 @@ class ServiceLocator implements IContainer {
 		$shared = false;
 		$nooverwrite = false;
 		$alias = false;
+		$parameter = false;
 
 		if (is_bool($flags)) {
 			// DEPRECATED
@@ -56,9 +59,15 @@ class ServiceLocator implements IContainer {
 			$shared = ($flags & self::SHARED) != 0;
 			$nooverwrite = ($flags & self::NOOVERWRITE) != 0;
 			$alias = ($flags & self::ALIAS) != 0;
+			$parameter = ($flags & self::PARAMETER) != 0;
 		}
 
 		if ($nooverwrite && $this->has($name)) return $this;
+
+		if ($parameter) {
+			$this->parameters[$name] = $classDefinition;
+			return $this;
+		}
 
 		if ($alias) {
 			// $classDefinition ist in diesem Fall der Ziel-Service (string)
@@ -77,7 +86,9 @@ class ServiceLocator implements IContainer {
 	 * @return bool
 	 */
 	public function has(string $name): bool {
-		return array_key_exists($name, $this->container) || array_key_exists($name, $this->aliases);
+		return array_key_exists($name, $this->container)
+			|| array_key_exists($name, $this->aliases)
+			|| array_key_exists($name, $this->parameters);
 	}
 
 	/**
@@ -88,6 +99,8 @@ class ServiceLocator implements IContainer {
 	public function get(string $name) {
 
 		if (isset($this->aliases[$name])) $name = $this->aliases[$name];
+
+		if (isset($this->parameters[$name])) return $this->parameters[$name];
 
 		if (!isset($this->container[$name])) {
 			return null;
