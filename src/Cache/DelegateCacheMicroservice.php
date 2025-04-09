@@ -11,7 +11,7 @@ class DelegateCacheMicroservice extends AbstractMicroservice implements ICache {
 	private $servicelocator;
 	private $cache;
 
-	public function __construct($cnf = null) {
+	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->cache = $this->servicelocator->get('cache');
 	}

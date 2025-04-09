@@ -10,7 +10,7 @@ class DelegateWorkerMicroservice extends AbstractMicroservice implements IWorker
 
 	private $worker;
 
-	public function __construct($cnf = null) {
+	public function __construct() {
 		$this->worker = new DelegateWorker;
 	}
 

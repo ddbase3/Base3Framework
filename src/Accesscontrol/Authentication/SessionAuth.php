@@ -11,7 +11,7 @@ class SessionAuth extends AbstractAuth implements ICheck {
 	private $servicelocator;
 	private $session;
 
-	public function __construct($cnf = null) {
+	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->session = $this->servicelocator->get('session');
 	}

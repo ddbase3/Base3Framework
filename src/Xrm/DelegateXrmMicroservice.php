@@ -11,7 +11,7 @@ class DelegateXrmMicroservice extends AbstractMicroservice implements IXrm {
 	private $servicelocator;
 	private $xrm;
 
-	public function __construct($cnf = null) {
+	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->xrm = $this->servicelocator->get('xrm');
 	}

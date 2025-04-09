@@ -13,7 +13,7 @@ class SingleAuth extends AbstractAuth implements ICheck {
 
 	private $cnf;
 
-	public function __construct($id = null) {
+	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->configuration = $this->servicelocator->get('configuration');
 

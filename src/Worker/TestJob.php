@@ -10,7 +10,7 @@ class TestJob implements IOutput {
 	private $servicelocator;
 	private $classmap;
 
-	public function __construct($cnf = null) {
+	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->classmap = $this->servicelocator->get('classmap');
 

@@ -2,26 +2,13 @@
 
 namespace Base3\Core;
 
-class PluginClassMap {
-
-	private $filename;
-	private $map;
-
-	public function __construct($filename = null) {
-
-		if ($filename == null) $filename = DIR_TMP . "classmap.php";
-
-		$this->filename = $filename;
-		$this->generate();
-		$this->map = require $this->filename;
-	}
+class PluginClassMap extends AbstractClassMap {
 
 	public function generate($regenerate = false) {
 		if (!$regenerate && file_exists($this->filename) && filesize($this->filename) > 0) return;
 
 		if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
 
-		$fp = fopen($this->filename, "w");
 		$str = "<?php return ";
 
 		$this->map = array();
@@ -42,7 +29,7 @@ class PluginClassMap {
 					foreach ($c["interfaces"] as $interface) {
 						$this->map[$app]["interface"][$interface][] = $c["class"];
 						if ($interface == \Base3\Api\IBase::class) {
-							$instance = new $c["class"];
+							$instance = $this->instantiate($c["class"]);
 							$name = $instance->getName();
 							$this->map[$app]["name"][$name] = $c["class"];
 						}
@@ -53,12 +40,10 @@ class PluginClassMap {
 
 		$str .= var_export($this->map, true);
 		$str .= ";\n";
+
+		$fp = fopen($this->filename, "w");
 		fwrite($fp, $str);
 		fclose($fp);
-	}
-
-	public function getApps() {
-		return array_keys($this->map);
 	}
 
 	public function getPlugins() {
@@ -83,7 +68,7 @@ class PluginClassMap {
 		$instances = array();
 		if (isset($this->map[$app]) && isset($this->map[$app]["interface"][$interface])) {
 			$cs = $this->map[$app]["interface"][$interface];
-			foreach ($cs as $c) $instances[] = new $c;
+			foreach ($cs as $c) $instances[] = $this->instantiate($c);
 			return $instances;
 		}
 
@@ -97,7 +82,7 @@ class PluginClassMap {
 		if (isset($this->map[$app]) && isset($this->map[$app]["name"][$name])) {
 			$c = $this->map[$app]["name"][$name];
 			if (class_exists($c)) {  // alternatively regenerate classmap
-				$instance = new $c;
+				$instance = $this->instantiate($c);
 				return $instance;
 			}
 		}
@@ -115,7 +100,7 @@ class PluginClassMap {
 				foreach ($appdata["name"] as $n => $c) {
 					if ($n != $name || !class_exists($c)) continue;
 					// TODO check if class implements given interface
-					$instance = new $c;
+					$instance = $this->instantiate($c);
 					return $instance;
 				}
 			}
@@ -134,7 +119,7 @@ class PluginClassMap {
 			$c = $this->map[$app]["name"][$name];
 			if (!in_array($c, $this->map[$app]["interface"][$interface])) return null;
 			if (class_exists($c)) {  // alternatively regenerate classmap
-				$instance = new $c;
+				$instance = $this->instantiate($c);
 				return $instance;
 			}
 		}

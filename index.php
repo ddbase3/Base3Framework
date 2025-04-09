@@ -27,11 +27,17 @@ require DIR_SRC . 'Core/Autoloader.php';
 \Base3\Core\Autoloader::register();
 
 /* service locator */
-$servicelocator = ServiceLocator::getInstance()
+$servicelocator = new ServiceLocator();
+ServiceLocator::useInstance($servicelocator);
+$servicelocator
+	->set('servicelocator', $servicelocator, ServiceLocator::SHARED)
+	->set(\Base3\Api\IContainer::class, 'servicelocator', ServiceLocator::ALIAS)
 	->set('configuration', new \Base3\Configuration\ConfigFile\ConfigFile, ServiceLocator::SHARED)
-	->set('classmap', new \Base3\Core\PluginClassMap, ServiceLocator::SHARED)
+	->set('classmap', new \Base3\Core\PluginClassMap($servicelocator), ServiceLocator::SHARED)
 	->set('serviceselector', \Base3\ServiceSelector\Standard\StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
 	;
+
+/* plugins */
 $plugins = $servicelocator->get('classmap')->getInstancesByInterface(\Base3\Api\IPlugin::class);
 foreach ($plugins as $plugin) $plugin->init();
 
