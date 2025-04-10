@@ -33,6 +33,7 @@ $servicelocator
 	->set('servicelocator', $servicelocator, ServiceLocator::SHARED)
 	->set(\Base3\Api\IContainer::class, 'servicelocator', ServiceLocator::ALIAS)
 	->set('configuration', new \Base3\Configuration\ConfigFile\ConfigFile, ServiceLocator::SHARED)
+	->set(\Base3\Api\IConfiguration::class, 'configuration', ServiceLocator::ALIAS)
 	->set('classmap', new \Base3\Core\PluginClassMap($servicelocator), ServiceLocator::SHARED)
 	->set('serviceselector', \Base3\ServiceSelector\Standard\StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
 	;
