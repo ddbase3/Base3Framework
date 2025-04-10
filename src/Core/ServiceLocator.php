@@ -2,24 +2,27 @@
 
 namespace Base3\Core;
 
+use Base3\Api\IContainer;
+
 /**
  * Dependency Injector.
  * Hier werden alle von der Anwendung global verfügbare Dienste hinterlegt.
  */
-class ServiceLocator {
+class ServiceLocator implements IContainer {
 
-	const SHARED = 1;
-	const NOOVERWRITE = 2;
- 
 	private static $instance;
-	private $container = array();
+	private static $externalInstance = null;
 
-	private function __construct() {}
- 
-	// private function __clone() {}
- 	// private function __wakeup() {}
+	private $container = array();
+	private $aliases = array();
+	private $parameters = array();
+
+	public static function useInstance(self $instance) {
+		self::$externalInstance = $instance;
+	}
 
 	public static function getInstance(): self {
+		if (self::$externalInstance !== null) return self::$externalInstance;
 		if (self::$instance === null) self::$instance = new self();
 		return self::$instance;
 	}
@@ -30,6 +33,8 @@ class ServiceLocator {
 	public function getServiceList(): array {
 		$list = array();
 		foreach ($this->container as $name => $_) $list[] = $name;
+		foreach ($this->aliases as $name => $_) $list[] = $name;
+		foreach ($this->parameters as $name => $_) $list[] = $name;
 		return $list;
 	}
 
@@ -40,19 +45,36 @@ class ServiceLocator {
 	 * @param bool                         $shared          Gibt es nur eine Instanz für alle, oder bekommt jeder eine eigene.// DEPRECATED
 	 * @param int $flags Einstellungen gem. Konstanten
 	 */
-	public function set(string $name, $classDefinition, $flags = 0): self {
+	public function set(string $name, $classDefinition, $flags = 0): IContainer {
 
 		$shared = false;
 		$nooverwrite = false;
+		$alias = false;
+		$parameter = false;
+
 		if (is_bool($flags)) {
 			// DEPRECATED
 			$shared = $flags;
 		} else {
 			$shared = ($flags & self::SHARED) != 0;
 			$nooverwrite = ($flags & self::NOOVERWRITE) != 0;
+			$alias = ($flags & self::ALIAS) != 0;
+			$parameter = ($flags & self::PARAMETER) != 0;
 		}
 
 		if ($nooverwrite && $this->has($name)) return $this;
+
+		if ($parameter) {
+			$this->parameters[$name] = $classDefinition;
+			return $this;
+		}
+
+		if ($alias) {
+			// $classDefinition ist in diesem Fall der Ziel-Service (string)
+			if (!$this->has($classDefinition)) throw new \RuntimeException("Cannot create alias: Target service '$classDefinition' not found.");
+			$this->aliases[$name] = $classDefinition;
+			return $this;
+		}
 
 		$this->container[$name] = (object) array('def' => $classDefinition, 'shared' => $shared, 'instance' => null);
 
@@ -61,11 +83,12 @@ class ServiceLocator {
 
 	/**
 	 * Prüft, ob ein Name vergeben ist für einen Service
-	 * (isset ist bereits vergeben von PHP)
 	 * @return bool
 	 */
 	public function has(string $name): bool {
-		return array_key_exists($name, $this->container);
+		return array_key_exists($name, $this->container)
+			|| array_key_exists($name, $this->aliases)
+			|| array_key_exists($name, $this->parameters);
 	}
 
 	/**
@@ -74,6 +97,10 @@ class ServiceLocator {
 	 * @return object
 	 */
 	public function get(string $name) {
+
+		if (isset($this->aliases[$name])) $name = $this->aliases[$name];
+
+		if (isset($this->parameters[$name])) return $this->parameters[$name];
 
 		if (!isset($this->container[$name])) {
 			return null;

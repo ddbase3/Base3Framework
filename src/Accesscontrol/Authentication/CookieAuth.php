@@ -16,7 +16,7 @@ class CookieAuth extends AbstractAuth implements ICheck {
 	private $cookieTimeout;
 	private $cookieDomain;
 
-	public function __construct($cnf = null) {
+	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->classmap = $this->servicelocator->get('classmap');
 		$this->authtoken = $this->servicelocator->get('authtoken');

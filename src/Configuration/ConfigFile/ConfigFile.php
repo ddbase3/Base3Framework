@@ -10,7 +10,10 @@ class ConfigFile implements IConfiguration, ICheck {
 	private $filename;
 	private $cnf;
 
-	public function __construct($filename = "") {
+	public function __construct() {
+
+		// refactoring, former param
+		$filename = "";
 
 		$this->filename = DIR_CNF . "config.ini";
 		if (!empty($filename)) $this->filename = $filename;

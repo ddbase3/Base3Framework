@@ -13,12 +13,15 @@ class SingleLang implements ILanguage, ICheck {
 
 	private $language;
 
-	public function __construct($cnf = null) {
+	public function __construct(\Base3\Configuration\Api\IConfiguration $configuration) {
+
+		// refactoring, former param
+		$cnf = null;
 
 		$this->servicelocator = ServiceLocator::getInstance();
 
 		if ($cnf == null) {
-			$configuration = $this->servicelocator->get('configuration');
+			// $configuration = $this->servicelocator->get('configuration');
 			if ($configuration != null) $cnf = $configuration->get('language');
 		}
 

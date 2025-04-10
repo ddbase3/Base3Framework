@@ -15,7 +15,11 @@ class DelegateWorker implements IWorker, ICheck {
 	private $active;
 	private $priority;
 
-	public function __construct($cnf = null) {
+	public function __construct() {
+
+		// ehemals Parameter, TODO check ob noch notwendig, z.B. wenn Worker via CLI oder Cron aufgerufen wird
+		$cnf = null;
+
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->classmap = $this->servicelocator->get('classmap');
 		$this->configuration = $this->servicelocator->get('configuration');

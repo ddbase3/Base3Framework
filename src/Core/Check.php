@@ -12,8 +12,9 @@ class Check implements IOutput, ICheck {
 
 	private $checks;
 
-	public function __construct() {
-		$this->servicelocator = ServiceLocator::getInstance();
+	public function __construct(\Base3\Api\IContainer $container) {
+		// $this->servicelocator = ServiceLocator::getInstance();
+		$this->servicelocator = $container;
 	}
 
 	// Implementation of IBase

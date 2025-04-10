@@ -14,10 +14,14 @@ class MultiLang implements ILanguage, ICheck {
 	private $language;
 	private $languages;
 
-	public function __construct($cnf = null) {
+	public function __construct(\Base3\Configuration\Api\IConfiguration $configuration) {
+
+		// refactoring, former param
+		$cnf = null;
+
 		$this->servicelocator = ServiceLocator::getInstance();
 
-		$configuration = $this->servicelocator->get('configuration');
+		// $configuration = $this->servicelocator->get('configuration');
 		if ($configuration != null)
 			$this->cnf = $configuration->get('language');
 

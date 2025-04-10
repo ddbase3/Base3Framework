@@ -11,7 +11,7 @@ class MasterWorker implements IOutput {
 	private $workers;
 	private $logger;
 
-	public function __construct($cnf = null) {
+	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->workers = $this->servicelocator->get('workers');
 		$this->logger = $this->servicelocator->get('logger');
