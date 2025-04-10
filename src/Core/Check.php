@@ -4,7 +4,6 @@ namespace Base3\Core;
 
 use Base3\Api\IOutput;
 use Base3\Api\ICheck;
-use Base3\Core\ServiceLocator;
 
 class Check implements IOutput, ICheck {
 
@@ -13,7 +12,6 @@ class Check implements IOutput, ICheck {
 	private $checks;
 
 	public function __construct(\Base3\Api\IContainer $container) {
-		// $this->servicelocator = ServiceLocator::getInstance();
 		$this->servicelocator = $container;
 	}
 
@@ -116,6 +114,5 @@ class Check implements IOutput, ICheck {
 			'data' => empty($data) ? 'empty check' : $data
 		);
 	}
-
 }
 

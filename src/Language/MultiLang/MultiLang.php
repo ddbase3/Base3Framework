@@ -5,26 +5,24 @@ namespace Base3\Language\MultiLang;
 use Base3\Core\ServiceLocator;
 use Base3\Language\Api\ILanguage;
 use Base3\Api\ICheck;
+use Base3\Configuration\Api\IConfiguration;
+use Base3\Session\Api\ISession;
 
 class MultiLang implements ILanguage, ICheck {
 
 	private $servicelocator;
+	private $session;
 
 	private $cnf;
 	private $language;
 	private $languages;
 
-	public function __construct(\Base3\Configuration\Api\IConfiguration $configuration) {
-
-		// refactoring, former param
-		$cnf = null;
+	public function __construct(IConfiguration $configuration, ISession $session) {
 
 		$this->servicelocator = ServiceLocator::getInstance();
+		$this->session = $session;
 
-		// $configuration = $this->servicelocator->get('configuration');
-		if ($configuration != null)
-			$this->cnf = $configuration->get('language');
-
+		$this->cnf = $configuration->get('language');
 		$this->languages = $this->cnf != null && $this->cnf['languages'] != null ? $this->cnf['languages'] : [];
 
 		if (isset($_SESSION["language"])) {
@@ -53,8 +51,7 @@ class MultiLang implements ILanguage, ICheck {
 
 	public function checkDependencies() {
 		return array(
-			"depending_services" => $this->servicelocator->get('configuration') == null || $this->servicelocator->get('session') == null ? "Fail" : "Ok"
+			"session_started" => $this->session->started() ? "Ok" : "Fail"
 		);
 	}
-
 }

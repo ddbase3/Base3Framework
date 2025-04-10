@@ -20,28 +20,39 @@ define('DIR_TPL', DIR_ROOT . 'tpl' . DIRECTORY_SEPARATOR);
 define('DIR_USERFILES', DIR_ROOT . 'userfiles' . DIRECTORY_SEPARATOR);
 
 /* uses */
+use Base3\Core\Autoloader;
 use Base3\Core\ServiceLocator;
+use Base3\Api\IContainer;
+use Base3\Configuration\ConfigFile\ConfigFile;
+use Base3\Configuration\Api\IConfiguration;
+use Base3\Core\PluginClassMap;
+use Base3\Api\IClassMap;
+use Base3\ServiceSelector\Standard\StandardServiceSelector;
+use Base3\ServiceSelector\Api\IServiceSelector;
+use Base3\Api\IPlugin;
 
 /* autoloader */
 require DIR_SRC . 'Core/Autoloader.php';
-\Base3\Core\Autoloader::register();
+Autoloader::register();
 
 /* service locator */
 $servicelocator = new ServiceLocator();
 ServiceLocator::useInstance($servicelocator);
 $servicelocator
 	->set('servicelocator', $servicelocator, ServiceLocator::SHARED)
-	->set(\Base3\Api\IContainer::class, 'servicelocator', ServiceLocator::ALIAS)
-	->set('configuration', new \Base3\Configuration\ConfigFile\ConfigFile, ServiceLocator::SHARED)
-	->set(\Base3\Api\IConfiguration::class, 'configuration', ServiceLocator::ALIAS)
-	->set('classmap', new \Base3\Core\PluginClassMap($servicelocator), ServiceLocator::SHARED)
-	->set('serviceselector', \Base3\ServiceSelector\Standard\StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
+	->set(IContainer::class, 'servicelocator', ServiceLocator::ALIAS)
+	->set('configuration', new ConfigFile, ServiceLocator::SHARED)
+	->set(IConfiguration::class, 'configuration', ServiceLocator::ALIAS)
+	->set('classmap', new PluginClassMap($servicelocator), ServiceLocator::SHARED)
+	->set(IClassMap::class, 'classmap', ServiceLocator::ALIAS)
+	->set(IServiceSelector::class, StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
 	;
 
 /* plugins */
-$plugins = $servicelocator->get('classmap')->getInstancesByInterface(\Base3\Api\IPlugin::class);
+$plugins = $servicelocator->get(IClassMap::class)->getInstancesByInterface(IPlugin::class);
 foreach ($plugins as $plugin) $plugin->init();
 
 /* go */
-$serviceselector = $servicelocator->get('serviceselector');
+$serviceselector = $servicelocator->get(IServiceSelector::class);
 $serviceselector->go();
+

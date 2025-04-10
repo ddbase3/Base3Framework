@@ -97,7 +97,6 @@ class ServiceLocator implements IContainer {
 	 * @return object
 	 */
 	public function get(string $name) {
-
 		if (isset($this->aliases[$name])) $name = $this->aliases[$name];
 
 		if (isset($this->parameters[$name])) return $this->parameters[$name];

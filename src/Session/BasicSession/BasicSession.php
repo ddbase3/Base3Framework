@@ -7,7 +7,7 @@ use Base3\Configuration\Api\IConfiguration;
 
 class BasicSession implements ISession {
 
-	private $started = false;
+	private $isStarted = false;
 
 	public function __construct(IConfiguration $configuration) {
 
@@ -25,10 +25,10 @@ class BasicSession implements ISession {
 		if (!isset($_REQUEST['out']) || !in_array($_REQUEST['out'], $cnf["extensions"])) return;
 
 		session_start();
-		$this->started = true;
+		$this->isStarted = true;
 	}
 
 	public function started(): bool {
-		return $this->started;
+		return $this->isStarted;
 	}
 }

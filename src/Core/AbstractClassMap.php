@@ -2,9 +2,10 @@
 
 namespace Base3\Core;
 
+use Base3\Api\IClassMap;
 use Base3\Api\IContainer;
 
-abstract class AbstractClassMap {
+abstract class AbstractClassMap implements IClassMap {
 
 	protected $container;
 
@@ -102,7 +103,7 @@ abstract class AbstractClassMap {
 		return $this->getInstanceByAppInterfaceName($app, $interface, $name, true);
 	}
 
-	protected function instantiate(string $class) {
+	public function instantiate(string $class) {
 		$refClass = new \ReflectionClass($class);
 		$constructor = $refClass->getConstructor();
 
