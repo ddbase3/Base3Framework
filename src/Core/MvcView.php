@@ -2,12 +2,13 @@
 
 namespace Base3\Core;
 
+use Base3\Api\IMvcView;
 use Base3\Core\ServiceLocator;
 
-class MvcView {
+class MvcView implements IMvcView {
 
 	// Pfad zum Template
-	private $path;
+	private $path = '.';
 	// Name des Templates, in dem Fall das Standardtemplate.
 	private $template = 'default';
 
@@ -15,10 +16,6 @@ class MvcView {
 	 * Enthält die Variablen, die in das Template eingebetet werden sollen.
 	 */
 	private $_ = array();
-
-	public function __construct(string $path = '.') {
-		$this->setPath($path);
-	}
 
 	public function setPath(string $path = '.') {
 		$this->path = rtrim($path, DIRECTORY_SEPARATOR);
