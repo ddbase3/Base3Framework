@@ -19,7 +19,7 @@ class PhpInfo implements IOutput {
 
 	public function getOutput($out = "html") {
 
-                if (!DEBUG) return '';
+                if (!getenv('DEBUG')) return '';
 
 		return phpinfo();
 	}

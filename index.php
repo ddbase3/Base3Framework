@@ -1,12 +1,12 @@
 <?php
 
 /* Debug mode - 0: aus, 1: an, ggfs noch höhere Stufen? */
-define('DEBUG', 1);
+putenv('DEBUG=1');
 
 /* error handling */
-ini_set('display_errors', DEBUG ? 1 : 0);
-ini_set('display_startup_errors', DEBUG ? 1 : 0);
-error_reporting(DEBUG ? E_ALL | E_STRICT : 0);
+ini_set('display_errors', getenv('DEBUG') ? 1 : 0);
+ini_set('display_startup_errors', getenv('DEBUG') ? 1 : 0);
+error_reporting(getenv('DEBUG') ? E_ALL | E_STRICT : 0);
 
 /* define directories constants */
 define('DIR_ROOT', __DIR__ . DIRECTORY_SEPARATOR);

@@ -20,6 +20,9 @@ class BasicSession implements ISession {
 			$defaultConfig,
 			$configuration->get('session'));
 
+		// for testing
+		if (php_sapi_name() === 'cli') return;
+
 		// only create session, if chosen output is one of the session extensions
 		// TODO check - was ist, wenn csv geladen werden soll und das nur per Session gemacht werden kann?
 		if (!isset($_REQUEST['out']) || !in_array($_REQUEST['out'], $cnf["extensions"])) return;

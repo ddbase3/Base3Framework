@@ -25,7 +25,7 @@ class Check implements IOutput, ICheck {
 
 	public function getOutput($out = "html"): string {
 
-		if (!DEBUG) return '';
+		if (!getenv('DEBUG')) return '';
 
 		$this->check();
 		$out = '<html>';

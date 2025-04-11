@@ -5,7 +5,7 @@ namespace Base3\Core;
 class NullObject {
 
 	public function __call($method, $args) {
-		if (DEBUG) echo 'NullObject called.';
+		if (getenv('DEBUG')) echo 'NullObject called.';
 	}
 
 }

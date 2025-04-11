@@ -87,7 +87,7 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 
 			case $out == "help":
 
-				if (!DEBUG) exit;
+				if (!getenv('DEBUG')) exit;
 
 				echo $instance->getHelp();
 				exit;

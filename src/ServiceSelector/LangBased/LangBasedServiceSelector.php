@@ -90,7 +90,7 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 
 			case $out == "help":
 
-                                if (!DEBUG) exit;
+                                if (!getenv('DEBUG')) exit;
 
 				$output = $instance->getHelp();
 				break;
