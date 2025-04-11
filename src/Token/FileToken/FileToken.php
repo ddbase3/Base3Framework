@@ -108,7 +108,8 @@ class FileToken implements IToken, ICheck {
 
 	public function checkDependencies() {
 		return array(
-			"openssl_available" => extension_loaded('openssl') ? "Ok" : "OpenSSL extension not loaded"
+			"openssl_available" => extension_loaded('openssl') ? "Ok" : "OpenSSL extension not loaded",
+			"filetoken_dir_writable" => is_dir(DIR_LOCAL . 'FileToken') && is_writable(DIR_LOCAL . 'FileToken') ? "Ok" : "filetoken dir not writable"
 		);
 	}
 
