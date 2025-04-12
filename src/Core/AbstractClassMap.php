@@ -120,7 +120,8 @@ abstract class AbstractClassMap implements IClassMap {
 			$dep = $type->getName();
 
 			if (!$this->container->has($dep)) {
-				throw new \RuntimeException("Dependency $dep not found in container for class $class");
+				// throw new \RuntimeException("Dependency $dep not found in container for class $class");
+				return null;
 			}
 
 			$params[] = $this->container->get($dep);

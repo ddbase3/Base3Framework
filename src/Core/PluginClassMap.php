@@ -5,6 +5,7 @@ namespace Base3\Core;
 class PluginClassMap extends AbstractClassMap {
 
 	public function generate($regenerate = false) {
+
 		if (!$regenerate && file_exists($this->filename) && filesize($this->filename) > 0) return;
 
 		if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
@@ -30,6 +31,7 @@ class PluginClassMap extends AbstractClassMap {
 						$this->map[$app]["interface"][$interface][] = $c["class"];
 						if ($interface == \Base3\Api\IBase::class) {
 							$instance = $this->instantiate($c["class"]);
+							if ($instance == null) continue;
 							$name = $instance->getName();
 							$this->map[$app]["name"][$name] = $c["class"];
 						}
