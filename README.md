@@ -45,8 +45,7 @@ To enable Composer for your plugin(s), you need to create a composer.json file w
 Go to the plugin directory where you want to manage dependencies. This is where the composer.json file will live. Initialise Composer here:
 
 ```bash
-cd plugin
-composer init
+composer --working-dir=plugin init
 ```
 
 This will prompt you with questions to set up the basic configuration for your plugin, such as package name, description, and dependencies. You can also manually edit the generated composer.json afterward.
@@ -65,7 +64,7 @@ This example adds Monolog and Guzzle as dependencies for the plugin:
 After setting up your composer.json file, run the following command to download and install the defined dependencies and all required libraries in the plugin/vendor directory:
 
 ```bash
-composer install
+composer --working-dir=plugin install
 ```
 
 If your plugin has the classes in the src folder, it does not need to load Composer's autoloader manually, as the core framework already handles autoloading for you.
@@ -79,7 +78,7 @@ composer --working-dir=plugin update
 Optional: All plugins come over with own composer.json files. There's a script setup/composer.php for merging all composer.json in just one in the plugin dir for again having just one plugin/vendor dir, the framework uses automatically.
 
 ```bash
-php merge-composer.php
+php setup/merge-composer.php
 composer --working-dir=plugin install
 ```
 
@@ -102,6 +101,29 @@ $client = new Client();
 ```
 
 This setup keeps the Composer dependencies isolated to the plugins, ensuring the core framework remains lightweight while still offering the flexibility to extend functionality with external libraries.
+
+## Using the Makefile
+
+This project provides a `Makefile` to simplify managing plugin dependencies with Composer.
+
+### Common Commands
+
+```bash
+make           # Merge all plugin composer.json files and install dependencies
+make install   # Same as above
+make update    # Merge and update all dependencies
+make clean     # Remove generated composer.json, composer.lock, and vendor directory
+```
+
+The Makefile will automatically:
+
+- Scan all subdirectories in plugin/ for composer.json files.
+- Merge them into a single plugin/composer.json.
+- Run Composer (install or update) in the plugin/ directory.
+
+All dependencies are installed to plugin/vendor/
+
+This setup allows plugins to declare their own dependencies independently, while the framework itself remains Composer-agnostic.
 
 ## Framework Components
 
