@@ -35,6 +35,10 @@ use Base3\Api\IPlugin;
 require DIR_SRC . 'Core/Autoloader.php';
 Autoloader::register();
 
+/* autoloader: Composer (optional) */
+$composerAutoload = DIR_ROOT . 'vendor/autoload.php';
+if (file_exists($composerAutoload)) require_once $composerAutoload;
+
 /* service locator */
 $servicelocator = new ServiceLocator();
 ServiceLocator::useInstance($servicelocator);
