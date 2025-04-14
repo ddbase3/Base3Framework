@@ -4,7 +4,7 @@ namespace Base3\Api;
 
 interface ICheck {
 
-	/* for servicelocator services, to check if it's usable */
+	/* for container services, to check if it's usable */
 	public function checkDependencies();
 
 }

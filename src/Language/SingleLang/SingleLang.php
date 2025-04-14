@@ -2,29 +2,16 @@
 
 namespace Base3\Language\SingleLang;
 
-use Base3\Core\ServiceLocator;
 use Base3\Language\Api\ILanguage;
-use Base3\Api\ICheck;
+use Base3\Configuration\Api\IConfiguration;
 
 /* Only use language as configured as "main" */
-class SingleLang implements ILanguage, ICheck {
+class SingleLang implements ILanguage {
 
-	private $servicelocator;
+	private $language = null;
 
-	private $language;
-
-	public function __construct(\Base3\Configuration\Api\IConfiguration $configuration) {
-
-		// refactoring, former param
-		$cnf = null;
-
-		$this->servicelocator = ServiceLocator::getInstance();
-
-		if ($cnf == null) {
-			// $configuration = $this->servicelocator->get('configuration');
-			if ($configuration != null) $cnf = $configuration->get('language');
-		}
-
+	public function __construct(IConfiguration $configuration) {
+		$cnf = $configuration->get('language');
 		if ($cnf != null) $this->language = $cnf["main"];
 	}
 
@@ -41,13 +28,4 @@ class SingleLang implements ILanguage, ICheck {
 	public function getLanguages(): array {
 		return [ $this->language ];
 	}
-
-	// Implementation of ICheck
-
-	public function checkDependencies() {
-		return array(
-			"depending_services" => $this->servicelocator->get('configuration') == null ? "Fail" : "Ok"
-		);
-	}
-
 }

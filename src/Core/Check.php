@@ -4,15 +4,16 @@ namespace Base3\Core;
 
 use Base3\Api\IOutput;
 use Base3\Api\ICheck;
+use Base3\Api\IContainer;
 
 class Check implements IOutput, ICheck {
 
-	protected $servicelocator;
+	protected $container;
 
 	private $checks;
 
-	public function __construct(\Base3\Api\IContainer $container) {
-		$this->servicelocator = $container;
+	public function __construct(IContainer $container) {
+		$this->container = $container;
 	}
 
 	// Implementation of IBase
@@ -73,9 +74,9 @@ class Check implements IOutput, ICheck {
 
 	private function check(): void {
 		$this->checks = array();
-		$services = $this->servicelocator->getServiceList();
+		$services = $this->container->getServiceList();
 		foreach ($services as $name) {
-			$service = $this->servicelocator->get($name);
+			$service = $this->container->get($name);
 			$this->checkService($service, $name);
 		}
 	}

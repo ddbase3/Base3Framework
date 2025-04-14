@@ -2,24 +2,21 @@
 
 namespace Base3\Language\MultiLang;
 
-use Base3\Core\ServiceLocator;
-use Base3\Language\Api\ILanguage;
 use Base3\Api\ICheck;
 use Base3\Configuration\Api\IConfiguration;
+use Base3\Language\Api\ILanguage;
 use Base3\Session\Api\ISession;
 
 class MultiLang implements ILanguage, ICheck {
 
-	private $servicelocator;
 	private $session;
 
 	private $cnf;
-	private $language;
-	private $languages;
+	private $language = null;
+	private $languages = [];
 
 	public function __construct(IConfiguration $configuration, ISession $session) {
 
-		$this->servicelocator = ServiceLocator::getInstance();
 		$this->session = $session;
 
 		$this->cnf = $configuration->get('language');

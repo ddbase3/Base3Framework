@@ -6,6 +6,6 @@ interface IPlugin {
 
 	public function __construct(IContainer $container);
 
-	/* Jedes Plugin kann hierüber Initialisierungen durchführen, z.B. den ServiceLocator befüllen */
+	/* Jedes Plugin kann hierüber Initialisierungen durchführen, z.B. deDI container befüllen */
 	public function init();
 }

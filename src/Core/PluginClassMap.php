@@ -2,7 +2,9 @@
 
 namespace Base3\Core;
 
-class PluginClassMap extends AbstractClassMap {
+use Base3\Api\ICheck;
+
+class PluginClassMap extends AbstractClassMap implements ICheck {
 
 	public function generate($regenerate = false) {
 
@@ -101,5 +103,13 @@ class PluginClassMap extends AbstractClassMap {
 		}
 		closedir($handle);
 		return $entries;
+	}
+
+	// Implementation of ICheck
+
+	public function checkDependencies() {
+		return array(
+			"classmap_writable" => is_writable($this->filename) ? "Ok" : $this->filename . " not writable"
+		);
 	}
 }

@@ -6,6 +6,8 @@ use Base3\Core\ServiceLocator;
 use Base3\ServiceSelector\Api\IServiceSelector;
 use Base3\Middleware\Api\IMiddleware;
 use Base3\Api\ICheck;
+use Base3\Api\IOutput;
+use Base3\Page\Api\IPageCatchall;
 
 class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 
@@ -74,10 +76,10 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 		if (strlen($data) == 2) $language->setLanguage($data);
 
 		$instance = empty($app)
-			? $classmap->getInstanceByInterfaceName(\Base3\Api\IOutput::class, $name)
-			: $classmap->getInstanceByAppInterfaceName($app, \Base3\Api\IOutput::class, $name);
+			? $classmap->getInstanceByInterfaceName(IOutput::class, $name)
+			: $classmap->getInstanceByAppInterfaceName($app, IOutput::class, $name);
 		if ($instance == null) {
-			$instances = $classmap->getInstancesByInterface(\Base3\Page\Api\IPageCatchall::class);
+			$instances = $classmap->getInstancesByInterface(IPageCatchall::class);
 			$instance = reset($instances);
 		}
 

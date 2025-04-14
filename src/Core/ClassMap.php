@@ -3,8 +3,9 @@
 namespace Base3\Core;
 
 use Base3\Api\IContainer;
+use Base3\Api\ICheck;
 
-class ClassMap extends AbstractClassMap {
+class ClassMap extends AbstractClassMap implements ICheck {
 
 	private $path = DIR_SRC;
 
@@ -81,5 +82,13 @@ class ClassMap extends AbstractClassMap {
 		}
 		closedir($handle);
 		return $entries;
+	}
+
+	// Implementation of ICheck
+
+	public function checkDependencies() {
+		return array(
+			"classmap_writable" => is_writable($this->filename) ? "Ok" : $this->filename . " not writable"
+		);
 	}
 }
