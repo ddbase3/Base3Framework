@@ -8,16 +8,20 @@ use Base3\Configuration\Api\IConfiguration;
 /* Only use language as configured as "main" */
 class SingleLang implements ILanguage {
 
+	private $configuration;
 	private $language = null;
 
 	public function __construct(IConfiguration $configuration) {
-		$cnf = $configuration->get('language');
-		if ($cnf != null) $this->language = $cnf["main"];
+		$this->configuration = $configuration;
 	}
 
 	// Implementation of ILanguage
 
 	public function getLanguage(): string {
+		if ($this->language === null) {
+			$cnf = $this->configuration->get('language');
+			$this->language = $cnf['main'] ?? 'en';
+		}
 		return $this->language;
 	}
 
@@ -26,6 +30,6 @@ class SingleLang implements ILanguage {
 	}
 
 	public function getLanguages(): array {
-		return [ $this->language ];
+		return [ $this->getLanguage() ];
 	}
 }
