@@ -1,28 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit bootstrap="test/bootstrap.php" colors="true" stopOnFailure="false" verbose="true">
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.0/phpunit.xsd"
+         bootstrap="test/bootstrap.php"
+         colors="true"
+         stopOnFailure="false">
 
-	<testsuites>
-		<testsuite name="Application Tests">
-			<directory suffix="Test.php">./test</directory>
-			<directory suffix="Test.php">./plugin/*/test</directory>
-		</testsuite>
-	</testsuites>
+    <testsuites>
+        <testsuite name="Application Tests">
+            <!-- Nur Dateien mit dem Suffix "Test.php" im "test/" Verzeichnis und den Plugin-Verzeichnissen -->
+            <directory suffix="Test.php">test</directory>
+            <directory suffix="Test.php">plugin/*/test</directory> <!-- Plugin-spezifische Tests -->
+        </testsuite>
+    </testsuites>
 
-	<coverage>
-		<include>
-			<directory suffix=".php">./src</directory>
-			<directory suffix=".php">./plugin/*/src</directory>
-		</include>
-		<reporting>
-			<text />
-			<!-- Optional: html reports, TODO: .gitignore -->
-			<!-- <html outputDirectory="coverage" /> -->
-		</reporting>
-	</coverage>
+    <source>
+        <include>
+            <directory suffix=".php">src</directory>
+            <directory suffix=".php">plugin/*/src</directory> <!-- Für die Plugin-Quellcodes -->
+        </include>
+    </source>
 
-	<php>
-		<env name="DEBUG" value="1"/>
-	</php>
+<!--
+    <coverage>
+        <report>
+            <text outputFile="php://stdout"/>
+            <html outputDirectory="coverage" />
+        </report>
+    </coverage>
+-->
 
+    <php>
+        <env name="DEBUG" value="1"/>
+    </php>
 </phpunit>
 

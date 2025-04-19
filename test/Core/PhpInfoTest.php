@@ -1,36 +1,46 @@
 <?php declare(strict_types=1);
 
+namespace Base3\Test\Core;
+
 use PHPUnit\Framework\TestCase;
 use Base3\Core\PhpInfo;
 
-class PhpInfoTest extends TestCase {
+class PhpInfoTest extends TestCase
+{
+    private PhpInfo $phpInfo;
 
-	public function testGetName() {
-		$phpInfo = new PhpInfo();
-		$this->assertEquals('phpinfo', $phpInfo->getName());
-	}
+    protected function setUp(): void
+    {
+        putenv('DEBUG=1'); // für Test aktivieren
+        $this->phpInfo = new PhpInfo();
+    }
 
-	public function testGetHelp() {
-		$phpInfo = new PhpInfo();
-		$this->assertContains('phpinfo', $phpInfo->getHelp());
-	}
+    public function testGetName(): void
+    {
+        $this->assertSame('phpinfo', $this->phpInfo->getName());
+    }
 
-	public function testGetOutputWhenDebugIsTrue() {
-		putenv('DEBUG=1');
+    public function testGetOutputWithDebugEnabled(): void
+    {
+        ob_start();
+        $this->phpInfo->getOutput();
+        $output = ob_get_clean();
 
-		ob_start();
-		$output = (new PhpInfo())->getOutput();
-		$content = ob_get_clean();
+        // Inhalt muss phpinfo enthalten
+        $this->assertStringContainsString('phpinfo', strtolower($output));
+        $this->assertStringContainsString('PHP Version', $output);
+    }
 
-		$this->assertNotEmpty($content);
-		$this->assertContains('PHP Version', $content);
-	}
+    public function testGetOutputWithDebugDisabled(): void
+    {
+        putenv('DEBUG='); // deaktivieren
+        $output = $this->phpInfo->getOutput();
+        $this->assertSame('', $output);
+    }
 
-	public function testGetOutputWhenDebugIsFalse() {
-		putenv('DEBUG=0');
-
-		$output = (new PhpInfo())->getOutput();
-		$this->assertSame('', $output);
-	}
+    public function testGetHelp(): void
+    {
+        $this->assertStringContainsString('phpinfo', $this->phpInfo->getHelp());
+    }
 }
 

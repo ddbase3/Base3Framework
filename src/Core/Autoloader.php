@@ -2,103 +2,82 @@
 
 namespace Base3\Core;
 
-class Autoloader {
+class Autoloader
+{
+    /** @var array<string, string> Namespace-Prefixes → Verzeichnis-Mapping */
+    private static array $prefixes = [];
 
-	/**
-	 * Register new autoloader
-	 * @return void
-	 */
-	public static function register() {
-		// Autoloader for classes
-		spl_autoload_register(__NAMESPACE__ .'\Autoloader::__autoloadClass');
-	}
+    /** @var bool Autoloader bereits registriert? */
+    private static bool $registered = false;
 
-	/**
-	 * Class autoloader
-	 * @param $class
-	 * @return void
-	 */
-	public static function __autoloadClass($class) {
+    /**
+     * Registrierung des Autoloaders (nur einmal)
+     */
+    public static function register(): void
+    {
+        if (self::$registered) {
+            return;
+        }
 
-                // Core
-		$filePath = self::_transformClassNameToFilename($class);
-		if (file_exists($filePath)) {
-			require $filePath;
-			return;
-		}
+        // Basisnamespaces
+        self::addNamespace('Base3\\', DIR_SRC);
+        self::addNamespace('Base3\\Test\\', DIR_TEST);
 
-		// Plugin
-		$filePath = self::_transformPluginClassNameToFilename($class);
-		if (file_exists($filePath)) {
-			require $filePath;
-			return;
-		}
-	}
+        // Plugins dynamisch hinzufügen
+        foreach (glob(DIR_PLUGIN . '*', GLOB_ONLYDIR) as $pluginPath) {
+            $pluginName = basename($pluginPath);
+            self::addNamespace($pluginName . '\\', $pluginPath . '/src');
+            self::addNamespace($pluginName . '\\Test\\', $pluginPath . '/test');
+        }
 
-	/**
-	 * Function loader
-	 * @param $func
-	 */
-	public static function loadFunction($func) {
+        // Prefixes nach Länge sortieren (wichtig für überlappende Prefixes)
+        uksort(self::$prefixes, fn($a, $b) => strlen($b) <=> strlen($a));
 
-		// Core
-		$filePath = self::_transformClassNameToFilename($func);
-		if (file_exists($filePath)) {
-			require_once $filePath;
-			return;
-		}
+        spl_autoload_register([self::class, 'autoload']);
+        self::$registered = true;
+    }
 
-		// Plugin
-		$filePath = self::_transformPluginClassNameToFilename($func);
-		if (file_exists($filePath)) {
-			require_once $filePath;
-			return;
-		}
-	}
+    /**
+     * Füge ein Namespace-Verzeichnis hinzu (falls vorhanden)
+     */
+    private static function addNamespace(string $prefix, string $dir): void
+    {
+        $path = realpath($dir);
+        if ($path !== false) {
+            self::$prefixes[$prefix] = rtrim($path, '/') . '/';
+        }
+    }
 
-	/**
-	 * Transform class namespace to class filename
-	 * @see https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md
-	 * @param $className
-	 *
-	 * @return string
-	 */
-	private static function _transformClassNameToFilename($className) {
-		$className	= ltrim($className, '\\');
-		if (substr($className, 0, 6) == 'Base3\\') $className = substr($className, 6);
-		$fileName	= '';
-		if ($lastNsPos	= strrpos($className, '\\')) {
-			$namespace	= substr($className, 0, $lastNsPos);
-			$className	= substr($className, $lastNsPos + 1);
-			$fileName	= str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
-		}
-		$fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
+    public static function registerPlugin(string $pluginNamespace, string $baseDir): void
+    {
+        self::$prefixes[$pluginNamespace] = $baseDir;
+    }
 
-		return DIR_SRC . $fileName;
-	}
+    /**
+     * PSR-4 kompatibler Autoloader
+     */
+    private static function autoload(string $class): void
+    {
+        foreach (self::$prefixes as $prefix => $baseDir) {
+            if (str_starts_with($class, $prefix)) {
+                $relativeClass = substr($class, strlen($prefix));
+                $file = $baseDir . str_replace('\\', DIRECTORY_SEPARATOR, $relativeClass) . '.php';
 
-	/**
-	 * Transform plugin class namespace to class filename
-	 * @see https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md
-	 * @param $className
-	 *
-	 * @return string
-	 */
-	private static function _transformPluginClassNameToFilename($className) {
-		$className	= ltrim($className, '\\');
-		$fileName	= '';
-		if ($lastNsPos	= strrpos($className, '\\')) {
-			$namespace	= substr($className, 0, $lastNsPos);
-			$className	= substr($className, $lastNsPos + 1);
-			$fileName	= str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
-		}
-		$fileName .= str_replace('_', DIRECTORY_SEPARATOR, $className) . '.php';
+                if (getenv('DEBUG') === '2') {
+                    echo "Autoload: $class → $file\n";
+                }
 
-		// plugin classes in 'src' directory
-		if ($firstDsPos = strpos($fileName, DIRECTORY_SEPARATOR)) {
-			$fileName = substr($fileName, 0, $firstDsPos) . DIRECTORY_SEPARATOR . 'src' . substr($fileName, $firstDsPos);
-		}
+                if (file_exists($file)) {
+                    require $file;
+                }
 
-		return DIR_PLUGIN . $fileName;
-	}
+                return;
+            }
+        }
+
+        if (getenv('DEBUG') === '1') {
+            echo "Autoload: $class → NOT FOUND\n";
+        }
+    }
 }
+

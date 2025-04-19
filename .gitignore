@@ -16,4 +16,5 @@
 /robots.txt
 /sitemap-*.txt
 /sitemap-*.xml
+/.phpunit.result.cache
 
