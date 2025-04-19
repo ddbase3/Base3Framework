@@ -17,7 +17,7 @@ This README will guide you through the installation and usage of the Base3Framew
 
 ## Requirements
 
-- PHP 7.0 or higher
+- PHP 8.3 or higher
 - A web server (e.g., Apache or Nginx)
 
 ## Installation
