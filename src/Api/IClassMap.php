@@ -4,4 +4,5 @@ namespace Base3\Api;
 
 interface IClassMap {
 	public function instantiate(string $class);
+	public function getPlugins();
 }
