@@ -18,7 +18,7 @@ class BasicSession implements ISession {
 
 		$cnf = array_merge(
 			$defaultConfig,
-			$configuration->get('session'));
+			$configuration->get('session') ?? []);
 
 		// for testing
 		if (php_sapi_name() === 'cli') return;

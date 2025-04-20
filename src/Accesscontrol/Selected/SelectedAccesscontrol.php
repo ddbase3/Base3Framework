@@ -13,9 +13,9 @@ class SelectedAccesscontrol implements IAccesscontrol, ICheck {
 
 	private $userid = null;
 
-	public function __construct($cnf = null) {
+	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
-		$this->authentications = $this->servicelocator->get('authentications');
+		$this->authentications = $this->servicelocator->get('authentications') ?? [];
 
 		$verbose = isset($_REQUEST["checkaccesscontrol"]);
 
