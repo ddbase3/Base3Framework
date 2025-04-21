@@ -72,7 +72,8 @@ class DelegateWorker implements IWorker, ICheck {
 
 	public function checkDependencies() {
 		return array(
-			"depending_services" => $this->classmap == null ? "Fail" : "Ok"
+			'depending_services' => $this->classmap == null ? 'Fail' : 'Ok',
+			'num_of_jobs_' . sizeof($this->getJobs()) => 'Ok'
 		);
 	}
 
