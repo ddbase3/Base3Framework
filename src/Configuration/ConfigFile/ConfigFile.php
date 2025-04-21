@@ -12,11 +12,7 @@ class ConfigFile implements IConfiguration, ICheck {
 
 	public function __construct() {
 
-		// refactoring, former param
-		$filename = "";
-
 		$this->filename = DIR_CNF . "config.ini";
-		if (!empty($filename)) $this->filename = $filename;
 		if ($cnf = getenv("CONFIG_FILE")) $this->filename = $cnf;
 
 		$this->read_ini_file($this->filename);
@@ -42,7 +38,8 @@ class ConfigFile implements IConfiguration, ICheck {
 
 	public function checkDependencies() {
 		return array(
-			"config_file_exists" => file_exists($this->filename) ? "Ok" : "config file not found"
+			'config_file_exists' => file_exists($this->filename) ? 'Ok' : 'config file not found',
+			'data_directory_defined' => isset($this->cnf['directories']) && isset($this->cnf['directories']['data']) ? 'Ok' : 'data directory not defined'
 		);
 	}
 
@@ -55,10 +52,19 @@ class ConfigFile implements IConfiguration, ICheck {
 		$this->cnf = array_merge($this->cnf, $cnf);
 
 		if (!isset($this->cnf["include"]) || !isset($this->cnf["include"]["files"])) return;
+
+		$datadir = '';
+		if (isset($this->cnf['directories']) && isset($this->cnf['directories']['data']))
+			$datadir = $this->cnf['directories']['data'] . DIRECTORY_SEPARATOR;
+
 		$files = $this->cnf["include"]["files"];
 		unset($this->cnf["include"]);
 		foreach ($files as $f) {
-			$subfile = dirname($file) . "/" . $f;
+
+			$subfile = strlen($datadir)
+				? $datadir . DIRECTORY_SEPARATOR . $f
+				: dirname($file) . DIRECTORY_SEPARATOR . $f;
+
 			$this->read_ini_file($subfile);
 		}
 	}

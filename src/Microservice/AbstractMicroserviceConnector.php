@@ -62,7 +62,7 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 
 	protected function httpPost($url, $data) {
 		$user = "internal";
-		$pass = $this->cnf['masterpass'];
+		$pass = $this->cnf['masterpass'] ?? '';
 		$time = time();
 		$token = $this->generateToken();
 		$header = array(

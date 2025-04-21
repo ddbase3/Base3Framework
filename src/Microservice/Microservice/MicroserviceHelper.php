@@ -33,10 +33,10 @@ class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 		if ($this->configuration == null) return;
 		$this->cnf = $this->configuration->get();
 
-		$this->url = $this->cnf["base"]["url"];
-		$this->name = $this->cnf["microservice"]["name"];
-		$this->masterurl = $this->cnf["microservice"]["masterurl"];
-		$this->filename = DIR_TMP . "microservices.json";
+		$this->url = isset($this->cnf['base']) && isset($this->cnf['base']['url']) ? $this->cnf['base']['url'] : '';
+		$this->name = isset($this->cnf['microservice']) && isset($this->cnf['microservice']['name']) ? $this->cnf['microservice']['name'] : '';
+		$this->masterurl = isset($this->cnf['microservice']) && isset($this->cnf['microservice']['masterurl']) ? $this->cnf['microservice']['masterurl'] : '';
+		$this->filename = DIR_TMP . 'microservices.json';
 
 		if (!file_exists($this->filename)) $this->connect();
 	}
