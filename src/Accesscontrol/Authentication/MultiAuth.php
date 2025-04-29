@@ -1,0 +1,51 @@
+<?php declare(strict_types=1);
+
+namespace Base3\Accesscontrol\Authentication;
+
+use Base3\Core\ServiceLocator;
+use Base3\Accesscontrol\AbstractAuth;
+use Base3\Api\ICheck;
+
+class MultiAuth extends AbstractAuth implements ICheck {
+
+	private $servicelocator;
+	private $configuration;
+
+	private $cnf;
+
+	public function __construct() {
+		$this->servicelocator = ServiceLocator::getInstance();
+		$this->configuration = $this->servicelocator->get('configuration');
+
+		if ($this->configuration != null) $this->cnf = $this->configuration->get('multiauth');
+	}
+
+	// Implementation of IBase
+
+	public function getName() {
+		return "multiauth";
+	}
+
+	// Implementation of IAuthentication
+
+	public function login() {
+		if ($this->cnf == null) return null;
+		if (!isset($_REQUEST["login"])) return null;
+		if (!isset($_REQUEST["username"]) || !isset($_REQUEST["password"])) return null;
+		foreach ($this->cnf["user"] as $key => $user) {
+			if ($user != $_REQUEST["username"] || $this->cnf["pass"][$key] != sha1($_REQUEST["password"])) continue;
+			if ($this->verbose) echo "User " . $user . " loaded<br />";
+			return $user;
+		}
+		return null;
+	}
+
+	// Implementation of ICheck
+
+	public function checkDependencies() {
+		return array(
+			"depending_services" => $this->configuration == null ? "Fail" : "Ok"
+		);
+	}
+
+}
