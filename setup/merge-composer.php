@@ -60,7 +60,13 @@ foreach ($pluginPaths as $pluginPath) {
 ksort($mergedComposer['require']);
 ksort($mergedComposer['autoload']['psr-4']);
 
+// 👉 Falls keine PSR-4-Angaben vorhanden sind, ersetze Array durch leeres Objekt
+if (empty($mergedComposer['autoload']['psr-4'])) {
+    $mergedComposer['autoload']['psr-4'] = new stdClass();
+}
+
 // ✍️ Schreiben der zusammengeführten composer.json
 file_put_contents($outputFile, json_encode($mergedComposer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
 
 echo "✅ Merged composer.json written to: $outputFile" . PHP_EOL;
+
