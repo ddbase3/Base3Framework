@@ -1,7 +1,7 @@
 PLUGIN_DIR = plugin
 MERGE_SCRIPT = setup/merge-composer.php
 
-.PHONY: all init plugins merge install update clean
+.PHONY: all init plugins merge install update clean test
 
 all: install
 
@@ -25,4 +25,8 @@ clean:
 	rm -rf $(PLUGIN_DIR)/vendor
 	rm -f  $(PLUGIN_DIR)/composer.lock
 	rm -f  $(PLUGIN_DIR)/composer.json
+
+test:
+	@echo "PHPunit tests..."
+	phpunit
 
