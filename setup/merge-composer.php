@@ -56,6 +56,11 @@ foreach ($pluginPaths as $pluginPath) {
     }
 }
 
+if (empty($mergedComposer['require']) && empty($mergedComposer['autoload']['psr-4'])) {
+    echo "⚠️  No plugin composer.json files found. Skipping composer.json creation." . PHP_EOL;
+    exit(0);
+}
+
 // 🔠 Sortieren für Übersichtlichkeit
 ksort($mergedComposer['require']);
 ksort($mergedComposer['autoload']['psr-4']);
