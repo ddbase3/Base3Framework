@@ -1,9 +1,10 @@
-PLUGIN_DIR = plugin
+PUBLIC_DIR = public
 MERGE_SCRIPT = setup/merge-composer.php
 BUILD_ASSETS_SCRIPT = setup/build-assets.php
 BUILD_ROOTFILES_SCRIPT = setup/build-rootfiles.php
+BUILD_PUBLICFILES_SCRIPT = setup/build-publicfiles.php
 
-.PHONY: all init merge install update clean test assets rootfiles
+.PHONY: all init merge clean test install update
 
 all: install
 
@@ -21,8 +22,9 @@ install: merge
 	else \
 		echo "ℹ️  No plugin/composer.json found. Skipping composer install."; \
 	fi
-	@$(MAKE) assets
 	@$(MAKE) rootfiles
+	@$(MAKE) publicfiles
+	@$(MAKE) assets
 
 update: merge
 	@if [ -f plugin/composer.json ]; then \
@@ -31,16 +33,25 @@ update: merge
 	else \
 		echo "ℹ️  No plugin/composer.json found. Skipping composer update."; \
 	fi
-	@$(MAKE) assets
 	@$(MAKE) rootfiles
-
-assets:
-	@echo "🎨 Building public/assets/ from plugin assets..."
-	php $(BUILD_ASSETS_SCRIPT)
+	@$(MAKE) publicfiles
+	@$(MAKE) assets
 
 rootfiles:
-	@echo "📄 Copying plugin/*/rootfiles/ to public/..."
+	@echo "📄 Copying plugin/*/rootfiles/ to /..."
 	php $(BUILD_ROOTFILES_SCRIPT)
+
+publicfiles:
+	@echo "📄 Copying plugin/*/publicfiles/ to public/..."
+	php $(BUILD_PUBLICFILES_SCRIPT)
+
+assets:
+	@if [ -d "$(PUBLIC_DIR)" ]; then \
+		echo "🎨 Building public/assets/ from plugin assets..."; \
+		php $(BUILD_ASSETS_SCRIPT); \
+	else \
+		echo "⚠️ No public directory found, skipping assets build."; \
+	fi
 
 clean:
 	@echo "🧹 Cleaning plugin/vendor and composer files..."
