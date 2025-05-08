@@ -4,8 +4,6 @@ define('DIR_ROOT', dirname(__DIR__) . DIRECTORY_SEPARATOR);
 define('DIR_PLUGIN', DIR_ROOT . 'plugin' . DIRECTORY_SEPARATOR);
 define('DIR_PUBLIC', DIR_ROOT . 'public' . DIRECTORY_SEPARATOR);
 
-@mkdir(DIR_PUBLIC, 0755, true); // Ensure public dir exists
-
 echo "🔍 Searching for plugin publicfiles...\n";
 
 $pluginDirs = glob(DIR_PLUGIN . '*', GLOB_ONLYDIR);
@@ -17,6 +15,8 @@ foreach ($pluginDirs as $pluginDir) {
         echo "⏭️   Skipping $pluginName (no publicfiles/ directory)\n";
         continue;
     }
+
+    @mkdir(DIR_PUBLIC, 0755, true); // Ensure public dir exists
 
     echo "📄 Copying publicfiles from $pluginName...\n";
     recurseCopy($publicfilesSource, DIR_PUBLIC);
