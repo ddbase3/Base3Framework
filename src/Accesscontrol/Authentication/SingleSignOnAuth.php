@@ -2,22 +2,16 @@
 
 namespace Base3\Accesscontrol\Authentication;
 
-use Base3\Core\ServiceLocator;
 use Base3\Accesscontrol\AbstractAuth;
 use Base3\Api\ICheck;
+use Base3\Token\Api\IToken;
 
 class SingleSignOnAuth extends AbstractAuth implements ICheck {
-
-	private $servicelocator;
-	private $ssotoken;
 
 	private $ssoHashLength;
 	private $ssoTimeout;
 
-	public function __construct() {
-		$this->servicelocator = ServiceLocator::getInstance();
-		$this->ssotoken = $this->servicelocator->get('ssotoken');
-	}
+	public function __construct(private IToken $ssotoken) {}
 
 	// Implementation of IBase
 

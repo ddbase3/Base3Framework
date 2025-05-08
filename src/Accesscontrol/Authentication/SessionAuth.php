@@ -8,11 +8,7 @@ use Base3\Session\Api\ISession;
 
 class SessionAuth extends AbstractAuth implements ICheck {
 
-	private $session;
-
-	public function __construct(ISession $session) {
-		$this->session = $session;
-	}
+	public function __construct(private ISession $session) {}
 
 	// Implementation of IBase
 

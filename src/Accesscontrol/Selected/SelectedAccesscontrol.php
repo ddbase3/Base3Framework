@@ -2,53 +2,57 @@
 
 namespace Base3\Accesscontrol\Selected;
 
-use Base3\Core\ServiceLocator;
 use Base3\Accesscontrol\Api\IAccesscontrol;
+use Base3\Accesscontrol\Api\IAuthentication;
 use Base3\Api\ICheck;
 
 class SelectedAccesscontrol implements IAccesscontrol, ICheck {
 
-	private $servicelocator;
+	 /** @var IAuthentication[] */
 	private $authentications;
 
 	private $userid = null;
 
-	public function __construct() {
-		$this->servicelocator = ServiceLocator::getInstance();
-		$this->authentications = $this->servicelocator->get('authentications') ?? [];
+	public function __construct(array $authentications) {
+
+		// Auflösen der Closures (falls aus Container als fn() übergeben)
+		$this->authentications = array_map(
+			fn($auth) => is_callable($auth) ? $auth() : $auth,
+			$authentications
+		);
+
+		foreach ($this->authentications as $auth) {
+			if ($auth instanceof IAuthentication) continue;
+			throw new \InvalidArgumentException("Invalid authentication object");
+		}
 
 		$verbose = isset($_REQUEST["checkaccesscontrol"]);
-
-		$authentications = array();
-		foreach ($this->authentications as $authentication) $authentications[] = $authentication();
-
-		foreach ($authentications as $authentication) $authentication->setVerbose($verbose);
+		foreach ($this->authentications as $auth) $auth->setVerbose($verbose);
 
 		if ($verbose) echo "=================================<br />LOGOUT<br />";
-		foreach ($authentications as $authentication) {
-			if ($verbose) echo "---------------------------------<br />" . $authentication->getName() . "<br />";
-			$authentication->logout();
+		foreach ($this->authentications as $auth) {
+			if ($verbose) echo "---------------------------------<br />" . $auth->getName() . "<br />";
+			$auth->logout();
 		}
 
 		if ($verbose) echo "=================================<br />LOGIN<br />";
-		foreach ($authentications as $authentication) {
-			if ($verbose) echo "---------------------------------<br />" . $authentication->getName() . "<br />";
-			$userid = $authentication->login();
+		foreach ($this->authentications as $auth) {
+			if ($verbose) echo "---------------------------------<br />" . $auth->getName() . "<br />";
+			$userid = $auth->login();
 			if ($userid != null) $this->userid = $userid;
 			if ($verbose) echo "&bullet; user: " . ($userid == null ? "null" : $userid) . "<br />";
 		}
 
 		if ($verbose) echo "=================================<br />KEEP<br />";
-		foreach ($authentications as $authentication) {
-			if ($verbose) echo "---------------------------------<br />" . $authentication->getName() . "<br />";
-			// TODO check isKeepable ???
-			if ($this->userid != null) $authentication->keep($this->userid);
+		foreach ($this->authentications as $auth) {
+			if ($verbose) echo "---------------------------------<br />" . $auth->getName() . "<br />";
+			if ($this->userid != null) $auth->keep($this->userid);
 		}
 
 		if ($verbose) echo "=================================<br />FINISH<br />";
-		foreach ($authentications as $authentication) {
-			if ($verbose) echo "---------------------------------<br />" . $authentication->getName() . "<br />";
-			$authentication->finish($this->userid);
+		foreach ($this->authentications as $auth) {
+			if ($verbose) echo "---------------------------------<br />" . $auth->getName() . "<br />";
+			$auth->finish($this->userid);
 		}
 
 		if ($verbose) exit;
@@ -64,8 +68,7 @@ class SelectedAccesscontrol implements IAccesscontrol, ICheck {
 
 	public function checkDependencies() {
 		return array(
-			"depending_services" => $this->authentications == null ? "Fail" : "Ok"
+			"authentication_methods_given" => count($this->authentications) == 0 ? "Fail" : "Ok"
 		);
 	}
-
 }
