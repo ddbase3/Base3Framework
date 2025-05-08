@@ -112,13 +112,24 @@ abstract class AbstractClassMap implements IClassMap {
 
 		$params = [];
 		foreach ($constructor->getParameters() as $param) {
+
 			$type = $param->getType();
-			if (!$type || !$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
-				throw new \RuntimeException("Cannot resolve constructor param \${$param->getName()} in $class");
+			$paramName = $param->getName();
+
+			if (!$type || !$type instanceof \ReflectionNamedType) {
+				throw new \RuntimeException("Cannot resolve constructor param \${$paramName} in $class");
+			}
+
+			if ($type->isBuiltin()) {
+				if ($this->container->has($paramName)) {
+					$params[] = $this->container->get($paramName);
+					continue;
+				} else {
+					throw new \RuntimeException("Cannot resolve builtin param \${$paramName} in $class");
+				}
 			}
 
 			$dep = $type->getName();
-
 			if (!$this->container->has($dep)) {
 				// throw new \RuntimeException("Dependency $dep not found in container for class $class");
 				return null;
