@@ -6,6 +6,8 @@ use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionParameter;
+use ReflectionUnionType;
+use ReflectionType;
 
 class DynamicMockFactory {
     private static int $counter = 0;
@@ -15,25 +17,15 @@ class DynamicMockFactory {
             throw new \InvalidArgumentException("Class or interface $classOrInterface does not exist.");
         }
 
-        // Konkrete Klasse → instanziieren mit Dummy- oder rekursiven Parametern
-        if (class_exists($classOrInterface)) {
+        if (class_exists($classOrInterface) && !interface_exists($classOrInterface)) {
             $ref = new ReflectionClass($classOrInterface);
             $ctor = $ref->getConstructor();
+            if (!$ctor) return new $classOrInterface();
 
-            if (!$ctor) {
-                return new $classOrInterface();
-            }
-
-            $args = [];
-
-            foreach ($ctor->getParameters() as $param) {
-                $args[] = self::createParameterValue($param);
-            }
-
+            $args = array_map(fn($param) => self::createParameterValue($param), $ctor->getParameters());
             return $ref->newInstanceArgs($args);
         }
 
-        // Interface → dynamischen Mock erzeugen
         return self::createInterfaceMock($classOrInterface);
     }
 
@@ -59,85 +51,118 @@ class DynamicMockFactory {
         $params = [];
 
         foreach ($method->getParameters() as $param) {
-            $paramCode = '';
-
-            if ($param->hasType()) {
-                $paramType = $param->getType();
-                if ($paramType instanceof ReflectionNamedType) {
-                    $typeName = $paramType->getName();
-                    $paramCode .= ($paramType->allowsNull() ? '?' : '');
-                    $paramCode .= $paramType->isBuiltin() ? $typeName : '\\' . ltrim($typeName, '\\');
-                    $paramCode .= ' ';
-                }
-            }
-
-            $paramCode .= '$' . $param->getName();
-
-            if ($param->isDefaultValueAvailable()) {
-                $paramCode .= ' = ' . var_export($param->getDefaultValue(), true);
-            }
-
-            $params[] = $paramCode;
+            $params[] = self::generateParameterCode($param);
         }
 
         $paramList = implode(', ', $params);
 
-        $returnType = $method->getReturnType();
-        $typeHint = '';
-        $returnCode = 'return null;';
-
-        if ($returnType instanceof ReflectionNamedType) {
-            $typeName = $returnType->getName();
-            $nullable = $returnType->allowsNull() ? '?' : '';
-            $typeHint = ': ' . $nullable . ($returnType->isBuiltin() ? $typeName : '\\' . ltrim($typeName, '\\'));
-            $returnCode = self::generateReturnValueCode($returnType);
-        }
-
+        $returnByReference = $method->returnsReference() ? '&' : '';
         $static = $method->isStatic() ? 'static ' : '';
+        $name = $method->getName();
+
+        $returnType = $method->getReturnType();
+        $typeHint = $returnType ? ': ' . self::getTypeHint($returnType) : '';
+
+        $returnCode = self::generateReturnValueCode($returnType);
+
         return <<<PHP
-            public {$static}function {$method->getName()}($paramList)$typeHint {
+            public {$static}function {$returnByReference}{$name}($paramList)$typeHint {
                 $returnCode
             }
         PHP;
     }
 
-    private static function generateReturnValueCode(ReflectionNamedType $type): string {
-        if ($type->isBuiltin()) {
-            return match ($type->getName()) {
-                'int' => 'return 0;',
-                'float' => 'return 0.0;',
-                'string' => 'return "' . addslashes(uniqid('mock_', true)) . '";',
-                'bool' => 'return false;',
-                'array' => 'return [];',
-                'void' => '',
-                default => 'return null;',
-            };
+    private static function generateParameterCode(ReflectionParameter $param): string {
+        $code = '';
+
+        // Typ
+        if ($param->hasType()) {
+            $type = $param->getType();
+            $code .= self::getTypeHint($type) . ' ';
         }
 
-	return 'return null;';
-/*
-        // Rekursiv einen Mock erzeugen für Klassen oder Interfaces
-        $className = '\\' . ltrim($type->getName(), '\\');
-        $mock = var_export(self::createMock($className), true);
-        // Achtung: eval() kann keine serialisierten Objekte ausführen, daher:
-        $mockVar = '$_mock_' . self::$counter;
-        return <<<PHP
-            $mockVar = \\Base3\\Core\\DynamicMockFactory::createMock('$className');
-            return $mockVar;
-        PHP;
-*/
+        // Referenz
+        if ($param->isPassedByReference()) {
+            $code .= '&';
+        }
+
+        // Variadisch
+        if ($param->isVariadic()) {
+            $code .= '...';
+        }
+
+        $code .= '$' . $param->getName();
+
+        // Defaultwert
+        if ($param->isOptional() && !$param->isVariadic()) {
+            if ($param->isDefaultValueAvailable()) {
+                $code .= ' = ' . var_export($param->getDefaultValue(), true);
+            } elseif ($param->isDefaultValueConstant()) {
+                $code .= ' = ' . $param->getDefaultValueConstantName();
+            }
+        }
+
+        return $code;
+    }
+
+    private static function getTypeHint(?ReflectionType $type): string {
+        if (!$type) return '';
+
+        $nullable = $type->allowsNull() ? '?' : '';
+
+        if ($type instanceof ReflectionNamedType) {
+            $name = $type->getName();
+            if (!in_array($name, ['int', 'float', 'string', 'bool', 'array', 'object', 'callable', 'iterable', 'mixed', 'void', 'never'])) {
+                $name = '\\' . ltrim($name, '\\');
+            }
+            return $nullable . $name;
+        }
+
+        if ($type instanceof ReflectionUnionType) {
+            return implode('|', array_map(
+                fn(ReflectionNamedType $t) => ($t->allowsNull() ? '?' : '') . $t->getName(),
+                $type->getTypes()
+            ));
+        }
+
+        return ''; // fallback
+    }
+
+    private static function generateReturnValueCode(?ReflectionType $type): string {
+        if (!$type) return 'return null;';
+
+        if ($type instanceof ReflectionNamedType) {
+            $name = $type->getName();
+
+            if ($type->isBuiltin()) {
+                return match ($name) {
+                    'int' => 'return 0;',
+                    'float' => 'return 0.0;',
+                    'string' => 'return "' . addslashes(uniqid('mock_', true)) . '";',
+                    'bool' => 'return false;',
+                    'array' => 'return [];',
+                    'void', 'never' => '',
+                    'mixed', 'object', 'callable', 'iterable' => 'return null;',
+                    default => 'return null;',
+                };
+            } else {
+                // Objekt-Mock rekursiv erzeugen
+                $fqcn = '\\' . ltrim($name, '\\');
+                return "return \\Base3\\Core\\DynamicMockFactory::createMock('$fqcn');";
+            }
+        }
+
+        return 'return null;';
     }
 
     private static function createParameterValue(ReflectionParameter $param): mixed {
         $type = $param->getType();
-
         if ($type instanceof ReflectionNamedType) {
             if (!$type->isBuiltin()) {
                 return self::createMock($type->getName());
             }
             return self::defaultValueFor($type->getName());
         }
-
         return null;
     }
 
