@@ -11,7 +11,6 @@ error_reporting(getenv('DEBUG') ? E_ALL | E_STRICT : 0);
 /* define directories constants */
 define('DIR_ROOT', __DIR__ . DIRECTORY_SEPARATOR);
 define('DIR_CNF', DIR_ROOT . 'cnf' . DIRECTORY_SEPARATOR);
-define('DIR_LANG', DIR_ROOT . 'lang' . DIRECTORY_SEPARATOR);
 define('DIR_SRC', DIR_ROOT . 'src' . DIRECTORY_SEPARATOR);
 define('DIR_LOCAL', DIR_ROOT . 'local' . DIRECTORY_SEPARATOR);
 define('DIR_PLUGIN', DIR_ROOT . 'plugin' . DIRECTORY_SEPARATOR);

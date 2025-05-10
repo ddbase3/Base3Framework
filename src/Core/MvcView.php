@@ -76,7 +76,6 @@ class MvcView implements IMvcView {
 			$servicelocator = ServiceLocator::getInstance();
 			$language = $servicelocator->get('language')->getLanguage();
 		}
-		// TODO DIR_LANG nutzen
 		$filename = $this->path . DIRECTORY_SEPARATOR . 'lang' . DIRECTORY_SEPARATOR . $set . DIRECTORY_SEPARATOR . $language . ".ini";
 		$bricks = parse_ini_file($filename, true);
 		if (isset($this->_["bricks"])) $bricks = array_merge($this->_["bricks"], $bricks);
