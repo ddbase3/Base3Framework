@@ -93,8 +93,9 @@ class DynamicMockFactory {
             $returnCode = self::generateReturnValueCode($returnType);
         }
 
+        $static = $method->isStatic() ? 'static ' : '';
         return <<<PHP
-            public function {$method->getName()}($paramList)$typeHint {
+            public {$static}function {$method->getName()}($paramList)$typeHint {
                 $returnCode
             }
         PHP;
