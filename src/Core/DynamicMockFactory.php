@@ -114,6 +114,8 @@ class DynamicMockFactory {
             };
         }
 
+	return 'return null;';
+/*
         // Rekursiv einen Mock erzeugen für Klassen oder Interfaces
         $className = '\\' . ltrim($type->getName(), '\\');
         $mock = var_export(self::createMock($className), true);
@@ -123,6 +125,7 @@ class DynamicMockFactory {
             $mockVar = \\Base3\\Core\\DynamicMockFactory::createMock('$className');
             return $mockVar;
         PHP;
+*/
     }
 
     private static function createParameterValue(ReflectionParameter $param): mixed {
