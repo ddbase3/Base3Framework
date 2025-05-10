@@ -102,19 +102,27 @@ class DynamicMockFactory {
     }
 
     private static function generateReturnValueCode(ReflectionNamedType $type): string {
-        if (!$type->isBuiltin()) {
-            return 'return null;';
+        if ($type->isBuiltin()) {
+            return match ($type->getName()) {
+                'int' => 'return 0;',
+                'float' => 'return 0.0;',
+                'string' => 'return "' . addslashes(uniqid('mock_', true)) . '";',
+                'bool' => 'return false;',
+                'array' => 'return [];',
+                'void' => '',
+                default => 'return null;',
+            };
         }
 
-        return match ($type->getName()) {
-            'int' => 'return 0;',
-            'float' => 'return 0.0;',
-            'string' => 'return "' . addslashes(uniqid('mock_', true)) . '";',
-            'bool' => 'return false;',
-            'array' => 'return [];',
-            'void' => '',
-            default => 'return null;',
-        };
+        // Rekursiv einen Mock erzeugen für Klassen oder Interfaces
+        $className = '\\' . ltrim($type->getName(), '\\');
+        $mock = var_export(self::createMock($className), true);
+        // Achtung: eval() kann keine serialisierten Objekte ausführen, daher:
+        $mockVar = '$_mock_' . self::$counter;
+        return <<<PHP
+            $mockVar = \\Base3\\Core\\DynamicMockFactory::createMock('$className');
+            return $mockVar;
+        PHP;
     }
 
     private static function createParameterValue(ReflectionParameter $param): mixed {
