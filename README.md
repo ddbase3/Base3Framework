@@ -17,7 +17,7 @@ This README will guide you through the installation and usage of the Base3Framew
 
 ## Requirements
 
-- PHP 8.3 or higher
+- PHP 8.1 or higher
 - A web server (e.g., Apache or Nginx)
 
 ## Installation
@@ -211,6 +211,18 @@ When you visit /hello.php in the browser, you should see the message "Hello, Wor
 
 ### Contributing
 
+## Example Projects Using BASE3
+
+The following production web applications have been developed with BASE3:
+
+- [Mosaic Creator](https://mosaic-creator.de)  
+  An online tool for generating high-resolution photo mosaics.  
+  BASE3 is used here to handle sessions, authentication, file uploads, and background job management.
+
+- [Contourz Photography](https://contourz.photo)  
+  A portfolio and booking platform for ballet photography.  
+  The site is fully built with BASE3, including its plugin system, responsive frontend, and media management.
+
 ### License
 
 Base3Framework is licensed under the LGPL License. See the LICENSE file for more details.
@@ -218,4 +230,10 @@ Base3Framework is licensed under the LGPL License. See the LICENSE file for more
 ## Documentation
 
 For more detailed documentation, please visit the official website or check the API reference.
+
+## Links
+
+- [BASE3 on Wikipedia (German)](https://de.wikipedia.org/wiki/BASE3_Framework)
+- [Official project page (documentation)](https://base3.de/crm.php?id=05fdf4d623714e24a7418c160795ef34)
+
 
