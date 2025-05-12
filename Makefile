@@ -16,22 +16,22 @@ merge:
 	php $(MERGE_SCRIPT)
 
 install: merge
-	@if [ -f plugin/composer.json ]; then \
+	@if [ -f composer.json ]; then \
 		echo "📦 Installing composer dependencies..."; \
-		cd plugin && composer install --no-interaction; \
+		composer install --no-interaction; \
 	else \
-		echo "ℹ️  No plugin/composer.json found. Skipping composer install."; \
+		echo "ℹ️  No composer.json found. Skipping composer install."; \
 	fi
 	@$(MAKE) rootfiles
 	@$(MAKE) publicfiles
 	@$(MAKE) assets
 
 update: merge
-	@if [ -f plugin/composer.json ]; then \
+	@if [ -f composer.json ]; then \
 		echo "📦 Updating composer dependencies..."; \
-		cd plugin && composer update --no-interaction; \
+		composer update --no-interaction; \
 	else \
-		echo "ℹ️  No plugin/composer.json found. Skipping composer update."; \
+		echo "ℹ️  No composer.json found. Skipping composer update."; \
 	fi
 	@$(MAKE) rootfiles
 	@$(MAKE) publicfiles
@@ -54,10 +54,10 @@ assets:
 	fi
 
 clean:
-	@echo "🧹 Cleaning plugin/vendor and composer files..."
-	rm -rf $(PLUGIN_DIR)/vendor
-	rm -f  $(PLUGIN_DIR)/composer.lock
-	rm -f  $(PLUGIN_DIR)/composer.json
+	@echo "🧹 Cleaning vendor and composer files..."
+	rm -rf vendor
+	rm -f composer.lock
+	rm -f composer.json
 
 test:
 	@echo "✅ Running PHPUnit tests..."

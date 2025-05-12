@@ -36,7 +36,7 @@ require DIR_SRC . 'Core/Autoloader.php';
 Autoloader::register();
 
 /* autoloader: Composer (optional) */
-$pluginComposerAutoload = DIR_PLUGIN . 'vendor/autoload.php';
+$pluginComposerAutoload = DIR_ROOT . 'vendor/autoload.php';
 if (file_exists($pluginComposerAutoload)) require_once $pluginComposerAutoload;
 
 /* service locator */

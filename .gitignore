@@ -19,3 +19,8 @@
 /sitemap-*.xml
 /.phpunit.result.cache
 
+# Ignoring generated composer files
+/composer.json
+/composer.lock
+/vendor
+
