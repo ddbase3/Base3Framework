@@ -219,7 +219,7 @@ The following production web applications have been developed with BASE3:
   An online tool for generating high-resolution photo mosaics.  
   BASE3 is used here to handle sessions, authentication, file uploads, and background job management.
 
-- [Contourz Photography](https://contourz.photo)  
+- [Contourz Ballet Photography](https://contourz.photo)  
   A portfolio and booking platform for ballet photography.  
   The site is fully built with BASE3, including its plugin system, responsive frontend, and media management.
 
