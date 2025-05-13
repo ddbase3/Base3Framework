@@ -64,6 +64,9 @@ class ServiceLocator implements IContainer {
 
 		if ($nooverwrite && $this->has($name)) return $this;
 
+		// Sicherstellen, dass der Service in keinem der Container existiert
+		$this->remove($name);
+
 		if ($parameter) {
 			$this->parameters[$name] = $classDefinition;
 			return $this;
@@ -79,6 +82,15 @@ class ServiceLocator implements IContainer {
 		$this->container[$name] = (object) array('def' => $classDefinition, 'shared' => $shared, 'instance' => null);
 
 		return $this;
+	}
+
+	/**
+	 * Entfernt einen Service
+	 */
+	public function remove(string $name) {
+		if (array_key_exists($name, $this->container)) unset($this->container[$name]);
+		if (array_key_exists($name, $this->aliases)) unset($this->aliases[$name]);
+		if (array_key_exists($name, $this->parameters)) unset($this->parameters[$name]);
 	}
 
 	/**

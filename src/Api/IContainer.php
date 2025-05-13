@@ -11,6 +11,7 @@ interface IContainer {
 
 	public function getServiceList(): array;
 	public function set(string $name, $classDefinition, $flags = 0): IContainer;
+        public function remove(string $name);
 	public function has(string $name): bool;
 	public function get(string $name);
 }
