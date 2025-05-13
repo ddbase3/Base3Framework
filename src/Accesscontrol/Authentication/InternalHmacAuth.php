@@ -26,7 +26,7 @@ class InternalHmacAuth extends AbstractAuth implements ICheck {
 			if ($cnf != null) {
 				$this->data["id"] = "internal";
 				$this->data["username"] = "internal";
-				$this->data["password"] = $cnf["masterpass"];
+				$this->data["password"] = $cnf["masterpass"] ?? '';
 			}
 		}
 	}
