@@ -56,7 +56,7 @@ class MvcView implements IMvcView {
 
 		if (!file_exists($file)) {
 			// Template-File existiert nicht -> Fehlermeldung.
-			return 'Unable to find template';
+			return 'Unable to find template - ' . $file;
 		}
 
 		// Der Output des Scripts wird n einen Buffer gespeichert, d.h. nicht gleich ausgegeben.
