@@ -178,7 +178,9 @@ class ServiceLocator implements IContainer, \ArrayAccess {
 		}
  
 		if (is_object($definition)) {
-			return $shared ? $definition : new $definition;
+			if ($shared) return $definition;
+			$class = get_class($definition);
+			return new $class;
 		}
 
 		throw new \RuntimeException('Malformed service definition!');
