@@ -8,7 +8,7 @@ use Base3\Api\IContainer;
  * Dependency Injector.
  * Hier werden alle von der Anwendung global verfügbare Dienste hinterlegt.
  */
-class ServiceLocator implements IContainer {
+class ServiceLocator implements IContainer, \ArrayAccess {
 
 	private static $instance;
 	private static $externalInstance = null;
@@ -16,6 +16,26 @@ class ServiceLocator implements IContainer {
 	private $container = array();
 	private $aliases = array();
 	private $parameters = array();
+
+	// Implementation of ArrayAccess
+
+	public function offsetExists($offset): bool {
+		return $this->has($offset);
+	}
+
+	public function offsetGet($offset): mixed {
+		return $this->get($offset);
+	}
+
+	public function offsetSet($offset, $value): void {
+		throw new \LogicException('Setting services via array access is not supported.');
+	}
+
+	public function offsetUnset($offset): void {
+		throw new \LogicException('Unsetting services via array access is not supported.');
+	}
+
+	// Implementation of IContainer
 
 	public static function useInstance(self $instance) {
 		self::$externalInstance = $instance;
@@ -148,12 +168,12 @@ class ServiceLocator implements IContainer {
 	private function createInstance($definition, bool $shared) {
 
 		if (is_callable($definition)) {
-			// Benutzer hat eine Funktion hinterlegt, die die Klasse erstellt.
+			$ref = new \ReflectionFunction($definition);
+			if ($ref->getNumberOfParameters() > 0) return $definition($this);
 			return $definition();
 		}
- 
+
 		if (is_string($definition)) {
-			// Einfacher Klassenname
 			return new $definition;
 		}
  
