@@ -11,13 +11,13 @@ class SingleSignOnAutoAuth extends AbstractAuth implements ICheck {
 	private $servicelocator;
 	private $session;
 	private $loginpage;
-	private $cnf;
+	private $configuration;
 
 	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->session = $this->servicelocator->get('session');
 		$this->loginpage = $this->servicelocator->get('loginpage');
-		$this->cnf = $this->servicelocator->get('configuration')->get('base');
+		$this->configuration = $this->servicelocator->get('configuration');
 	}
 
 	// Implementation of IBase
@@ -39,6 +39,7 @@ class SingleSignOnAutoAuth extends AbstractAuth implements ICheck {
 
 /*
 // hat nach autologin falsch weiter geleitet
+		$this->cnf = $this->configuration->get('base');
 		$ssocont = strlen($this->cnf["intern"])
 			? $this->cnf["url"] . $this->cnf["intern"]
 			: (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
