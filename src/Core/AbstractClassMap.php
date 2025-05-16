@@ -130,16 +130,18 @@ abstract class AbstractClassMap implements IClassMap {
 			}
 
 			$dep = $type->getName();
-			if (!$this->container->has($dep)) {
+
+			if ($this->container->has($dep)) {
+				$value = $this->container->get($dep);
+			} elseif ($this->container->has($paramName)) {
+				$value = $this->container->get($paramName);
+			} else {
 				$mock = \Base3\Core\DynamicMockFactory::createMock($dep);
 				if ($mock === null) throw new \RuntimeException("Dependency $dep not found in container for class $class");
-				$params[] = $mock;
-				continue;
+				$value = $mock;
 			}
 
-			$value = $this->container->get($dep);
 			if ($value instanceof \Closure) $value = $value();
-
 			$params[] = $value;
 		}
 
