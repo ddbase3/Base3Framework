@@ -120,7 +120,10 @@ class DynamicMockFactory {
 
         if ($type instanceof ReflectionUnionType) {
             return implode('|', array_map(
-                fn(ReflectionNamedType $t) => ($t->allowsNull() ? '?' : '') . $t->getName(),
+                fn(ReflectionNamedType $t) => ($t->allowsNull() ? '?' : '') .
+                    (in_array($t->getName(), ['int','float','string','bool','array','object','callable','iterable','mixed','void','never'])
+                        ? $t->getName()
+                        : '\\' . ltrim($t->getName(), '\\')),
                 $type->getTypes()
             ));
         }
@@ -130,6 +133,14 @@ class DynamicMockFactory {
 
     private static function generateReturnValueCode(?ReflectionType $type): string {
         if (!$type) return 'return null;';
+
+        if ($type instanceof ReflectionUnionType) {
+            // Nimm den ersten gültigen Typ zur Generierung des Rückgabewerts
+            foreach ($type->getTypes() as $subtype) {
+                if ($subtype instanceof ReflectionNamedType) return self::generateReturnValueCode($subtype);
+            }
+            return 'return null;';
+        }
 
         if ($type instanceof ReflectionNamedType) {
             $name = $type->getName();
