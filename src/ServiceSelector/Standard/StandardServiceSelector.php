@@ -2,26 +2,24 @@
 
 namespace Base3\ServiceSelector\Standard;
 
-use Base3\Core\ServiceLocator;
-use Base3\ServiceSelector\Api\IServiceSelector;
-use Base3\Middleware\Api\IMiddleware;
 use Base3\Api\ICheck;
+use Base3\Api\IOutput;
+use Base3\Api\IRequest;
+use Base3\Core\ServiceLocator;
+use Base3\Middleware\Api\IMiddleware;
+use Base3\Page\Api\IPageCatchall;
+use Base3\ServiceSelector\Api\IServiceSelector;
 
 class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 
 	private $servicelocator;
+	private $request;
 
 	private static $instance;
 
 	private function __construct() {
-
 		$this->servicelocator = ServiceLocator::getInstance();
-
-		if (php_sapi_name() != "cli") return;
-		$options = getopt("", array("app:", "name:", "out:"));
-	        if (isset($options["app"])) $_GET["app"] = $options["app"];
-        	if (isset($options["name"])) $_GET["name"] = $options["name"];
-	        if (isset($options["out"])) $_GET["out"] = $options["out"];
+		$this->request = $this->servicelocator->get(IRequest::class);
 	}
 
 	public static function getInstance() {
@@ -58,10 +56,10 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 		$configuration = $this->servicelocator->get('configuration');
 		$accesscontrol = $this->servicelocator->get('accesscontrol');
 
-		$out = $_GET['out'] = isset($_GET['out']) && strlen($_GET['out']) ? $_GET['out'] : 'html';
-		$data = $_GET['data'] = isset($_GET['data']) && strlen($_GET['data']) ? $_GET['data'] : '';
-		$app = $_GET['app'] = isset($_GET['app']) && strlen($_GET['app']) ? $_GET['app'] : '';
-		$name = $_GET['name'] = isset($_GET['name']) && strlen($_GET['name']) ? $_GET['name'] : 'index';
+		$out = $this->request->get('out', 'html');
+		$data = $this->request->get('data', '');
+		$app = $this->request->get('app', '');
+		$name = $this->request->get('name', 'index');
 
 		$url = $configuration->get('base')["url"];
 		$intern = $configuration->get('base')["intern"];
@@ -71,10 +69,10 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 		}
 
 		$instance = empty($app)
-			? $classmap->getInstanceByInterfaceName(\Base3\Api\IOutput::class, $name)
-			: $classmap->getInstanceByAppInterfaceName($app, \Base3\Api\IOutput::class, $name);
+			? $classmap->getInstanceByInterfaceName(IOutput::class, $name)
+			: $classmap->getInstanceByAppInterfaceName($app, IOutput::class, $name);
 		if ($instance == null) {
-			$instances = $classmap->getInstancesByInterface(\Base3\Page\Api\IPageCatchall::class);
+			$instances = $classmap->getInstancesByInterface(IPageCatchall::class);
 			$instance = reset($instances);
 		}
 

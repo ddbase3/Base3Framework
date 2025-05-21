@@ -34,7 +34,7 @@ class SingleSignOnAuth extends AbstractAuth implements ICheck {
 
 	public function finish($userid) {
 		/*
-		$getvars = $_GET;
+		$getvars = $_GET;  // new version $this->request->allGet();
 		unset($getvars["userid"]);
 		unset($getvars["ssocode"]);
 		$url = strtok($_SERVER["REQUEST_URI"], '?') . "?" . http_build_query($getvars);

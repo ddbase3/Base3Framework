@@ -20,16 +20,18 @@ define('DIR_TPL', DIR_ROOT . 'tpl' . DIRECTORY_SEPARATOR);
 define('DIR_USERFILES', DIR_ROOT . 'userfiles' . DIRECTORY_SEPARATOR);
 
 /* uses */
-use Base3\Core\Autoloader;
-use Base3\Core\ServiceLocator;
-use Base3\Api\IContainer;
-use Base3\Configuration\ConfigFile\ConfigFile;
-use Base3\Configuration\Api\IConfiguration;
-use Base3\Core\PluginClassMap;
 use Base3\Api\IClassMap;
-use Base3\ServiceSelector\Standard\StandardServiceSelector;
-use Base3\ServiceSelector\Api\IServiceSelector;
+use Base3\Api\IContainer;
 use Base3\Api\IPlugin;
+use Base3\Api\IRequest;
+use Base3\Configuration\Api\IConfiguration;
+use Base3\Configuration\ConfigFile\ConfigFile;
+use Base3\Core\Autoloader;
+use Base3\Core\PluginClassMap;
+use Base3\Core\Request;
+use Base3\Core\ServiceLocator;
+use Base3\ServiceSelector\Api\IServiceSelector;
+use Base3\ServiceSelector\Standard\StandardServiceSelector;
 
 /* autoloader */
 require DIR_SRC . 'Core/Autoloader.php';
@@ -44,6 +46,7 @@ $servicelocator = new ServiceLocator();
 ServiceLocator::useInstance($servicelocator);
 $servicelocator
 	->set('servicelocator', $servicelocator, ServiceLocator::SHARED)
+	->set(IRequest::class, Request::fromGlobals(), ServiceLocator::SHARED)
 	->set(IContainer::class, 'servicelocator', ServiceLocator::ALIAS)
 	->set('configuration', new ConfigFile, ServiceLocator::SHARED)
 	->set(IConfiguration::class, 'configuration', ServiceLocator::ALIAS)
