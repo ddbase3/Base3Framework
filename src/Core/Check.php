@@ -2,19 +2,16 @@
 
 namespace Base3\Core;
 
-use Base3\Api\IOutput;
 use Base3\Api\ICheck;
+use Base3\Api\IClassMap;
 use Base3\Api\IContainer;
+use Base3\Api\IOutput;
 
 class Check implements IOutput, ICheck {
 
-	protected $container;
-
 	private $checks;
 
-	public function __construct(IContainer $container) {
-		$this->container = $container;
-	}
+	public function __construct(private readonly IContainer $container) {}
 
 	// Implementation of IBase
 
@@ -85,10 +82,16 @@ class Check implements IOutput, ICheck {
 		switch (true) {
 
 			case $service == null:
-				$this->checks[] = array('title' => $name, 'class' => '', 'data' => 'no service');
+				$this->checks[] = ['title' => $name, 'class' => '', 'data' => 'no service'];
 				break;
 
 			case is_callable($service):
+
+				// TODO replace whole method with classmap instatiate method
+				$ref = new \ReflectionFunction($service);
+				$params = $ref->getParameters();
+				if ($params > 0) $this->checks[] = ['title' => $name, 'class' => '', 'data' => 'third party service'];
+
 				$instance = $service();
 				if ($instance instanceof ICheck) $this->checkInstance($instance, $name);
 				break;
@@ -103,7 +106,7 @@ class Check implements IOutput, ICheck {
 				break;
 
 			default:
-				$this->checks[] = array('title' => $name, 'class' => '', 'data' => 'no check');
+				$this->checks[] = ['title' => $name, 'class' => '', 'data' => 'no check'];
 		}
 	}
 
