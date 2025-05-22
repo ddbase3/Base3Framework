@@ -79,7 +79,7 @@ class Check implements IOutput, ICheck {
 			} catch (\Throwable $e) {
 				$this->checks[] = [
 					'title' => $name,
-					'class' => get_class($instance),
+					'class' => '',
 					'data' => 'exception: ' . $e->getMessage()
 				];
 				continue;
