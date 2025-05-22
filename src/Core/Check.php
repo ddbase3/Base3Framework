@@ -96,7 +96,7 @@ class Check implements IOutput, ICheck {
 				$this->checks[] = ['title' => $name, 'class' => '', 'data' => 'no service'];
 				break;
 
-			case is_callable($service):
+			case $service instanceof \Closure:
 
 				// TODO replace whole method with classmap instatiate method
 				$ref = new \ReflectionFunction($service);
