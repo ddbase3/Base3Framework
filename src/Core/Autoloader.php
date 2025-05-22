@@ -10,10 +10,6 @@ class Autoloader
     /** @var bool Autoloader bereits registriert? */
     private static bool $registered = false;
 
-    private static string $dirSrc = "src/";
-    private static string $dirTest = "test/";
-    private static string $dirPlugin = "plugin/";
-
     /**
      * Registrierung des Autoloaders (nur einmal)
      */
@@ -24,11 +20,11 @@ class Autoloader
         }
 
         // Basisnamespaces
-        self::addNamespace('Base3\\', self::$dirSrc);
-        self::addNamespace('Base3\\Test\\', self::$dirTest);
+        self::addNamespace('Base3\\', DIR_SRC);
+        self::addNamespace('Base3\\Test\\', DIR_TEST);
 
         // Plugins dynamisch hinzufügen
-        foreach (glob(self::$dirPlugin . '*', GLOB_ONLYDIR) as $pluginPath) {
+        foreach (glob(DIR_PLUGIN . '*', GLOB_ONLYDIR) as $pluginPath) {
             $pluginName = basename($pluginPath);
             self::addNamespace($pluginName . '\\', $pluginPath . '/src');
             self::addNamespace($pluginName . '\\Test\\', $pluginPath . '/test');
