@@ -73,7 +73,18 @@ class Check implements IOutput, ICheck {
 		$this->checks = array();
 		$services = $this->container->getServiceList();
 		foreach ($services as $name) {
-			$service = $this->container->get($name);
+
+			try {
+				$service = $this->container->get($name);
+			} catch (\Throwable $e) {
+				$this->checks[] = [
+					'title' => $name,
+					'class' => get_class($instance),
+					'data' => 'exception: ' . $e->getMessage()
+				];
+				continue;
+			}
+
 			$this->checkService($service, $name);
 		}
 	}
