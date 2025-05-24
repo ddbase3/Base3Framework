@@ -12,7 +12,7 @@ class ExecutionTimeMiddleware implements IMiddleware {
 		$this->next = $next;
 	}
 
-	public function process() {
+	public function process(): string {
 		$start = microtime(true);
 
 		$output = $this->next->process();
