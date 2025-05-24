@@ -168,9 +168,18 @@ class ServiceLocator implements IContainer, \ArrayAccess {
 	private function createInstance($definition, bool $shared) {
 
 		if (is_callable($definition)) {
-			$ref = new \ReflectionFunction($definition);
-			if ($ref->getNumberOfParameters() > 0) return $definition($this);
-			return $definition();
+			if ($definition instanceof \Closure) {
+				$ref = new \ReflectionFunction($definition);
+				return $ref->getNumberOfParameters() > 0
+					? $definition($this)
+					: $definition();
+			}
+
+			// Falls es sich um [Class, method] oder __invoke handelt:
+			$ref = new \ReflectionMethod($definition, '__invoke');
+			return $ref->getNumberOfParameters() > 0
+				? $definition($this)
+				: $definition();
 		}
 
 		if (is_string($definition)) {
