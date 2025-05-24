@@ -30,6 +30,9 @@ use Base3\Core\ServiceLocator;
 use Base3\Configuration\ConfigFile\ConfigFile;
 use Base3\Configuration\Api\IConfiguration;
 use Base3\Core\PluginClassMap;
+use Base3\Dispatcher\IHookManager;
+use Base3\Dispatcher\IHookListener;
+use Base3\Dispatcher\HookManager;
 use Base3\ServiceSelector\Standard\StandardServiceSelector;
 use Base3\ServiceSelector\Api\IServiceSelector;
 
@@ -48,6 +51,7 @@ $servicelocator
 	->set('servicelocator', $servicelocator, ServiceLocator::SHARED)
 	->set(IRequest::class, Request::fromGlobals(), ServiceLocator::SHARED)
 	->set(IContainer::class, 'servicelocator', ServiceLocator::ALIAS)
+	->set(IHookManager::class, fn() => new HookManager, ServiceLocator::SHARED)
 	->set('configuration', new ConfigFile, ServiceLocator::SHARED)
 	->set(IConfiguration::class, 'configuration', ServiceLocator::ALIAS)
 	->set('classmap', new PluginClassMap($servicelocator), ServiceLocator::SHARED)
@@ -55,11 +59,19 @@ $servicelocator
 	->set(IServiceSelector::class, StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
 	;
 
+/* hooks */
+$hookManager = $servicelocator->get(IHookManager::class);
+$listeners = $servicelocator->get(IClassMap::class)->getInstancesByInterface(IHookListener::class);
+foreach ($listeners as $listener) $hookManager->addHookListener($listener);
+$hookManager->dispatch('bootstrap.init');
+
 /* plugins */
 $plugins = $servicelocator->get(IClassMap::class)->getInstancesByInterface(IPlugin::class);
 foreach ($plugins as $plugin) $plugin->init();
+$hookManager->dispatch('bootstrap.start');
 
 /* go */
 $serviceselector = $servicelocator->get(IServiceSelector::class);
-$serviceselector->go();
+echo $serviceselector->go();
+$hookManager->dispatch('bootstrap.finish');
 

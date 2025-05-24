@@ -29,29 +29,28 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 
 	// Implementation of IServiceSelector
 
-	public function go() {
+	public function go(): string {
 		$middlewares = $this->servicelocator->get('middlewares');
-		if (empty($middlewares)) {
-			echo $this->process();
-			return;
-		}
+		if (empty($middlewares)) return $this->process();
 
 		$prev = null;
 		foreach ($middlewares as $middleware) {
-			if ($prev != null) $prev->setNext($middleware);
+			if ($prev !== null) $prev->setNext($middleware);
 			$prev = $middleware;
 		}
+
 		$prev->setNext($this);
-		echo $middlewares[0]->process();
+
+		return $middlewares[0]->process();
 	}
 
 	// Implementation of IMiddleware
 
-	public function setNext($next) {
+	public final function setNext($next) {
 		// do nothing
 	}
 
-	public function process() {
+	public function process(): string {
 		$classmap = $this->servicelocator->get('classmap');
 		$language = $this->servicelocator->get('language');
 		$configuration = $this->servicelocator->get('configuration');

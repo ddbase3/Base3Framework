@@ -3,9 +3,6 @@
 namespace Base3\Middleware\Api;
 
 interface IMiddleware {
-
 	public function setNext($next);
-
-	public function process();
-
+	public function process(): string;
 }

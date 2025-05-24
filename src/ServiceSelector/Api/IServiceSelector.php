@@ -3,7 +3,5 @@
 namespace Base3\ServiceSelector\Api;
 
 interface IServiceSelector {
-
-	public function go();
-
+	public function go(): string;
 }
