@@ -13,6 +13,27 @@ class DynamicMockFactory {
     private static int $counter = 0;
 
     public static function createMock(string $classOrInterface): object {
+        $builtinMocks = [
+            \DateTimeZone::class => fn() => new \DateTimeZone('UTC'),
+            \DateTimeImmutable::class => fn() => new \DateTimeImmutable('now'),
+            \DateTime::class => fn() => new \DateTime('now'),
+            \FilesystemIterator::class => fn() => new \FilesystemIterator(__DIR__),
+            \DirectoryIterator::class => fn() => new \DirectoryIterator(__DIR__),
+            \SplFileObject::class => fn() => new \SplFileObject('/tmp/mock.txt', 'w+'),
+            \SimpleXMLElement::class => fn() => new \SimpleXMLElement('<root/>'),
+            \DOMDocument::class => fn() => (function () {
+                $doc = new \DOMDocument();
+                $doc->loadXML('<root/>');
+                return $doc;
+            })(),
+            \PDO::class => fn() => throw new \RuntimeException("Cannot auto-mock PDO – please register it in the container."),
+        ];
+
+        if (isset($builtinMocks[$classOrInterface])) {
+            $mock = $builtinMocks[$classOrInterface];
+            return \is_callable($mock) ? $mock() : $mock;
+        }
+
         if (!interface_exists($classOrInterface) && !class_exists($classOrInterface)) {
             throw new \InvalidArgumentException("Class or interface $classOrInterface does not exist.");
         }
