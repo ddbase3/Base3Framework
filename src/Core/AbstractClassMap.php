@@ -105,9 +105,12 @@ abstract class AbstractClassMap implements IClassMap {
 
 	public function instantiate(string $class) {
 		$refClass = new \ReflectionClass($class);
-		$constructor = $refClass->getConstructor();
+
+		// nur konkrete Klassen oder Interfaces
+		if ($refClass->isAbstract()) return null;
 
 		// Kein Konstruktor? Einfach instanziieren
+		$constructor = $refClass->getConstructor();
 		if (!$constructor) return new $class();
 
 		$params = [];
