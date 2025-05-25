@@ -103,51 +103,69 @@ abstract class AbstractClassMap implements IClassMap {
 		return $this->getInstanceByAppInterfaceName($app, $interface, $name, true);
 	}
 
-	public function instantiate(string $class) {
-		$refClass = new \ReflectionClass($class);
+public function instantiate(string $class) {
+    try {
+        $refClass = new \ReflectionClass($class);
 
-		// nur konkrete Klassen oder Interfaces
-		if ($refClass->isAbstract()) return null;
+        // nur konkrete Klassen
+        if ($refClass->isAbstract()) return null;
 
-		// Kein Konstruktor? Einfach instanziieren
-		$constructor = $refClass->getConstructor();
-		if (!$constructor) return new $class();
+        // Kein Konstruktor? Einfach instanziieren
+        $constructor = $refClass->getConstructor();
+        if (!$constructor) return new $class();
 
-		$params = [];
-		foreach ($constructor->getParameters() as $param) {
+        $params = [];
+        foreach ($constructor->getParameters() as $param) {
+            $type = $param->getType();
+            $paramName = $param->getName();
 
-			$type = $param->getType();
-			$paramName = $param->getName();
+            if (!$type || !$type instanceof \ReflectionNamedType) {
+                // z. B. union type, intersection oder mixed
+                if ($param->isDefaultValueAvailable()) {
+                    $params[] = $param->getDefaultValue();
+                    continue;
+                }
 
-			if (!$type || !$type instanceof \ReflectionNamedType) {
-				throw new \RuntimeException("Cannot resolve constructor param \${$paramName} in $class");
-			}
+                // sonst: überspringen
+                return null;
+            }
 
-			if ($type->isBuiltin()) {
-				if ($this->container->has($paramName)) {
-					$params[] = $this->container->get($paramName);
-					continue;
-				} else {
-					throw new \RuntimeException("Cannot resolve builtin param \${$paramName} in $class");
-				}
-			}
+            if ($type->isBuiltin()) {
+                if ($this->container->has($paramName)) {
+                    $params[] = $this->container->get($paramName);
+                    continue;
+                } elseif ($param->isDefaultValueAvailable()) {
+                    $params[] = $param->getDefaultValue();
+                    continue;
+                } else {
+                    return null;
+                }
+            }
 
-			$dep = $type->getName();
+            $dep = $type->getName();
 
-			if ($this->container->has($dep)) {
-				$value = $this->container->get($dep);
-			} elseif ($this->container->has($paramName)) {
-				$value = $this->container->get($paramName);
-			} else {
-				$mock = \Base3\Core\DynamicMockFactory::createMock($dep);
-				if ($mock === null) throw new \RuntimeException("Dependency $dep not found in container for class $class");
-				$value = $mock;
-			}
+            if ($this->container->has($dep)) {
+                $value = $this->container->get($dep);
+            } elseif ($this->container->has($paramName)) {
+                $value = $this->container->get($paramName);
+            } else {
+                $mock = \Base3\Core\DynamicMockFactory::createMock($dep);
+                if ($mock === null) return null;
+                $value = $mock;
+            }
 
-			if ($value instanceof \Closure) $value = $value();
-			$params[] = $value;
-		}
+            if ($value instanceof \Closure) {
+                $value = $value();
+            }
 
-		return $refClass->newInstanceArgs($params);
-	}
+            $params[] = $value;
+        }
+
+        return $refClass->newInstanceArgs($params);
+    } catch (\Throwable $e) {
+        // Problem bei Reflection, Konstruktor-Auflösung oder Instanziierung
+        return null;
+    }
+}
+
 }
