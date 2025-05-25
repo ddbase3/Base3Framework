@@ -40,6 +40,11 @@ class DynamicMockFactory {
 
         if (class_exists($classOrInterface) && !interface_exists($classOrInterface)) {
             $ref = new ReflectionClass($classOrInterface);
+
+            if ($ref->isAbstract()) {
+                return self::createAbstractClassMock($classOrInterface);
+            }
+
             $ctor = $ref->getConstructor();
             if (!$ctor) return new $classOrInterface();
 
