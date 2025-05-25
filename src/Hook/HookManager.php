@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Base3\Dispatcher;
+namespace Base3\Hook;
 
 class HookManager implements IHookManager
 {

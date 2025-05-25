@@ -12,9 +12,9 @@ use Base3\Core\ServiceLocator;
 use Base3\Configuration\ConfigFile\ConfigFile;
 use Base3\Configuration\Api\IConfiguration;
 use Base3\Core\PluginClassMap;
-use Base3\Dispatcher\IHookManager;
-use Base3\Dispatcher\IHookListener;
-use Base3\Dispatcher\HookManager;
+use Base3\Hook\IHookManager;
+use Base3\Hook\IHookListener;
+use Base3\Hook\HookManager;
 use Base3\ServiceSelector\Standard\StandardServiceSelector;
 use Base3\ServiceSelector\Api\IServiceSelector;
 
