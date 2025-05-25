@@ -65,15 +65,40 @@ class DynamicMockFactory {
             }
         }
 
+        // Konstruktor vorbereiten
+        $constructor = '';
+        if ($reflection->hasMethod('__construct')) {
+            $ctor = $reflection->getConstructor();
+            $args = [];
+
+            foreach ($ctor->getParameters() as $param) {
+                $type = $param->getType();
+                $arg = 'null';
+                if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+                    $mock = self::createMock($type->getName());
+                    $arg = var_export($mock, true);
+                }
+                $args[] = $arg;
+            }
+
+            $argList = implode(', ', $args);
+            $constructor = <<<PHP
+                public function __construct() {
+                    parent::__construct($argList);
+                }
+            PHP;
+        }
+
         $className = 'Mock_' . $reflection->getShortName() . '_' . self::$counter++;
         $code = <<<PHP
             return new class extends \\$abstractClass {
+                $constructor
                 $methodsCode
             };
         PHP;
 
         return eval($code);
-    }
+   }
 
 
     private static function createInterfaceMock(string $interface): object {
