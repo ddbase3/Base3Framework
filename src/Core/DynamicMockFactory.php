@@ -55,6 +55,27 @@ class DynamicMockFactory {
         return self::createInterfaceMock($classOrInterface);
     }
 
+    private static function createAbstractClassMock(string $abstractClass): object {
+        $reflection = new ReflectionClass($abstractClass);
+        $methodsCode = '';
+
+        foreach ($reflection->getMethods() as $method) {
+            if ($method->isAbstract()) {
+                $methodsCode .= self::generateMethodStub($method) . "\n";
+            }
+        }
+
+        $className = 'Mock_' . $reflection->getShortName() . '_' . self::$counter++;
+        $code = <<<PHP
+            return new class extends \\$abstractClass {
+                $methodsCode
+            };
+        PHP;
+
+        return eval($code);
+    }
+
+
     private static function createInterfaceMock(string $interface): object {
         $reflection = new ReflectionClass($interface);
         $methodsCode = '';
