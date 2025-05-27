@@ -8,7 +8,7 @@ class GroupUserAuth extends AbstractAuth {
 
 	// Implementation of IBase
 
-	public function getName() {
+	public static function getName(): string {
 		return "groupuserauth";
 	}
 

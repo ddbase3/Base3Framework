@@ -31,7 +31,7 @@ class SingleSignOnServerAuth extends AbstractAuth implements ICheck {
 
 	// Implementation of IBase
 
-	public function getName() {
+	public static function getName(): string {
 		return "singlesignonserverauth";
 	}
 

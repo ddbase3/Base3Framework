@@ -15,7 +15,7 @@ class MicroserviceReceiver extends AbstractMicroservice implements IMicroservice
 
 	// Implementation of IBase
 
-	public function getName() {
+	public static function getName(): string {
 		return "microservicereceiver";
 	}
 

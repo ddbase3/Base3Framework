@@ -26,11 +26,16 @@ class ClassMap extends AbstractClassMap implements ICheck {
 			foreach ($classes as $c) {
 				foreach ($c["interfaces"] as $interface) {
 					$this->map[$app]["interface"][$interface][] = $c["class"];
-					if ($interface == \Base3\Api\IBase::class) {
-						$instance = $this->instantiate($c["class"]);
-						$name = $instance->getName();
-						$this->map[$app]["name"][$name] = $c["class"];
+
+					if ($interface !== IBase::class) continue;
+					if (!method_exists($c["class"], 'getName')) continue;
+
+					try {
+						$name = $c["class"]::getName();
+					} catch (\Throwable $e) {
+						continue;  //ignore failing implementations
 					}
+					$this->map[$app]["name"][$name] = $c["class"];
 				}
 			}
 		}
@@ -38,9 +43,7 @@ class ClassMap extends AbstractClassMap implements ICheck {
 		$str .= var_export($this->map, true);
 		$str .= ";\n";
 
-		$fp = fopen($this->filename, "w");
-		fwrite($fp, $str);
-		fclose($fp);
+		file_put_contents($this->filename, $str);
 	}
 
 	// Implementation of ICheck

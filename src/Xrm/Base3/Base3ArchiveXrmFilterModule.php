@@ -17,7 +17,7 @@ class Base3ArchiveXrmFilterModule implements IXrmFilterModule {
 
 	// Implementation of IBase
 
-	public function getName() {
+	public static function getName(): string {
 		return "base3archivexrmfiltermodule";
 	}
 

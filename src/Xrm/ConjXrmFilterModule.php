@@ -17,7 +17,7 @@ class ConjXrmFilterModule extends AbstractXrmFilterModule {
 
 	// Implementation of IBase
 
-	public function getName() {
+	public static function getName(): string {
 		return "conjxrmfiltermodule";
 	}
 

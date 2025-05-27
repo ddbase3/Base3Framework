@@ -8,9 +8,10 @@ abstract class AbstractMicroservice implements IMicroservice {
 
 	// Implementation of IBase
 
-	public function getName() {
-		$c = get_class($this);
-		return strtolower(substr($c, strrpos($c, '\\') + 1));
+	public static function getName(): string {
+		$fullClass = static::class;
+		$parts = explode('\\', $fullClass);
+		return strtolower(end($parts));
 	}
 
 	// Implementation of IOutput

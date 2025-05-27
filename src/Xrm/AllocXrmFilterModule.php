@@ -17,7 +17,7 @@ class AllocXrmFilterModule extends AbstractXrmFilterModule {
 
 	// Implementation of IBase
 
-	public function getName() {
+	public static function getName(): string {
 		return "allocxrmfiltermodule";
 	}
 

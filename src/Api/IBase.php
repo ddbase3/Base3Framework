@@ -5,6 +5,6 @@ namespace Base3\Api;
 interface IBase {
 
 	/* Bezeichnung für den Zugriff auf eine bestimmte Klasse (auch Namespace-übergreifend unique!) */
-	public function getName();
+	public static function getName(): string;
 
 }

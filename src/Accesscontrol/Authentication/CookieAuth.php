@@ -35,7 +35,7 @@ class CookieAuth extends AbstractAuth implements ICheck {
 
 	// Implementation of IBase
 
-	public function getName() {
+	public static function getName(): string {
 		return "cookieauth";
 	}
 

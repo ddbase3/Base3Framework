@@ -36,7 +36,7 @@ class DelegateWorker implements IWorker, ICheck {
 
 	// Implementation of IBase
 
-	public function getName() {
+	public static function getName(): string {
 		return "delegateworker";
 	}
 

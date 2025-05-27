@@ -2,6 +2,7 @@
 
 namespace Base3\Core;
 
+use Base3\Api\IBase;
 use Base3\Api\ICheck;
 
 class PluginClassMap extends AbstractClassMap implements ICheck {
@@ -26,17 +27,21 @@ class PluginClassMap extends AbstractClassMap implements ICheck {
 				$apppath = $d["basedir"] . DIRECTORY_SEPARATOR . $app;
 				if (!empty($d["subdir"])) $apppath .= DIRECTORY_SEPARATOR . $d["subdir"];
 				if (!is_dir($apppath)) continue;
-				$classes = array();
+				$classes = [];
 				$this->getClasses($classes, $d["basedir"], $app, $d["subdir"], $d["subns"]);
 				foreach ($classes as $c) {
 					foreach ($c["interfaces"] as $interface) {
 						$this->map[$app]["interface"][$interface][] = $c["class"];
-						if ($interface == \Base3\Api\IBase::class) {
-							$instance = $this->instantiate($c["class"]);
-							if ($instance == null) continue;
-							$name = $instance->getName();
-							$this->map[$app]["name"][$name] = $c["class"];
+
+						if ($interface !== IBase::class) continue;
+						if (!method_exists($c["class"], 'getName')) continue;
+
+						try {
+							$name = $c["class"]::getName();
+						} catch (\Throwable $e) {
+							continue;  //ignore failing implementations
 						}
+						$this->map[$app]["name"][$name] = $c["class"];
 					}
 				}
 			}
@@ -45,9 +50,7 @@ class PluginClassMap extends AbstractClassMap implements ICheck {
 		$str .= var_export($this->map, true);
 		$str .= ";\n";
 
-		$fp = fopen($this->filename, "w");
-		fwrite($fp, $str);
-		fclose($fp);
+		file_put_contents($this->filename, $str);
 	}
 
 	public function getPlugins() {

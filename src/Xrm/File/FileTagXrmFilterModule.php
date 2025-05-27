@@ -8,7 +8,7 @@ class FileTagXrmFilterModule extends AbstractXrmFilterModule {
 
 	// Implementation of IBase
 
-	public function getName() {
+	public static function getName(): string {
 		return "filetagxrmfiltermodule";
 	}
 
