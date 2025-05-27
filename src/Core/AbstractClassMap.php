@@ -168,4 +168,19 @@ public function instantiate(string $class) {
     }
 }
 
+	// Private methods
+
+	protected function getEntries($path) {
+		$path = rtrim($path, DIRECTORY_SEPARATOR);
+		$entries = array();
+		$handle = opendir($path);
+		while ($entry = readdir($handle)) {
+			if ($entry == "." || $entry == "..") continue;
+			if (substr($entry, 0, 1) == "_") continue;
+			if (substr($entry, 0, 1) == ".") continue;
+			$entries[] = $entry;
+		}
+		closedir($handle);
+		return $entries;
+	}
 }

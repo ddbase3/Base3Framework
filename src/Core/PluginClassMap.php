@@ -59,6 +59,16 @@ class PluginClassMap extends AbstractClassMap implements ICheck {
 		return $plugins;
 	}
 
+	// Implementation of ICheck
+
+	public function checkDependencies() {
+		return array(
+			"classmap_writable" => is_writable($this->filename) ? "Ok" : $this->filename . " not writable"
+		);
+	}
+
+	// Private methods
+
 	private function getClasses(&$classes, $basedir, $app, $subdir = "", $subns = "", $path = "") {
 		$fullpath = $basedir . DIRECTORY_SEPARATOR . $app . DIRECTORY_SEPARATOR . $subdir . DIRECTORY_SEPARATOR . $path;
 		$entries = $this->getEntries($fullpath);
@@ -89,27 +99,5 @@ class PluginClassMap extends AbstractClassMap implements ICheck {
 				$classes[] = array("file" => $fullentry, "class" => $classname, "interfaces" => $interfaces);
 			}
 		}
-	}
-
-	private function getEntries($path) {
-		$path = rtrim($path, DIRECTORY_SEPARATOR);
-		$entries = array();
-		$handle = opendir($path);
-		while ($entry = readdir($handle)) {
-			if ($entry == "." || $entry == "..") continue;
-			if (substr($entry, 0, 1) == "_") continue;
-			if (substr($entry, 0, 1) == ".") continue;
-			$entries[] = $entry;
-		}
-		closedir($handle);
-		return $entries;
-	}
-
-	// Implementation of ICheck
-
-	public function checkDependencies() {
-		return array(
-			"classmap_writable" => is_writable($this->filename) ? "Ok" : $this->filename . " not writable"
-		);
 	}
 }

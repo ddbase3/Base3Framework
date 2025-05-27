@@ -43,6 +43,16 @@ class ClassMap extends AbstractClassMap implements ICheck {
 		fclose($fp);
 	}
 
+	// Implementation of ICheck
+
+	public function checkDependencies() {
+		return array(
+			"classmap_writable" => is_writable($this->filename) ? "Ok" : $this->filename . " not writable"
+		);
+	}
+
+	// Private methods
+
 	private function getClasses(&$classes, $path) {
 		$path = rtrim($path, DIRECTORY_SEPARATOR);
 		$entries = $this->getEntries($path);
@@ -68,27 +78,5 @@ class ClassMap extends AbstractClassMap implements ICheck {
 				$classes[] = array("file" => $fullentry, "class" => $classname, "interfaces" => $interfaces);
 			}
 		}
-	}
-
-	private function getEntries($path) {
-		$path = rtrim($path, DIRECTORY_SEPARATOR);
-		$entries = array();
-		$handle = opendir($path);
-		while ($entry = readdir($handle)) {
-			if ($entry == "." || $entry == "..") continue;
-			if (substr($entry, 0, 1) == "_") continue;
-			if (substr($entry, 0, 1) == ".") continue;
-			$entries[] = $entry;
-		}
-		closedir($handle);
-		return $entries;
-	}
-
-	// Implementation of ICheck
-
-	public function checkDependencies() {
-		return array(
-			"classmap_writable" => is_writable($this->filename) ? "Ok" : $this->filename . " not writable"
-		);
 	}
 }
