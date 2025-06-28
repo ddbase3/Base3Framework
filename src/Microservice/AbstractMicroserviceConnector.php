@@ -31,9 +31,10 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 	public function __call($method, $args) {
 
 		$binarystream = $this->flags & self::BINARYSTREAM;
+		$serialized = true; // $this->flags & self::SERIALIZED;
 
 		$methoddata = $this->getMethodData($method);
-		if (!$methoddata) die("method not found");
+		if (!$methoddata) die('method not found - ' . print_r($this->service, true) . ' - ' . $this->url . ' - ' . $method);
 
 		$params = array();
 		if ($methoddata != null && isset($methoddata["params"]))
@@ -47,7 +48,9 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 
                 if (!$response) return null;
 
-		return $binarystream ? $response : json_decode($response, true);
+		if ($binarystream) return $response;
+		if ($serialized) return unserialize($response);
+		return json_decode($response, true);
 	}
 
 	protected function getMethodData($method) {

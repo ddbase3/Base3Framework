@@ -163,6 +163,9 @@ abstract class AbstractClassMap implements IClassMap {
 
 			return $refClass->newInstanceArgs($params);
 		} catch (\Throwable $e) {
+			echo $e->getMessage();
+			exit;
+
 			// Problem bei Reflection, Konstruktor-Auflösung oder Instanziierung
 			return null;
 		}
