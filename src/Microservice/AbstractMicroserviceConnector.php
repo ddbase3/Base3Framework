@@ -31,7 +31,7 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 	public function __call($method, $args) {
 
 		$binarystream = $this->flags & self::BINARYSTREAM;
-		$serialized = true; // $this->flags & self::SERIALIZED;
+		$serialized = $this->flags & self::SERIALIZED;
 
 		$methoddata = $this->getMethodData($method);
 		if (!$methoddata) die('method not found - ' . print_r($this->service, true) . ' - ' . $this->url . ' - ' . $method);
