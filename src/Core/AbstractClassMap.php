@@ -107,10 +107,10 @@ abstract class AbstractClassMap implements IClassMap {
 		try {
 			$refClass = new \ReflectionClass($class);
 
-			// nur konkrete Klassen
+			// Only instantiate concrete classes
 			if ($refClass->isAbstract()) return null;
 
-			// Kein Konstruktor? Einfach instanziieren
+			// No constructor? Instantiate directly
 			$constructor = $refClass->getConstructor();
 			if (!$constructor) return new $class();
 
@@ -119,54 +119,80 @@ abstract class AbstractClassMap implements IClassMap {
 				$type = $param->getType();
 				$paramName = $param->getName();
 
-				if (!$type || !$type instanceof \ReflectionNamedType) {
-					// z.B. union type, intersection oder mixed
-					if ($param->isDefaultValueAvailable()) {
-						$params[] = $param->getDefaultValue();
-						continue;
+				// Handle union types (e.g. FooService|BarService)
+				if ($type instanceof \ReflectionUnionType) {
+					$resolved = false;
+					foreach ($type->getTypes() as $unionType) {
+						if (!$unionType instanceof \ReflectionNamedType) continue;
+						$dep = $unionType->getName();
+
+						if ($this->container->has($dep)) {
+							$value = $this->container->get($dep);
+							if ($value instanceof \Closure) $value = $value();
+							$params[] = $value;
+							$resolved = true;
+							break;
+						}
 					}
 
-					// sonst: überspringen
-					return null;
+					if (!$resolved) {
+						if ($param->isDefaultValueAvailable()) {
+							$params[] = $param->getDefaultValue();
+						} else {
+							return null; // No suitable match for the union type
+						}
+					}
+
+					continue;
 				}
 
-				if ($type->isBuiltin()) {
+				// Handle named class/interface types
+				if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+					$dep = $type->getName();
+
+					if ($this->container->has($dep)) {
+						$value = $this->container->get($dep);
+					} elseif ($this->container->has($paramName)) {
+						$value = $this->container->get($paramName);
+					} else {
+						$mock = \Base3\Core\DynamicMockFactory::createMock($dep);
+						if ($mock === null) return null;
+						$value = $mock;
+					}
+
+					if ($value instanceof \Closure) $value = $value();
+					$params[] = $value;
+					continue;
+				}
+
+				// Handle built-in types (e.g. string, int)
+				if ($type instanceof \ReflectionNamedType && $type->isBuiltin()) {
 					if ($this->container->has($paramName)) {
 						$params[] = $this->container->get($paramName);
-						continue;
 					} elseif ($param->isDefaultValueAvailable()) {
 						$params[] = $param->getDefaultValue();
-						continue;
 					} else {
 						return null;
 					}
+
+					continue;
 				}
 
-				$dep = $type->getName();
-
-				if ($this->container->has($dep)) {
-					$value = $this->container->get($dep);
-				} elseif ($this->container->has($paramName)) {
-					$value = $this->container->get($paramName);
+				// No type hint or unsupported type
+				if ($param->isDefaultValueAvailable()) {
+					$params[] = $param->getDefaultValue();
 				} else {
-					$mock = \Base3\Core\DynamicMockFactory::createMock($dep);
-					if ($mock === null) return null;
-					$value = $mock;
+					return null;
 				}
-
-				if ($value instanceof \Closure) {
-					$value = $value();
-				}
-
-				$params[] = $value;
 			}
 
 			return $refClass->newInstanceArgs($params);
+
 		} catch (\Throwable $e) {
 			echo $e->getMessage();
 			exit;
 
-			// Problem bei Reflection, Konstruktor-Auflösung oder Instanziierung
+			// Reflection, constructor resolution, or instantiation failed
 			return null;
 		}
 	}
