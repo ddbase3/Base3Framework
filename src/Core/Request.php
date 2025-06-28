@@ -6,20 +6,20 @@ use Base3\Api\IRequest;
 
 class Request implements IRequest
 {
-	protected array $get;
-	protected array $post;
-	protected array $cookie;
-	protected array $session;
-	protected array $server;
-	protected array $files;
+	protected \ArrayAccess|array $get;
+	protected \ArrayAccess|array $post;
+	protected \ArrayAccess|array $cookie;
+	protected \ArrayAccess|array $session;
+	protected \ArrayAccess|array $server;
+	protected \ArrayAccess|array $files;
 
 	public function __construct(
-		array $get = null,
-		array $post = null,
-		array $cookie = null,
-		array $session = null,
-		array $server = null,
-		array $files = null
+		\ArrayAccess|array $get = null,
+		\ArrayAccess|array $post = null,
+		\ArrayAccess|array $cookie = null,
+		\ArrayAccess|array $session = null,
+		\ArrayAccess|array $server = null,
+		\ArrayAccess|array $files = null
 	) {
 		$this->get = $get ?? $_GET;
 		$this->post = $post ?? $_POST;
@@ -60,6 +60,16 @@ class Request implements IRequest
 		}
 	}
 
+	// Convert ArrayAccess or Traversable to array
+	protected function toArray(array|\ArrayAccess $source): array {
+		if (is_array($source)) return $source;
+		if ($source instanceof \Traversable) return iterator_to_array($source);
+
+		$result = [];
+		foreach ($source as $k => $v) $result[$k] = $v;
+		return $result;
+	}
+
 	public function get(string $key, $default = null) {
 		return $this->get[$key] ?? $default;
 	}
@@ -84,34 +94,42 @@ class Request implements IRequest
 		return $this->files[$key] ?? $default;
 	}
 
+	// Return full GET array
 	public function allGet(): array {
-		return $this->get;
+		return $this->toArray($this->get);
 	}
 
+	// Return full POST array
 	public function allPost(): array {
-		return $this->post;
+		return $this->toArray($this->post);
 	}
 
+	// Return full COOKIE array
 	public function allCookie(): array {
-		return $this->cookie;
+		return $this->toArray($this->cookie);
 	}
 
+	// Return full SESSION array
 	public function allSession(): array {
-		return $this->session;
+		return $this->toArray($this->session);
 	}
 
+	// Return full SERVER array
 	public function allServer(): array {
-		return $this->server;
+		return $this->toArray($this->server);
 	}
 
+	// Return full FILES array
 	public function allFiles(): array {
-		return $this->files;
+		return $this->toArray($this->files);
 	}
 
+	// Check for CLI context
 	public function isCli(): bool {
 		return \php_sapi_name() === 'cli';
 	}
 
+	// Determine execution context
 	public function getContext(): string {
 		if ($this->isCli()) {
 			if (isset($_SERVER['REQUEST_METHOD'])) {

@@ -73,7 +73,7 @@ abstract class AbstractClassMap implements IClassMap {
 				if (!isset($appdata["name"])) continue;
 				foreach ($appdata["name"] as $n => $c) {
 					if ($n != $name || !class_exists($c)) continue;
-					// TODO check if class implements given interface
+					if (!in_array($interface, class_implements($c))) continue;
 					$instance = $this->instantiate($c);
 					return $instance;
 				}
@@ -163,6 +163,9 @@ abstract class AbstractClassMap implements IClassMap {
 
 			return $refClass->newInstanceArgs($params);
 		} catch (\Throwable $e) {
+			echo $e->getMessage();
+			exit;
+
 			// Problem bei Reflection, Konstruktor-Auflösung oder Instanziierung
 			return null;
 		}

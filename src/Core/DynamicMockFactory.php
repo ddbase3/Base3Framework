@@ -180,7 +180,7 @@ class DynamicMockFactory {
     private static function getTypeHint(?ReflectionType $type): string {
         if (!$type) return '';
 
-        $nullable = $type->allowsNull() ? '?' : '';
+	$nullable = ($type->allowsNull() && $type->getName() !== 'mixed') ? '?' : '';
 
         if ($type instanceof ReflectionNamedType) {
             $name = $type->getName();
@@ -192,7 +192,7 @@ class DynamicMockFactory {
 
         if ($type instanceof ReflectionUnionType) {
             return implode('|', array_map(
-                fn(ReflectionNamedType $t) => ($t->allowsNull() ? '?' : '') .
+                fn(ReflectionNamedType $t) => ($t->allowsNull() && $t->getName() !== 'mixed' ? '?' : '') .
                     (in_array($t->getName(), ['int','float','string','bool','array','object','callable','iterable','mixed','void','never'])
                         ? $t->getName()
                         : '\\' . ltrim($t->getName(), '\\')),
