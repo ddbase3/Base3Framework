@@ -20,6 +20,7 @@ class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 
 	protected $internalonly;
 	protected $binarystream;
+	protected $serialized;
 	private $flags;
 
 	public function __construct($flags = 0) {

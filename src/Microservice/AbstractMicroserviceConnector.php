@@ -42,9 +42,13 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 				$params[$p] = isset($args[$k]) ? $args[$k] : null;
 
 		// params per JSON gesendet, da nur max. 1000 Parameter gesendet werden (Array-Elemente werden einzeln gezählt!)
-		$response = $this->httpPost(
-			$this->url,
-			array("call" => $method, "params" => json_encode($params), "binarystream" => $binarystream));
+		$data = [
+			'call' => $method,
+			'params' => json_encode($params),
+			'binarystream' => $binarystream,
+			'serialized' => $serialized
+		];
+		$response = $this->httpPost($this->url, $data);
 
                 if (!$response) return null;
 
