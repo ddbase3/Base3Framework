@@ -20,6 +20,7 @@ abstract class AbstractMicroservice implements IMicroservice {
 		if ($out != "json" || !isset($_REQUEST["call"])) return null;
 
 		$binarystream = isset($_REQUEST["binarystream"]) ? !!$_REQUEST["binarystream"] : false;
+		$serialized = isset($_REQUEST["serialized"]) ? !!$_REQUEST["serialized"] : false;
 
 		$callparams = array();
 		if (isset($_REQUEST["params"])) $_REQUEST["params"] = json_decode($_REQUEST["params"], true);  // $params per JSON gesendet, da nur max. 1000 Parameter gesendet werden
@@ -30,7 +31,10 @@ abstract class AbstractMicroservice implements IMicroservice {
 		foreach ($parameters as $p) $callparams[] = isset($_REQUEST["params"][$p->name]) ? $_REQUEST["params"][$p->name] : null;
 
 		$result = call_user_func_array(array($this, $_REQUEST["call"]), $callparams);
-		return $binarystream ? $result : json_encode($result);
+
+		if ($binarystream) return $result;
+		if ($serialized) return serialize($result);
+		return json_encode($result);
 	}
 
 	public function getHelp() {
