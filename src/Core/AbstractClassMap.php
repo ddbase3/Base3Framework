@@ -2,10 +2,11 @@
 
 namespace Base3\Core;
 
+use Base3\Api\ICheck;
 use Base3\Api\IClassMap;
 use Base3\Api\IContainer;
 
-abstract class AbstractClassMap implements IClassMap {
+abstract class AbstractClassMap implements IClassMap, ICheck {
 
 	protected $container;
 
@@ -197,19 +198,52 @@ abstract class AbstractClassMap implements IClassMap {
 		}
 	}
 
+	// Implementation of ICheck
+
+	public function checkDependencies() {
+		return array(
+			'classmap_writable' => is_writable($this->filename) ? 'Ok' : $this->filename . ' not writable'
+		);
+	}
+
 	// Private methods
 
-	protected function getEntries($path) {
+	protected function getEntries($path): array {
 		$path = rtrim($path, DIRECTORY_SEPARATOR);
 		$entries = array();
 		$handle = opendir($path);
 		while ($entry = readdir($handle)) {
-			if ($entry == "." || $entry == "..") continue;
-			if (substr($entry, 0, 1) == "_") continue;
-			if (substr($entry, 0, 1) == ".") continue;
+			$firstChar = substr($entry, 0, 1);
+			if ($firstChar == '.' || $firstChar == '_') continue;
 			$entries[] = $entry;
 		}
 		closedir($handle);
 		return $entries;
+	}
+
+	protected function fillClassMap(string $app, array &$classes): void {
+		foreach ($classes as $c) {
+			foreach ($c['interfaces'] as $interface) {
+				$this->map[$app]['interface'][$interface][] = $c['class'];
+
+				if ($interface !== IBase::class) continue;
+				if (!method_exists($c['class'], 'getName')) continue;
+
+				try {
+					$name = $c['class']::getName();
+				} catch (\Throwable $e) {
+					continue;  //ignore failing implementations
+				}
+				$this->map[$app]['name'][$name] = $c['class'];
+			}
+		}
+	}
+
+	protected function writeClassMap(): void {
+                $str = "<?php return ";
+                $str .= var_export($this->map, true);
+                $str .= ";\n";
+
+                file_put_contents($this->filename, $str);
 	}
 }

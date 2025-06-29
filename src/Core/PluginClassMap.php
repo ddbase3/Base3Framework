@@ -3,17 +3,15 @@
 namespace Base3\Core;
 
 use Base3\Api\IBase;
-use Base3\Api\ICheck;
+use Base3\Api\IPlugin;
 
-class PluginClassMap extends AbstractClassMap implements ICheck {
+class PluginClassMap extends AbstractClassMap {
 
 	public function generate($regenerate = false) {
 
 		if (!$regenerate && file_exists($this->filename) && filesize($this->filename) > 0) return;
 
 		if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
-
-		$str = "<?php return ";
 
 		$this->map = array();
 
@@ -30,44 +28,33 @@ class PluginClassMap extends AbstractClassMap implements ICheck {
 				$classes = [];
 				$this->getClasses($classes, $d["basedir"], $app, $d["subdir"], $d["subns"]);
 				foreach ($classes as $c) {
-					foreach ($c["interfaces"] as $interface) {
-						$this->map[$app]["interface"][$interface][] = $c["class"];
+					foreach ($c['interfaces'] as $interface) {
+						$this->map[$app]['interface'][$interface][] = $c['class'];
 
 						if ($interface !== IBase::class) continue;
-						if (!method_exists($c["class"], 'getName')) continue;
+						if (!method_exists($c['class'], 'getName')) continue;
 
 						try {
-							$name = $c["class"]::getName();
+							$name = $c['class']::getName();
 						} catch (\Throwable $e) {
 							continue;  //ignore failing implementations
 						}
-						$this->map[$app]["name"][$name] = $c["class"];
+						$this->map[$app]['name'][$name] = $c['class'];
 					}
 				}
 			}
 		}
 
-		$str .= var_export($this->map, true);
-		$str .= ";\n";
-
-		file_put_contents($this->filename, $str);
+		$this->writeClassMap();
 	}
 
 	public function getPlugins() {
 		$plugins = array();
 		foreach ($this->map as $app => $appdata) {
 			if (!isset($appdata['interface'])) continue;
-			if (in_array(\Base3\Api\IPlugin::class, array_keys($appdata['interface']))) $plugins[] = $app;
+			if (in_array(IPlugin::class, array_keys($appdata['interface']))) $plugins[] = $app;
 		}
 		return $plugins;
-	}
-
-	// Implementation of ICheck
-
-	public function checkDependencies() {
-		return array(
-			"classmap_writable" => is_writable($this->filename) ? "Ok" : $this->filename . " not writable"
-		);
 	}
 
 	// Private methods

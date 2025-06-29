@@ -3,9 +3,8 @@
 namespace Base3\Core;
 
 use Base3\Api\IContainer;
-use Base3\Api\ICheck;
 
-class ClassMap extends AbstractClassMap implements ICheck {
+class ClassMap extends AbstractClassMap {
 
 	private $path = DIR_SRC;
 
@@ -13,8 +12,6 @@ class ClassMap extends AbstractClassMap implements ICheck {
 		if (!$regenerate && file_exists($this->filename)) return;
 
 		if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
-
-		$str = "<?php return ";
 
 		$this->map = array();
 		$apps = $this->getEntries($this->path);
@@ -24,34 +21,23 @@ class ClassMap extends AbstractClassMap implements ICheck {
 			$classes = array();
 			$this->getClasses($classes, $apppath);
 			foreach ($classes as $c) {
-				foreach ($c["interfaces"] as $interface) {
-					$this->map[$app]["interface"][$interface][] = $c["class"];
+				foreach ($c['interfaces'] as $interface) {
+					$this->map[$app]['interface'][$interface][] = $c['class'];
 
 					if ($interface !== IBase::class) continue;
-					if (!method_exists($c["class"], 'getName')) continue;
+					if (!method_exists($c['class'], 'getName')) continue;
 
 					try {
-						$name = $c["class"]::getName();
+						$name = $c['class']::getName();
 					} catch (\Throwable $e) {
 						continue;  //ignore failing implementations
 					}
-					$this->map[$app]["name"][$name] = $c["class"];
+					$this->map[$app]['name'][$name] = $c['class'];
 				}
 			}
 		}
 
-		$str .= var_export($this->map, true);
-		$str .= ";\n";
-
-		file_put_contents($this->filename, $str);
-	}
-
-	// Implementation of ICheck
-
-	public function checkDependencies() {
-		return array(
-			"classmap_writable" => is_writable($this->filename) ? "Ok" : $this->filename . " not writable"
-		);
+		$this->writeClassMap();
 	}
 
 	// Private methods
