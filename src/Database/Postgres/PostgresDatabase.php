@@ -5,39 +5,44 @@ namespace Base3\Database\Postgres;
 use Base3\Core\ServiceLocator;
 use Base3\Database\Api\IDatabase;
 use Base3\Api\ICheck;
+use Base3\Configuration\Api\IConfiguration;
 
 class PostgresDatabase implements IDatabase, ICheck {
 
 	private static $servicelocator;
 
 	private $connection;
-	private static $instance;
-
 	private $connected = false;
+
 	private $host;
 	private $user;
 	private $pass;
 	private $name;
 
-	private function __construct($host, $user, $pass, $name) {
-		$this->host = $host;
-		$this->user = $user;
-		$this->pass = $pass;
-		$this->name = $name;
+	public function __construct(IConfiguration $config) {
+		$cnf = $config->get('database');
+		$this->host = $cnf['host'] ?? null;
+		$this->user = $cnf['user'] ?? null;
+		$this->pass = $cnf['pass'] ?? null;
+		$this->name = $cnf['name'] ?? null;
 	}
 
-	public static function getInstance($cnf = null) {
-
-		if ($cnf == null) {
-			self::$servicelocator = ServiceLocator::getInstance();
+	public static function getInstance($cnf = null): self {
+		if ($cnf === null) {
+			if (!self::$servicelocator) self::$servicelocator = ServiceLocator::getInstance();
 			$configuration = self::$servicelocator->get('configuration');
-			if ($configuration != null) $cnf = $configuration->get('database');
+			if ($configuration !== null) {
+				return new self($configuration);
+			}
 		}
 
-		if (!isset(self::$instance)) self::$instance = $cnf == null
-			? new PostgresDatabase(null, null, null, null)
-			: new PostgresDatabase($cnf["host"], $cnf["user"], $cnf["pass"], $cnf["name"]);
-		return self::$instance;
+		return new self(new class($cnf) implements IConfiguration {
+			private $cnf;
+			public function __construct($cnf) { $this->cnf = $cnf; }
+			public function get($configuration = "") { return $this->cnf; }
+			public function set($data, $configuration = "") {}
+			public function save() {}
+		});
 	}
 
 	public function connect() {
@@ -49,7 +54,7 @@ class PostgresDatabase implements IDatabase, ICheck {
 	}
 
 	public function connected() {
-		return !!$this->connected;
+		return $this->connected;
 	}
 
 	public function disconnect() {
@@ -80,7 +85,7 @@ class PostgresDatabase implements IDatabase, ICheck {
 	}
 
 	public function &listQuery($query) {
-		$list = array();
+		$list = [];
 		$result = pg_query($this->connection, $query);
 		if (!$result || pg_num_rows($result) == 0) return $list;
 		while ($row = pg_fetch_row($result)) $list[] = $row[0];
@@ -89,7 +94,7 @@ class PostgresDatabase implements IDatabase, ICheck {
 	}
 
 	public function &multiQuery($query) {
-		$rows = array();
+		$rows = [];
 		$result = pg_query($this->connection, $query);
 		if (!$result || pg_num_rows($result) == 0) return $rows;
 		while ($row = pg_fetch_assoc($result)) $rows[] = $row;
@@ -98,13 +103,10 @@ class PostgresDatabase implements IDatabase, ICheck {
 	}
 
 	public function affectedRows() {
-		// Letztes Resultat muss gespeichert werden
 		return pg_affected_rows($this->connection);
 	}
 
 	public function insertId() {
-		// Funktioniert nur, wenn das INSERT RETURNING id enthält
-		// Alternative: currval('sequence_name')
 		$result = pg_query($this->connection, "SELECT LASTVAL()");
 		if (!$result) return null;
 		$row = pg_fetch_row($result);
@@ -117,26 +119,22 @@ class PostgresDatabase implements IDatabase, ICheck {
 	}
 
 	public function isError() {
-		// Keine native Error-Funktion, aber man kann letzten Fehler speichern
 		return pg_last_error($this->connection) !== "";
 	}
 
 	public function errorNumber() {
-		// PostgreSQL gibt keine Fehlernummern über pg_* zurück
-		return 0;
+		return 0; // PostgreSQL gibt keine Fehlernummern zurück
 	}
 
 	public function errorMessage() {
 		return pg_last_error($this->connection);
 	}
 
-	// Implementation of ICheck
-
 	public function checkDependencies() {
-		return array(
+		return [
 			"depending_services" => self::$servicelocator->get('configuration') == null ? "Fail" : "Ok",
 			"postgres_connected" => $this->connect() || $this->connection ? (pg_last_error($this->connection) ?: "Ok") : "Not connected"
-		);
+		];
 	}
 }
 

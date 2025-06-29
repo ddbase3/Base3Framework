@@ -5,42 +5,44 @@ namespace Base3\Database\Mysql;
 use Base3\Core\ServiceLocator;
 use Base3\Database\Api\IDatabase;
 use Base3\Api\ICheck;
+use Base3\Configuration\Api\IConfiguration;
 
 class MysqlDatabase implements IDatabase, ICheck {
 
 	private static $servicelocator;
 
 	private $connection;
-	private static $instance;
-
 	private $connected = false;
+
 	private $host;
 	private $user;
 	private $pass;
 	private $name;
 
-	private function __construct($host, $user, $pass, $name) {
-		$this->host = $host;
-		$this->user = $user;
-		$this->pass = $pass;
-		$this->name = $name;
+	public function __construct(IConfiguration $config) {
+		$cnf = $config->get('database');
+		$this->host = $cnf['host'] ?? null;
+		$this->user = $cnf['user'] ?? null;
+		$this->pass = $cnf['pass'] ?? null;
+		$this->name = $cnf['name'] ?? null;
 	}
 
-	// private function __clone() {}
-	// private function __wakeup() {}
-
-	public static function getInstance($cnf = null) {
-
-		if ($cnf == null) {
-			self::$servicelocator = ServiceLocator::getInstance();
+	public static function getInstance($cnf = null): self {
+		if ($cnf === null) {
+			if (!self::$servicelocator) self::$servicelocator = ServiceLocator::getInstance();
 			$configuration = self::$servicelocator->get('configuration');
-			if ($configuration != null) $cnf = $configuration->get('database');
+			if ($configuration !== null) {
+				return new self($configuration);
+			}
 		}
 
-		if (!isset(self::$instance)) self::$instance = $cnf == null
-			? new MysqlDatabase(null, null, null, null)
-			: new MysqlDatabase($cnf["host"], $cnf["user"], $cnf["pass"], $cnf["name"]);
-		return self::$instance;
+		return new self(new class($cnf) implements IConfiguration {
+			private $cnf;
+			public function __construct($cnf) { $this->cnf = $cnf; }
+			public function get($configuration = "") { return $this->cnf; }
+			public function set($data, $configuration = "") {}
+			public function save() {}
+		});
 	}
 
 	public function connect() {
@@ -53,12 +55,12 @@ class MysqlDatabase implements IDatabase, ICheck {
 	}
 
 	public function connected() {
-		return !!$this->connected;
+		return $this->connected;
 	}
 
 	public function disconnect() {
 		$this->connected = false;
-		$this->connection->close();
+		if ($this->connection) $this->connection->close();
 	}
 
 	public function nonQuery($query) {
@@ -86,7 +88,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 	}
 
 	public function &listQuery($query) {
-		$list = array();
+		$list = [];
 		$result = $this->connection->query($query);
 		if (!$result || !$result->num_rows) return $list;
 		while ($row = $result->fetch_array(MYSQLI_NUM)) $list[] = $row[0];
@@ -95,7 +97,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 	}
 
 	public function &multiQuery($query) {
-		$rows = array();
+		$rows = [];
 		$result = $this->connection->query($query);
 		if (!$result || !$result->num_rows) return $rows;
 		while ($row = $result->fetch_assoc()) $rows[] = $row;
@@ -116,7 +118,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 	}
 
 	public function isError() {
-		return $this->connection->error != 0;
+		return $this->connection->error !== '';
 	}
 
 	public function errorNumber() {
@@ -127,13 +129,12 @@ class MysqlDatabase implements IDatabase, ICheck {
 		return $this->connection->error;
 	}
 
-	// Implementation of ICheck
-
 	public function checkDependencies() {
-		return array(
-			"depending_services" => self::$servicelocator->get('configuration') == null ? "Fail" : "Ok",
-			"mysql_connected" => $this->connect() || $this->connection ? ($this->connection->connect_errno ? $this->connection->connect_error : "Ok") : "Not connected"
-		);
+		return [
+			"mysql_connected" => $this->connect() || $this->connection
+				? ($this->connection->connect_errno ? $this->connection->connect_error : "Ok")
+				: "Not connected"
+		];
 	}
-
 }
+
