@@ -98,7 +98,7 @@ class LangBasedServiceSelector implements IServiceSelector, IMiddleware, ICheck 
 				break;
 		}
 
-		return $output ?? '';
+		return is_string($output) ? $output : '';
 	}
 
 	// Implementation of ICheck
