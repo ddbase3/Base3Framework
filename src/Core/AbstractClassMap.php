@@ -22,86 +22,99 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 
 	abstract protected function getScanTargets(): array;
 
-public function generate($regenerate = false) {
-    if (!$regenerate && file_exists($this->filename) && filesize($this->filename) > 0) return;
+	public function generate($regenerate = false) {
+	        if (!$regenerate && file_exists($this->filename) && filesize($this->filename) > 0) return;
 
-    if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
+	        if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
 
-    $this->map = [];
+		$this->map = [];
 
-    // Neue Option: von Composer ClassMap generieren?
-    if (method_exists($this, 'generateFromComposerClassMap')) {
-        $this->generateFromComposerClassMap();
-        $this->writeClassMap();
-        return;
-    }
+	        // Optional: generate from composer classmap
+		if (method_exists($this, 'generateFromComposerClassMap')) {
+	                $this->generateFromComposerClassMap();
+			$this->writeClassMap();
+		        return;
+	        }
 
-    // Standardpfade abarbeiten
-    $targets = $this->getScanTargets();
-    foreach ($targets as $target) {
-        $basedir = $target['basedir'];
-        $subdir  = $target['subdir'] ?? '';
-        $subns   = $target['subns'] ?? '';
+		// Process configured scan targets
+	        $targets = $this->getScanTargets();
+		foreach ($targets as $target) {
+	                $basedir = $target['basedir'];
+			$subdir  = $target['subdir'] ?? '';
+		        $subns   = $target['subns'] ?? '';
 
-        $apps = $this->getEntries($basedir);
-        foreach ($apps as $app) {
-            $apppath = $basedir . DIRECTORY_SEPARATOR . $app;
-            if (!empty($subdir)) $apppath .= DIRECTORY_SEPARATOR . $subdir;
-            if (!is_dir($apppath)) continue;
+	                $apps = isset($target['app'])
+			        ? [$target['app']]
+		                : $this->getEntries($basedir);
 
-            $classes = [];
-            $this->scanClasses($classes, $basedir, $app, $subdir, $subns);
-            $this->fillClassMap($app, $classes);
-        }
-    }
+	                foreach ($apps as $app) {
+				$apppath = $basedir . DIRECTORY_SEPARATOR . $app;
+			        if (!empty($subdir)) $apppath .= DIRECTORY_SEPARATOR . $subdir;
+		                if (!is_dir($apppath)) continue;
 
-    $this->writeClassMap();
-}
+	                        $classes = [];
+				$this->scanClasses($classes, $basedir, $app, $subdir, $subns);
+			        $this->fillClassMap($app, $classes);
+		        }
+	        }
 
-protected function scanClasses(&$classes, $basedir, $app, $subdir = "", $subns = "", $path = "") {
-    $fullpath = $basedir . DIRECTORY_SEPARATOR . $app;
-    if (!empty($subdir)) $fullpath .= DIRECTORY_SEPARATOR . $subdir;
-    if (!empty($path)) $fullpath .= DIRECTORY_SEPARATOR . $path;
+		$this->writeClassMap();
+	}
 
-    $entries = $this->getEntries($fullpath);
-    foreach ($entries as $entry) {
-        $fullentry = $fullpath . DIRECTORY_SEPARATOR . $entry;
-        if (is_dir($fullentry)) {
-            $this->scanClasses($classes, $basedir, $app, $subdir, $subns, $path . DIRECTORY_SEPARATOR . $entry);
-        } else {
-            if (substr($entry, -4) !== ".php" || substr_count($entry, ".") !== 1) continue;
+	protected function scanClasses(&$classes, $basedir, $app, $subdir = "", $subns = "", $path = "") {
+		$fullpath = $basedir . DIRECTORY_SEPARATOR . $app;
+	        if (!empty($subdir)) $fullpath .= DIRECTORY_SEPARATOR . $subdir;
+		if (!empty($path)) $fullpath .= DIRECTORY_SEPARATOR . $path;
 
-            // Do not include Base3\Core\Autoloader under any circumstances
-            if (basename($fullentry) === 'Autoloader.php' && str_contains($fullentry, 'Base3Framework')) {
-                continue;
-            }
+	        $entries = $this->getEntries($fullpath);
+		foreach ($entries as $entry) {
+			$fullentry = $fullpath . DIRECTORY_SEPARATOR . $entry;
 
-            require_once($fullentry);
+	                if (is_dir($fullentry)) {
+		                $this->scanClasses($classes, $basedir, $app, $subdir, $subns, $path . DIRECTORY_SEPARATOR . $entry);
+			        continue;
+			}
 
-            $nsparts = [];
-            if (!empty($subns)) $nsparts[] = $subns;
-            $nsparts[] = $app;
-            foreach (explode(DIRECTORY_SEPARATOR, $path) as $pp)
-                if (!empty($pp)) $nsparts[] = $pp;
+	                if (substr($entry, -4) !== ".php" || substr_count($entry, ".") !== 1) continue;
 
-            $namespace = implode("\\", $nsparts);
-            $classname = $namespace . "\\" . substr($entry, 0, -4);
+		        // Skip Base3 autoloader to avoid double inclusion
+			if (basename($fullentry) === 'Autoloader.php' && str_contains($fullentry, 'Base3Framework')) continue;
 
-            if (!class_exists($classname, false)) continue;
+	                require_once($fullentry);
 
-            $rc = new \ReflectionClass($classname);
-            if ($rc->isAbstract()) continue;
+			if (!empty($subns)) {
+			        $nsparts = explode("\\", $subns);
 
-            $interfaces = class_implements($classname);
+				// Falls App nicht schon Teil des Subnamespace ist, hänge sie an
+			        $appParts = explode("/", $app);              // z.B. "Core" oder "Qualitus/DataHawkExtension"
+			        $lastAppPart = end($appParts);
+			        if (!in_array($lastAppPart, $nsparts)) {
+					$nsparts[] = $lastAppPart;
+			        }
+			} else {
+			        $nsparts = explode(DIRECTORY_SEPARATOR, $app);
+			}
 
-            $classes[] = [
-                "file" => $fullentry,
-                "class" => $classname,
-                "interfaces" => $interfaces
-            ];
-        }
-    }
-}
+		        foreach (explode(DIRECTORY_SEPARATOR, $path) as $pp)
+			        if (!empty($pp)) $nsparts[] = $pp;
+
+	                $namespace = implode("\\", $nsparts);
+		        $classname = $namespace . "\\" . substr($entry, 0, -4);
+
+			if (!class_exists($classname, false)) continue;
+
+	                $rc = new \ReflectionClass($classname);
+		        if ($rc->isAbstract()) continue;
+
+	                $interfaces = class_implements($classname);
+
+		        $classes[] = [
+			        "file" => $fullentry,
+				"class" => $classname,
+	                        "interfaces" => $interfaces
+		        ];
+	        }
+	}
 
 	public function getApps() {
 		return array_keys($this->map);
@@ -302,24 +315,23 @@ protected function scanClasses(&$classes, $basedir, $app, $subdir = "", $subns =
 		return $entries;
 	}
 
-protected function fillClassMap(string $app, array $classes): void {
-    foreach ($classes as $c) {
-        foreach ($c['interfaces'] as $interface) {
-            $this->map[$app]['interface'][$interface][] = $c['class'];
-        }
+	protected function fillClassMap(string $app, array $classes): void {
+		foreach ($classes as $c) {
+			foreach ($c['interfaces'] as $interface) {
+				$this->map[$app]['interface'][$interface][] = $c['class'];
+			}
 
-        // Danach einmal prüfen, ob IBase enthalten ist
-        if (!in_array(\Base3\Api\IBase::class, $c['interfaces'])) continue;
-        if (!is_callable([$c['class'], 'getName'])) continue;
+			if (!in_array(\Base3\Api\IBase::class, $c['interfaces'])) continue;
+			if (!is_callable([$c['class'], 'getName'])) continue;
 
-        try {
-            $name = $c['class']::getName();
-            $this->map[$app]['name'][$name] = $c['class'];
-        } catch (\Throwable $e) {
-            continue;  // ignore failing implementations
-        }
-    }
-}
+			try {
+				$name = $c['class']::getName();
+				$this->map[$app]['name'][$name] = $c['class'];
+			} catch (\Throwable $e) {
+				continue;  // ignore failing implementations
+			}
+		}
+	}
 
 	protected function writeClassMap(): void {
                 $str = "<?php return ";
