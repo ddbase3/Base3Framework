@@ -71,6 +71,11 @@ protected function scanClasses(&$classes, $basedir, $app, $subdir = "", $subns =
         } else {
             if (substr($entry, -4) !== ".php" || substr_count($entry, ".") !== 1) continue;
 
+            // Do not include Base3\Core\Autoloader under any circumstances
+            if (basename($fullentry) === 'Autoloader.php' && str_contains($fullentry, 'Base3Framework')) {
+                continue;
+            }
+
             require_once($fullentry);
 
             $nsparts = [];
