@@ -95,7 +95,7 @@ class StandardServiceSelector implements IServiceSelector, IMiddleware, ICheck {
 				exit;
 		}
 
-		return $output;
+		return is_string($output) ? $output : '';
 	}
 
 	// Implementation of ICheck

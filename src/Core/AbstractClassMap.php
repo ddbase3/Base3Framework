@@ -2,10 +2,11 @@
 
 namespace Base3\Core;
 
+use Base3\Api\ICheck;
 use Base3\Api\IClassMap;
 use Base3\Api\IContainer;
 
-abstract class AbstractClassMap implements IClassMap {
+abstract class AbstractClassMap implements IClassMap, ICheck {
 
 	protected $container;
 
@@ -19,7 +20,101 @@ abstract class AbstractClassMap implements IClassMap {
 		$this->map = require $this->filename;
 	}
 
-	abstract public function generate($regenerate = false);
+	abstract protected function getScanTargets(): array;
+
+	public function generate($regenerate = false) {
+	        if (!$regenerate && file_exists($this->filename) && filesize($this->filename) > 0) return;
+
+	        if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
+
+		$this->map = [];
+
+	        // Optional: generate from composer classmap
+		if (method_exists($this, 'generateFromComposerClassMap')) {
+	                $this->generateFromComposerClassMap();
+			$this->writeClassMap();
+		        return;
+	        }
+
+		// Process configured scan targets
+	        $targets = $this->getScanTargets();
+		foreach ($targets as $target) {
+	                $basedir = $target['basedir'];
+			$subdir  = $target['subdir'] ?? '';
+		        $subns   = $target['subns'] ?? '';
+
+	                $apps = isset($target['app'])
+			        ? [$target['app']]
+		                : $this->getEntries($basedir);
+
+	                foreach ($apps as $app) {
+				$apppath = $basedir . DIRECTORY_SEPARATOR . $app;
+			        if (!empty($subdir)) $apppath .= DIRECTORY_SEPARATOR . $subdir;
+		                if (!is_dir($apppath)) continue;
+
+	                        $classes = [];
+				$this->scanClasses($classes, $basedir, $app, $subdir, $subns);
+			        $this->fillClassMap($app, $classes);
+		        }
+	        }
+
+		$this->writeClassMap();
+	}
+
+	protected function scanClasses(&$classes, $basedir, $app, $subdir = "", $subns = "", $path = "") {
+		$fullpath = $basedir . DIRECTORY_SEPARATOR . $app;
+	        if (!empty($subdir)) $fullpath .= DIRECTORY_SEPARATOR . $subdir;
+		if (!empty($path)) $fullpath .= DIRECTORY_SEPARATOR . $path;
+
+	        $entries = $this->getEntries($fullpath);
+		foreach ($entries as $entry) {
+			$fullentry = $fullpath . DIRECTORY_SEPARATOR . $entry;
+
+	                if (is_dir($fullentry)) {
+		                $this->scanClasses($classes, $basedir, $app, $subdir, $subns, $path . DIRECTORY_SEPARATOR . $entry);
+			        continue;
+			}
+
+	                if (substr($entry, -4) !== ".php" || substr_count($entry, ".") !== 1) continue;
+
+		        // Skip Base3 autoloader to avoid double inclusion
+			if (basename($fullentry) === 'Autoloader.php' && str_contains($fullentry, 'Base3Framework')) continue;
+
+	                require_once($fullentry);
+
+			if (!empty($subns)) {
+			        $nsparts = explode("\\", $subns);
+
+				// Falls App nicht schon Teil des Subnamespace ist, hänge sie an
+			        $appParts = explode("/", $app);              // z.B. "Core" oder "Qualitus/DataHawkExtension"
+			        $lastAppPart = end($appParts);
+			        if (!in_array($lastAppPart, $nsparts)) {
+					$nsparts[] = $lastAppPart;
+			        }
+			} else {
+			        $nsparts = explode(DIRECTORY_SEPARATOR, $app);
+			}
+
+		        foreach (explode(DIRECTORY_SEPARATOR, $path) as $pp)
+			        if (!empty($pp)) $nsparts[] = $pp;
+
+	                $namespace = implode("\\", $nsparts);
+		        $classname = $namespace . "\\" . substr($entry, 0, -4);
+
+			if (!class_exists($classname, false)) continue;
+
+	                $rc = new \ReflectionClass($classname);
+		        if ($rc->isAbstract()) continue;
+
+	                $interfaces = class_implements($classname);
+
+		        $classes[] = [
+			        "file" => $fullentry,
+				"class" => $classname,
+	                        "interfaces" => $interfaces
+		        ];
+	        }
+	}
 
 	public function getApps() {
 		return array_keys($this->map);
@@ -107,10 +202,10 @@ abstract class AbstractClassMap implements IClassMap {
 		try {
 			$refClass = new \ReflectionClass($class);
 
-			// nur konkrete Klassen
+			// Only instantiate concrete classes
 			if ($refClass->isAbstract()) return null;
 
-			// Kein Konstruktor? Einfach instanziieren
+			// No constructor? Instantiate directly
 			$constructor = $refClass->getConstructor();
 			if (!$constructor) return new $class();
 
@@ -119,73 +214,138 @@ abstract class AbstractClassMap implements IClassMap {
 				$type = $param->getType();
 				$paramName = $param->getName();
 
-				if (!$type || !$type instanceof \ReflectionNamedType) {
-					// z.B. union type, intersection oder mixed
-					if ($param->isDefaultValueAvailable()) {
-						$params[] = $param->getDefaultValue();
-						continue;
+				// Handle union types (e.g. FooService|BarService)
+				if ($type instanceof \ReflectionUnionType) {
+					$resolved = false;
+					foreach ($type->getTypes() as $unionType) {
+						if (!$unionType instanceof \ReflectionNamedType) continue;
+						$dep = $unionType->getName();
+
+						if ($this->container->has($dep)) {
+							$value = $this->container->get($dep);
+							if ($value instanceof \Closure) $value = $value();
+							$params[] = $value;
+							$resolved = true;
+							break;
+						}
 					}
 
-					// sonst: überspringen
-					return null;
-				}
+					if (!$resolved) {
+						if ($param->isDefaultValueAvailable()) {
+							$params[] = $param->getDefaultValue();
+						} else {
+							return null; // No suitable match for the union type
+						}
+					}
 
-				if ($type->allowsNull() && $param->isDefaultValueAvailable()) {
-					$params[] = null;
 					continue;
 				}
 
-				if ($type->isBuiltin()) {
-					if ($this->container->has($paramName)) {
-						$params[] = $this->container->get($paramName);
+				if ($type instanceof \ReflectionNamedType) {
+					// Null allowed and default value available
+					if ($type->allowsNull() && $param->isDefaultValueAvailable()) {
+						$params[] = null;
 						continue;
-					} elseif ($param->isDefaultValueAvailable()) {
-						$params[] = $param->getDefaultValue();
+					}
+
+					// Handle non-built-in types (classes/interfaces)
+					if (!$type->isBuiltin()) {
+						$dep = $type->getName();
+
+						if ($this->container->has($dep)) {
+							$value = $this->container->get($dep);
+						} elseif ($this->container->has($paramName)) {
+							$value = $this->container->get($paramName);
+						} else {
+							$mock = \Base3\Core\DynamicMockFactory::createMock($dep);
+							if ($mock === null) return null;
+							$value = $mock;
+						}
+
+						if ($value instanceof \Closure) $value = $value();
+						$params[] = $value;
 						continue;
-					} else {
-						return null;
+					}
+
+					// Handle built-in types (e.g. string, int)
+					if ($type->isBuiltin()) {
+						if ($this->container->has($paramName)) {
+							$params[] = $this->container->get($paramName);
+						} elseif ($param->isDefaultValueAvailable()) {
+							$params[] = $param->getDefaultValue();
+						} else {
+							return null;
+						}
+
+						continue;
 					}
 				}
 
-				$dep = $type->getName();
-
-				if ($this->container->has($dep)) {
-					$value = $this->container->get($dep);
-				} elseif ($this->container->has($paramName)) {
-					$value = $this->container->get($paramName);
+				// No type hint or unsupported type
+				if ($param->isDefaultValueAvailable()) {
+					$params[] = $param->getDefaultValue();
 				} else {
-					$mock = \Base3\Core\DynamicMockFactory::createMock($dep);
-					if ($mock === null) return null;
-					$value = $mock;
+					return null;
 				}
-
-				if ($value instanceof \Closure) {
-					$value = $value();
-				}
-
-				$params[] = $value;
 			}
 
 			return $refClass->newInstanceArgs($params);
+
 		} catch (\Throwable $e) {
-			// Problem bei Reflection, Konstruktor-Auflösung oder Instanziierung
+			echo $e->getMessage();
+			exit;
+
+			// Reflection, constructor resolution, or instantiation failed
 			return null;
 		}
 	}
 
+	// Implementation of ICheck
+
+	public function checkDependencies() {
+		return array(
+			'classmap_writable' => is_writable($this->filename) ? 'Ok' : $this->filename . ' not writable'
+		);
+	}
+
 	// Private methods
 
-	protected function getEntries($path) {
+	protected function getEntries($path): array {
 		$path = rtrim($path, DIRECTORY_SEPARATOR);
 		$entries = array();
 		$handle = opendir($path);
 		while ($entry = readdir($handle)) {
-			if ($entry == "." || $entry == "..") continue;
-			if (substr($entry, 0, 1) == "_") continue;
-			if (substr($entry, 0, 1) == ".") continue;
+			$firstChar = substr($entry, 0, 1);
+			if ($firstChar == '.' || $firstChar == '_') continue;
 			$entries[] = $entry;
 		}
 		closedir($handle);
 		return $entries;
+	}
+
+	protected function fillClassMap(string $app, array $classes): void {
+		foreach ($classes as $c) {
+			foreach ($c['interfaces'] as $interface) {
+				$this->map[$app]['interface'][$interface][] = $c['class'];
+			}
+
+			if (!in_array(\Base3\Api\IBase::class, $c['interfaces'])) continue;
+			if (!is_callable([$c['class'], 'getName'])) continue;
+
+			try {
+				$name = $c['class']::getName();
+				$this->map[$app]['name'][$name] = $c['class'];
+			} catch (\Throwable $e) {
+				continue;  // ignore failing implementations
+			}
+		}
+	}
+
+	protected function writeClassMap(): void {
+                $str = "<?php return ";
+                $str .= var_export($this->map, true);
+                $str .= ";\n";
+
+                file_put_contents($this->filename, $str);
 	}
 }

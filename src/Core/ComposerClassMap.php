@@ -2,66 +2,50 @@
 
 namespace Base3\Core;
 
+use Base3\Api\IBase;
 use Base3\Api\IContainer;
 
-// TODO test, still experimental
 class ClassMapComposer extends AbstractClassMap {
 
-    private $classmap;
+	protected function generateFromComposerClassMap(): void {
+		// Load Composer's autoload class map
+		$classmap = require dirname(__DIR__, 3) . '/vendor/composer/autoload_classmap.php';
 
-    public function __construct(IContainer $container) {
-        $this->container = $container;
-        $this->filename = DIR_TMP . 'classmap.php';
-        $this->generate();
-        $this->map = require $this->filename;
-    }
+		foreach ($classmap as $class => $file) {
+			if (!class_exists($class, false)) {
+				require_once $file;
+			}
+			if (!class_exists($class, false)) continue;
 
-    public function generate($regenerate = false) {
-        if (!$regenerate && file_exists($this->filename)) return;
+			$rc = new \ReflectionClass($class);
+			if ($rc->isAbstract()) continue;
 
-        if (!is_writable(DIR_TMP)) {
-            die('Directory /tmp has to be writable.');
-        }
+			$interfaces = $rc->getInterfaceNames();
 
-        // TODO configure location of autoload classmap file
-        $this->classmap = require dirname(__DIR__, 3) . '/vendor/composer/autoload_classmap.php';
-        $this->map = [];
+			// Determine app name from namespace component [1]
+			$parts = explode("\\", $class);
+			if (count($parts) < 2) continue;
+			$app = $parts[1];
 
-        foreach ($this->classmap as $class => $file) {
-            if (!class_exists($class, false)) {
-                require_once $file;
-            }
+			foreach ($interfaces as $interface) {
+				$this->map[$app]["interface"][$interface][] = $class;
+			}
 
-            if (!class_exists($class, false)) continue;
+			// Register name if IBase is implemented
+			if (in_array(IBase::class, $interfaces) && is_callable([$class, 'getName'])) {
+				try {
+					$name = $class::getName();
+					$this->map[$app]["name"][$name] = $class;
+				} catch (\Throwable $e) {
+					// Ignore failures
+				}
+			}
+		}
+	}
 
-            $rc = new \ReflectionClass($class);
-            if ($rc->isAbstract()) continue;
-
-            $interfaces = $rc->getInterfaceNames();
-
-            // TODO remove
-            // if (strpos($class, 'Base3\\') !== 0) continue;
-
-            $parts = explode("\\", $class);
-            // TODO remove
-            // if (count($parts) < 3) continue;
-            $app = $parts[1];
-
-            foreach ($interfaces as $interface) {
-                $this->map[$app]["interface"][$interface][] = $class;
-
-                if ($interface === \Base3\Api\IBase::class) {
-                    $instance = $this->instantiate($class);
-                    if ($instance && method_exists($instance, 'getName')) {
-                        $name = $instance->getName();
-                        $this->map[$app]["name"][$name] = $class;
-                    }
-                }
-            }
-        }
-
-        $str = "<?php return " . var_export($this->map, true) . ";\n";
-        file_put_contents($this->filename, $str);
-    }
+	protected function getScanTargets(): array {
+		// Not used in this class, but required by base class
+		return [];
+	}
 }
 
