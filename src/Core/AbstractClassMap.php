@@ -130,6 +130,11 @@ abstract class AbstractClassMap implements IClassMap {
 					return null;
 				}
 
+				if ($type->allowsNull() && $param->isDefaultValueAvailable()) {
+					$params[] = null;
+					continue;
+				}
+
 				if ($type->isBuiltin()) {
 					if ($this->container->has($paramName)) {
 						$params[] = $this->container->get($paramName);
