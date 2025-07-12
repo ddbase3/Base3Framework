@@ -1,30 +1,35 @@
 # Base3Framework
 
-Base3Framework is a lightweight yet powerful PHP framework designed to simplify modern web development. It offers a range of essential features that will help developers build scalable, maintainable, and fast applications. The framework includes a variety of components such as a robust autoloader, a service locator container, dependency injection, microservices support, MVC architecture, and plugin functionality.
+Base3Framework is a lightweight yet powerful PHP framework designed to simplify modern web development. It offers a range of essential features that help developers build scalable, maintainable, and fast applications. The framework includes a variety of components such as a robust autoloader, a service container, dependency injection, microservices support, MVC architecture, plugin functionality, and extensive interfaces for extensibility.
 
 This README will guide you through the installation and usage of the Base3Framework and highlight its unique features.
 
 ## Features
 
-- **Autoloader**: Automatically loads classes as needed, eliminating the need to include files manually.
-- **Service Locator Container**: Simplifies access to application services and dependencies.
-- **Dependency Injection**: Provides flexibility in managing object dependencies through inversion of control.
-- **Microservices**: Easily handle microservices with support for DI integration.
-- **ClassMap**: Maps classes to specific locations and offers special functions for efficient management.
-- **MVC Architecture**: Supports the MVC (Model-View-Controller) design pattern for a structured application.
-- **Plugin Support**: Easily extend and customize your application with plugins.
-- **Multilingual**: All base features for supporting application with multiple languages.
+* **Autoloader**: Automatically loads classes as needed, eliminating the need to include files manually.
+* **Service Container**: Central place for defining and retrieving services and parameters.
+* **Dependency Injection**: Provides flexibility in managing object dependencies through inversion of control.
+* **Microservices**: Create and consume microservices with support for DI, routing, flags, and receivers.
+* **ClassMap**: Maps classes to specific locations and offers utilities for discovery and instantiation.
+* **MVC Architecture**: Clean separation of concerns using controller, view, and model logic.
+* **Plugin System**: Modular architecture for extending the framework with isolated plugins.
+* **Multilingual**: Support for runtime language selection and language-specific views.
+* **Event & Hook System**: Register listeners and dispatch events or hooks with prioritization.
+* **Page Modules**: Pluggable page components (header, footer, content, etc.) with priorities and dependencies.
+* **XRM System**: Extended Relationship Management with tagging, relations, filters, and access control.
+* **Worker & Cron System**: Register and schedule background jobs with priorities.
+* **Token System**: Secure, scoped tokens for time-limited operations (e.g. password reset, validation).
+* **Session & Authentication**: Manage session lifecycle and login/logout functionality.
+* **Logging & Configuration**: Central services for storing logs and configuration data.
 
 ## Requirements
 
-- PHP 8.1 or higher
-- A web server (e.g., Apache or Nginx)
+* PHP 8.1 or higher
+* A web server (e.g., Apache or Nginx)
 
 ## Installation
 
 ### Step 1: Clone the repository
-
-First, clone the Base3Framework repository to your local development environment:
 
 ```bash
 git clone https://github.com/ddbase3/Base3Framework.git
@@ -32,7 +37,7 @@ git clone https://github.com/ddbase3/Base3Framework.git
 
 ### Step 2: Configuration
 
-Some settings might need to be adjusted to suit your environment. You can configure the application by using the example file in the cnf directory. Key settings include database connections, languages, logging.
+Some settings might need to be adjusted to suit your environment. You can configure the application by using the example file in the `cnf` directory. Key settings include database connections, languages, and logging.
 
 ## Composer (optional)
 
@@ -40,17 +45,11 @@ If you want to use Composer to manage dependencies in plugins, follow these step
 
 ### 1. Install Dependencies for Plugins
 
-To enable Composer for your plugin(s), you need to create a composer.json file within the plugin directory where your plugin resides. This will define the dependencies needed specifically for that plugin.
-
-Go to the plugin directory where you want to manage dependencies. This is where the composer.json file will live. Initialise Composer here:
-
 ```bash
 composer --working-dir=plugin init
 ```
 
-This will prompt you with questions to set up the basic configuration for your plugin, such as package name, description, and dependencies. You can also manually edit the generated composer.json afterward.
-
-This example adds Monolog and Guzzle as dependencies for the plugin:
+Example composer.json:
 
 ```json
 {
@@ -61,21 +60,11 @@ This example adds Monolog and Guzzle as dependencies for the plugin:
 }
 ```
 
-After setting up your composer.json file, run the following command to download and install the defined dependencies and all required libraries in the plugin/vendor directory:
-
 ```bash
 composer --working-dir=plugin install
 ```
 
-If your plugin has the classes in the src folder, it does not need to load Composer's autoloader manually, as the core framework already handles autoloading for you.
-
-Update dependencies just by editing the composer.json and run the following command. Use the working-dir option, if you are currently in the framework's root.
-
-```bash
-composer --working-dir=plugin update
-```
-
-Optional: All plugins come over with own composer.json files. There's a script setup/composer.php for merging all composer.json in just one in the plugin dir for again having just one plugin/vendor dir, the framework uses automatically.
+Optional merging of plugin composer files:
 
 ```bash
 php setup/merge-composer.php
@@ -84,13 +73,11 @@ composer --working-dir=plugin install
 
 ### 2. Autoloading Composer Dependencies
 
-Once the dependencies are installed, your framework will automatically load the Composer autoloader when it detects the vendor/ directory inside the plugin directory.
-
-The Composer autoloader is included centrally in the framework, so you do not need to manually include the vendor/autoload.php file in individual plugins.
+Composer autoloading is automatically detected inside plugins.
 
 ### 3. Using Composer Packages in Your Plugins
 
-After the dependencies are installed, you can use Composer packages in your plugins just as you would in a regular Composer project. For example, you can now use libraries like Monolog or Guzzle:
+Example:
 
 ```php
 use Monolog\Logger;
@@ -100,130 +87,125 @@ $logger = new Logger('plugin');
 $client = new Client();
 ```
 
-This setup keeps the Composer dependencies isolated to the plugins, ensuring the core framework remains lightweight while still offering the flexibility to extend functionality with external libraries.
-
 ## Using the Makefile
-
-This project provides a `Makefile` to simplify managing plugin dependencies with Composer.
-
-### Common Commands
 
 ```bash
 make           # Merge all plugin composer.json files and install dependencies
 make install   # Same as above
 make update    # Merge and update all dependencies
-make clean     # Remove generated composer.json, composer.lock, and vendor directory
+make clean     # Remove merged composer.json and vendor directory
 ```
-
-The Makefile will automatically:
-
-- Scan all subdirectories in plugin/ for composer.json files.
-- Merge them into a single plugin/composer.json.
-- Run Composer (install or update) in the plugin/ directory.
-
-All dependencies are installed to plugin/vendor/
-
-This setup allows plugins to declare their own dependencies independently, while the framework itself remains Composer-agnostic.
 
 ## Framework Components
 
 ### Autoloader
 
-Base3Framework uses an efficient autoloader that ensures classes are loaded only when needed. It ensures compatibility with other modern PHP libraries and frameworks.
+Efficient class loading based on namespaces and class maps.
 
-You don't need to manually include class files. Simply instantiate the class, and the autoloader will take care of the rest.
+### Service Container
 
-### Service Locator Container
+Provides service registration and lookup. Supports flags like `SHARED`, `NOOVERWRITE`, `ALIAS`, and `PARAMETER`.
 
-The service locator container is a central part of the framework's architecture. It allows easy access to services and objects needed throughout the application. By using the service locator, you can retrieve services in a clean and organized manner.
+### Dependency Injection
 
-Example:
-
-```php
-$serviceLocator = new \Base3\Core\ServiceLocator();
-$myService = $serviceLocator->get('MyService');
-```
-
-### Dependency Injection (DI)
-
-Dependency Injection in Base3Framework helps to decouple your code by injecting dependencies instead of creating them directly within classes. This allows for easier unit testing and cleaner, more maintainable code. This easily combines with the ServiceLocator architecture.
+Integrated via container or constructor-based injection.
 
 Example:
 
 ```php
-class UserService
-{
-    private $database;
+class UserService {
+    private Database $database;
 
     public function __construct(Database $database) {
         $this->database = $database;
     }
 
-    public function getUserData($userId) {
+    public function getUserData(int $userId): array {
         return $this->database->fetchUser($userId);
     }
 }
 ```
 
-### Microservices Support
+### Microservice Architecture
 
-Base3Framework makes it easy to create and manage microservices. You can use the dependency injection container to inject the appropriate services for each microservice, allowing for a modular, scalable application structure.
+Use `IMicroservice`, `IMicroserviceConnector`, `IMicroserviceReceiver`, and `IMicroserviceFlags` for building structured microservice endpoints and consumers.
 
-### ClassMap
+### MVC & Page System
 
-Base3Framework supports a class map, which provides an efficient way to map classes to specific files for easy loading and access. This is particularly useful for large applications with many classes, ensuring faster class resolution.
+Pages implement `IPage`, `IPageCatchall`, `IPagePostDataProcessor`. Views and modules use `IMvcView` and `IPageModule*` interfaces.
 
-### MVC Architecture
+### Event & Hook System
 
-Base3Framework follows the popular MVC (Model-View-Controller) pattern, allowing you to organize your code into three main parts:
+* Use `IEventManager`, `IStoppableEvent`
+* Hook-based extensibility via `IHookListener` and `IHookManager`
 
-- **Model**: Represents the application's data and business logic.
-- **View**: Displays the data to the user.
-- **Controller**: Handles user input, interacts with the model, and updates the view.
+### XRM (Extended Relationship Management)
 
-The framework provides basic controllers, views, and models for building applications, but you can extend and customize them according to your needs.
+* Entry handling via `IXrm`
+* Tagging, allocation, app linking
+* Filtering with `IXrmFilterModule`
+* Access control and user assignment
 
-### Plugin System
+### Workers & Cron
 
-Base3Framework offers a plugin system that allows you to extend the functionality of your application easily. Plugins can be loaded and configured independently, providing a flexible way to add features like user authentication, payment gateways, or third-party integrations.
+Jobs implement `IJob`; cron-capable jobs use `ICron`. Workers implement `IWorker` and orchestrate job execution.
 
-Plugins automatically integrate with the Autoloader, the ServiceLocator and the DependencyInjection.
+### Token System
 
-### Multilingual
+Create, check, and delete scoped tokens using `IToken` (e.g. for secure links, confirmation flows).
+
+### Session & Authentication
+
+* `ISession` for checking session state
+* `IAuthentication` for login/logout
+* `IAccesscontrol` for user ID access
+
+### Language System
+
+Use `ILanguage` to manage and switch between available languages at runtime.
+
+### Logging
+
+Log entries using `ILogger`, with support for scoped log streams.
+
+### Configuration
+
+Manage structured configuration data using `IConfiguration`.
 
 ## Example Usage
 
 ### Hello World Example
 
-Here's a simple example to demonstrate how to use Base3Framework with MVC:
-
 1. Create a Controller:
+
 ```php
-// TODO
+use Base3\Page\Api\IPage;
+
+class HelloController implements IPage {
+    public function getOutput($out = 'html') {
+        return '<h1>Hello, World!</h1>';
+    }
+
+    public function getName(): string {
+        return 'hello';
+    }
+}
 ```
 
-2. Create a View file:
-```php
-// TODO
-```
+2. Register the page module or route in the service selector or router.
 
-When you visit /hello.php in the browser, you should see the message "Hello, World!".
+3. Visit `/hello.php` and you will see the rendered output.
 
-### Contributing
+## Contributing
+
+Contributions are welcome. Please follow PSR-12 and document new interfaces clearly.
 
 ## Example Projects Using BASE3
 
-The following production web applications have been developed with BASE3:
+* [Mosaic Creator](https://mosaic-creator.de)
+* [Contourz Ballet Photography](https://contourz.photo)
 
-- [Mosaic Creator](https://mosaic-creator.de)  
-  An online tool for generating high-resolution photo mosaics.  
-  BASE3 is used here to handle sessions, authentication, file uploads, and background job management.
-
-- [Contourz Ballet Photography](https://contourz.photo)  
-  A portfolio and booking platform for ballet photography.  
-  The site is fully built with BASE3, including its plugin system, responsive frontend, and media management.
-
-### License
+## License
 
 Base3Framework is licensed under the LGPL License. See the LICENSE file for more details.
 
@@ -233,7 +215,6 @@ For more detailed documentation, please visit the official website or check the 
 
 ## Links
 
-- [BASE3 on Wikipedia (German)](https://de.wikipedia.org/wiki/BASE3_Framework)
-- [Official project page (documentation)](https://base3.de/crm.php?id=05fdf4d623714e24a7418c160795ef34)
-
+* [BASE3 on Wikipedia (German)](https://de.wikipedia.org/wiki/BASE3_Framework)
+* [Official project page (documentation)](https://base3.de/crm.php?id=05fdf4d623714e24a7418c160795ef34)
 
