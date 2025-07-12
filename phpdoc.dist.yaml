@@ -1,0 +1,28 @@
+title: BASE3 Project API Documentation
+
+paths:
+  output: docs/phpdoc
+  directories:
+    - src
+    - plugin/*/src
+  ignore:
+    - cnf
+    - tmp
+    - vendor
+    - test
+    - docs
+
+parser:
+  default-package-name: BASE3
+  markers:
+    - TODO
+    - FIXME
+
+transformer:
+  target: docs/phpdoc
+
+logging:
+  level: warning
+  paths:
+    default: phpdoc.log
+

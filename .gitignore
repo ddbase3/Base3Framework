@@ -6,21 +6,24 @@
 *.swp
 *.swo
 
-# Directories
-/public
-/.well-known
+# Ignored Directories (root-level only)
+public/
+.well-known/
+.phpdoc/
+.docs/
+docs/
+vendor/
 
-# Files
-/.htaccess
-/favicon.ico
-/cnf/config.ini
-/robots.txt
-/sitemap-*.txt
-/sitemap-*.xml
-/.phpunit.result.cache
+# Ignored Files (root-level only)
+.htaccess
+favicon.ico
+cnf/config.ini
+robots.txt
+sitemap-*.txt
+sitemap-*.xml
+.phpunit.result.cache
 
 # Ignoring generated composer files
-/composer.json
-/composer.lock
-/vendor
+composer.json
+composer.lock
 

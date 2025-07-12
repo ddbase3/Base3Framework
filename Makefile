@@ -63,3 +63,9 @@ test:
 	@echo "✅ Running PHPUnit tests..."
 	phpunit
 
+doc:
+	phpdoc run -d src,plugin/*/src -t docs/phpdoc
+
+doc-clean:
+	rm -rf docs/phpdoc
+
