@@ -3,12 +3,10 @@
 namespace Base3\Core;
 
 use Base3\Api\IBase;
-use Base3\Api\IContainer;
 
 class ClassMapComposer extends AbstractClassMap {
 
 	protected function generateFromComposerClassMap(): void {
-		// Load Composer's autoload class map
 		$classmap = require dirname(__DIR__, 3) . '/vendor/composer/autoload_classmap.php';
 
 		foreach ($classmap as $class => $file) {
@@ -22,29 +20,28 @@ class ClassMapComposer extends AbstractClassMap {
 
 			$interfaces = $rc->getInterfaceNames();
 
-			// Determine app name from namespace component [1]
 			$parts = explode("\\", $class);
 			if (count($parts) < 2) continue;
 			$app = $parts[1];
 
+			$map =& $this->getMap();
+
 			foreach ($interfaces as $interface) {
-				$this->map[$app]["interface"][$interface][] = $class;
+				$map[$app]["interface"][$interface][] = $class;
 			}
 
-			// Register name if IBase is implemented
 			if (in_array(IBase::class, $interfaces) && is_callable([$class, 'getName'])) {
 				try {
 					$name = $class::getName();
-					$this->map[$app]["name"][$name] = $class;
+					$map[$app]["name"][$name] = $class;
 				} catch (\Throwable $e) {
-					// Ignore failures
+					// ignore
 				}
 			}
 		}
 	}
 
 	protected function getScanTargets(): array {
-		// Not used in this class, but required by base class
 		return [];
 	}
 }

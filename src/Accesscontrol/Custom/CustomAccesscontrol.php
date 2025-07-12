@@ -4,22 +4,28 @@ namespace Base3\Accesscontrol\Custom;
 
 use Base3\Core\ServiceLocator;
 use Base3\Accesscontrol\Api\IAccesscontrol;
+use Base3\Accesscontrol\Api\IAuthentication;
 use Base3\Api\ICheck;
 
 class CustomAccesscontrol implements IAccesscontrol, ICheck {
 
-	private $servicelocator;
-	private $classmap;
-
-	private $userid = null;
+	private ServiceLocator $servicelocator;
+	private mixed $classmap;
+	private mixed $userid = null;
+	private bool $authenticated = false;
 
 	public function __construct($cnf = null) {
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->classmap = $this->servicelocator->get('classmap');
+	}
+
+	public function authenticate(): void {
+		if ($this->authenticated) return;
+		$this->authenticated = true;
 
 		$verbose = isset($_REQUEST["checkaccesscontrol"]);
 
-		$authentications = $this->classmap->getInstancesByInterface(\Base3\Accesscontrol\Api\IAuthentication::class);
+		$authentications = $this->classmap->getInstancesByInterface(IAuthentication::class);
 		foreach ($authentications as $authentication) $authentication->setVerbose($verbose);
 
 		if ($verbose) echo "=================================<br />LOGOUT<br />";
@@ -32,15 +38,14 @@ class CustomAccesscontrol implements IAccesscontrol, ICheck {
 		foreach ($authentications as $authentication) {
 			if ($verbose) echo "---------------------------------<br />" . get_class($authentication) . "<br />";
 			$userid = $authentication->login();
-			if ($userid != null) $this->userid = $userid;
-			if ($verbose) echo "&bullet; user: " . ($userid == null ? "null" : $userid) . "<br />";
+			if ($userid !== null) $this->userid = $userid;
+			if ($verbose) echo "&bullet; user: " . ($userid === null ? "null" : $userid) . "<br />";
 		}
 
 		if ($verbose) echo "=================================<br />KEEP<br />";
 		foreach ($authentications as $authentication) {
 			if ($verbose) echo "---------------------------------<br />" . get_class($authentication) . "<br />";
-			// TODO check isKeepable ???
-			if ($this->userid != null) $authentication->keep($this->userid);
+			if ($this->userid !== null) $authentication->keep($this->userid);
 		}
 
 		if ($verbose) echo "=================================<br />FINISH<br />";
@@ -52,18 +57,14 @@ class CustomAccesscontrol implements IAccesscontrol, ICheck {
 		if ($verbose) exit;
 	}
 
-	// Implementation of IAccesscontrol
-
-	public function getUserId() {
+	public function getUserId(): mixed {
 		return $this->userid;
 	}
 
-	// Implementation of ICheck
-
-	public function checkDependencies() {
-		return array(
-			"depending_services" => $this->classmap == null ? "Fail" : "Ok"
-		);
+	public function checkDependencies(): array {
+		return [
+			"depending_services" => $this->classmap === null ? "Fail" : "Ok"
+		];
 	}
-
 }
+

@@ -4,67 +4,52 @@ namespace Base3\Core;
 
 use Base3\Api\IRequest;
 
-class Request implements IRequest
-{
-	protected \ArrayAccess|array $get;
-	protected \ArrayAccess|array $post;
-	protected \ArrayAccess|array $cookie;
-	protected \ArrayAccess|array $session;
-	protected \ArrayAccess|array $server;
-	protected \ArrayAccess|array $files;
+class Request implements IRequest {
 
-	public function __construct(
-		\ArrayAccess|array $get = null,
-		\ArrayAccess|array $post = null,
-		\ArrayAccess|array $cookie = null,
-		\ArrayAccess|array $session = null,
-		\ArrayAccess|array $server = null,
-		\ArrayAccess|array $files = null
-	) {
-		$this->get = $get ?? $_GET;
-		$this->post = $post ?? $_POST;
-		$this->cookie = $cookie ?? $_COOKIE;
-		$this->session = $session ?? ($_SESSION ?? []);
-		$this->server = $server ?? $_SERVER;
-		$this->files = $files ?? $_FILES;
+	protected \ArrayAccess|array $get = [];
+	protected \ArrayAccess|array $post = [];
+	protected \ArrayAccess|array $cookie = [];
+	protected \ArrayAccess|array $session = [];
+	protected \ArrayAccess|array $server = [];
+	protected \ArrayAccess|array $files = [];
 
-		if ($this->isCli()) {
-			$this->parseCliArgs();
-		}
+	public function __construct() {
+		// intentionally empty for lazy loading
+	}
+
+	public function initFromGlobals(): void {
+		$this->get = $_GET;
+		$this->post = $_POST;
+		$this->cookie = $_COOKIE;
+		$this->session = $_SESSION ?? [];
+		$this->server = $_SERVER;
+		$this->files = $_FILES;
+
+		if ($this->isCli()) $this->parseCliArgs();
 	}
 
 	public static function fromGlobals(): self {
-		return new self(
-			$_GET,
-			$_POST,
-			$_COOKIE,
-			$_SESSION ?? [],
-			$_SERVER,
-			$_FILES
-		);
+		$self = new self();
+		$self->initFromGlobals();
+		return $self;
 	}
 
 	protected function parseCliArgs(): void {
 		$args = $_SERVER['argv'] ?? [];
-		array_shift($args); // remove script name
+		array_shift($args);
 
 		foreach ($args as $arg) {
 			if (preg_match('/^--([^=]+)=(.*)$/', $arg, $matches)) {
-				$key = $matches[1];
-				$value = $matches[2];
-				$this->get[$key] = $value;
+				$this->get[$matches[1]] = $matches[2];
 			} elseif (preg_match('/^--([^=]+)$/', $arg, $matches)) {
-				$key = $matches[1];
-				$this->get[$key] = true;
+				$this->get[$matches[1]] = true;
 			}
 		}
 	}
 
-	// Convert ArrayAccess or Traversable to array
 	protected function toArray(array|\ArrayAccess $source): array {
 		if (is_array($source)) return $source;
 		if ($source instanceof \Traversable) return iterator_to_array($source);
-
 		$result = [];
 		foreach ($source as $k => $v) $result[$k] = $v;
 		return $result;
@@ -94,62 +79,46 @@ class Request implements IRequest
 		return $this->files[$key] ?? $default;
 	}
 
-	// Return full GET array
 	public function allGet(): array {
 		return $this->toArray($this->get);
 	}
 
-	// Return full POST array
 	public function allPost(): array {
 		return $this->toArray($this->post);
 	}
 
-	// Return full COOKIE array
 	public function allCookie(): array {
 		return $this->toArray($this->cookie);
 	}
 
-	// Return full SESSION array
 	public function allSession(): array {
 		return $this->toArray($this->session);
 	}
 
-	// Return full SERVER array
 	public function allServer(): array {
 		return $this->toArray($this->server);
 	}
 
-	// Return full FILES array
 	public function allFiles(): array {
 		return $this->toArray($this->files);
 	}
 
-	// Check for CLI context
 	public function isCli(): bool {
 		return \php_sapi_name() === 'cli';
 	}
 
-	// Determine execution context
 	public function getContext(): string {
 		if ($this->isCli()) {
-			if (isset($_SERVER['REQUEST_METHOD'])) {
-				return self::CONTEXT_BUILTIN_SERVER;
-			}
-			if (getenv('CRON_JOB') || getenv('IS_CRON')) {
-				return self::CONTEXT_CRON;
-			}
-			if (defined('PHPUNIT_COMPOSER_INSTALL') || getenv('TEST_ENV')) {
-				return self::CONTEXT_TEST;
-			}
+			if (isset($_SERVER['REQUEST_METHOD'])) return self::CONTEXT_BUILTIN_SERVER;
+			if (getenv('CRON_JOB') || getenv('IS_CRON')) return self::CONTEXT_CRON;
+			if (defined('PHPUNIT_COMPOSER_INSTALL') || getenv('TEST_ENV')) return self::CONTEXT_TEST;
 			return self::CONTEXT_CLI;
 		}
 
 		$method = strtoupper($this->server['REQUEST_METHOD'] ?? '');
 
 		if ($method === 'POST') {
-			if (!empty($this->files)) {
-				return self::CONTEXT_WEB_UPLOAD;
-			}
+			if (!empty($this->files)) return self::CONTEXT_WEB_UPLOAD;
 			return self::CONTEXT_WEB_POST;
 		}
 

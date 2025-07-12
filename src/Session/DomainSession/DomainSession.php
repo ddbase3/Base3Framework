@@ -7,26 +7,26 @@ use Base3\Configuration\Api\IConfiguration;
 
 class DomainSession implements ISession {
 
-	private $started = false;
+	private bool $started = false;
 
-	public function __construct(IConfiguration $configuration) {
+	public function __construct(
+		private readonly IConfiguration $configuration
+	) {}
 
-                $defaultConfig = [
-                        "extensions" => array(),
-                        "cookiedomain" => ""
-                ];
+	public function start(): void {
+		if ($this->started || PHP_SAPI === 'cli') return;
 
-                $cnf = array_merge(
-                        $defaultConfig,
-                        $configuration->get('session'));
+		$config = array_merge([
+			"extensions" => [],
+			"cookiedomain" => ""
+		], $this->configuration->get('session') ?? []);
 
-                // for testing
-                if (php_sapi_name() === 'cli') return;
+		$out = $_REQUEST['out'] ?? null;
+		if (!in_array($out, $config['extensions'])) return;
 
-		// only create session, if chosen output is one of the session extensions
-		if (!isset($_REQUEST['out']) || !in_array($_REQUEST['out'], $cnf["extensions"])) return;
-		// cross subdomain session cookie
-		if (strlen($cnf["cookiedomain"])) ini_set('session.cookie_domain', $cnf["cookiedomain"]);
+		if (!empty($config["cookiedomain"])) {
+			ini_set('session.cookie_domain', $config["cookiedomain"]);
+		}
 
 		session_start();
 		$this->started = true;
@@ -36,3 +36,4 @@ class DomainSession implements ISession {
 		return $this->started;
 	}
 }
+

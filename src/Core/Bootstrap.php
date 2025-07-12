@@ -22,35 +22,36 @@ class Bootstrap implements IBootstrap {
 
 	public function run(): void {
 
-		// service locator
-		$servicelocator = new ServiceLocator();
-		ServiceLocator::useInstance($servicelocator);
-		$servicelocator
-			->set('servicelocator', $servicelocator, ServiceLocator::SHARED)
-			->set(IRequest::class, Request::fromGlobals(), ServiceLocator::SHARED)
-			->set(IContainer::class, 'servicelocator', ServiceLocator::ALIAS)
-			->set(IHookManager::class, fn() => new HookManager, ServiceLocator::SHARED)
-			->set('configuration', new ConfigFile, ServiceLocator::SHARED)
-			->set(IConfiguration::class, 'configuration', ServiceLocator::ALIAS)
-			->set('classmap', new PluginClassMap($servicelocator), ServiceLocator::SHARED)
-			->set(IClassMap::class, 'classmap', ServiceLocator::ALIAS)
-			->set(IServiceSelector::class, StandardServiceSelector::getInstance(), ServiceLocator::SHARED)
-			;
+		// container
+		$container = new ServiceLocator();
+		ServiceLocator::useInstance($container);
+		$container
+			->set('servicelocator', $container, IContainer::SHARED)
+			->set(IRequest::class, fn() => Request::fromGlobals(), IContainer::SHARED)
+			->set(IContainer::class, 'servicelocator', IContainer::ALIAS)
+			->set(IHookManager::class, fn() => new HookManager, IContainer::SHARED)
+			->set('configuration', fn() => new ConfigFile, IContainer::SHARED)
+			->set(IConfiguration::class, 'configuration', IContainer::ALIAS)
+			->set('classmap', fn($c) => new PluginClassMap($c->get(IContainer::class)), IContainer::SHARED)
+			->set(IClassMap::class, 'classmap', IContainer::ALIAS)
+			->set(IServiceSelector::class, fn() => StandardServiceSelector, IContainer::SHARED)
+		;
 
 		// hooks
-		$hookManager = $servicelocator->get(IHookManager::class);
-		$listeners = $servicelocator->get(IClassMap::class)->getInstancesByInterface(IHookListener::class);
+		$hookManager = $container->get(IHookManager::class);
+		$listeners = $container->get(IClassMap::class)->getInstancesByInterface(IHookListener::class);
 		foreach ($listeners as $listener) $hookManager->addHookListener($listener);
 		$hookManager->dispatch('bootstrap.init');
 
 		// plugins
-		$plugins = $servicelocator->get(IClassMap::class)->getInstancesByInterface(IPlugin::class);
+		$plugins = $container->get(IClassMap::class)->getInstancesByInterface(IPlugin::class);
 		foreach ($plugins as $plugin) $plugin->init();
 		$hookManager->dispatch('bootstrap.start');
 
 		// go
-		$serviceselector = $servicelocator->get(IServiceSelector::class);
-		echo $serviceselector->go();
+		$serviceSelector = $container->get(IServiceSelector::class);
+		echo $serviceSelector->go();
 		$hookManager->dispatch('bootstrap.finish');
 	}
 }
+

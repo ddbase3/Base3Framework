@@ -8,7 +8,12 @@ class NoAccesscontrol implements IAccesscontrol {
 
 	// Implementation of IAccesscontrol
 
-	public function getUserId() {
+	public function getUserId(): mixed {
 		return null;
 	}
+
+	public function authenticate(): void {
+		// no authentication needed
+	}
 }
+

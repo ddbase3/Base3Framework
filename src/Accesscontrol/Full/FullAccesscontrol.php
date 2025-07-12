@@ -8,7 +8,12 @@ class FullAccesscontrol implements IAccesscontrol {
 
 	// Implementation of IAccesscontrol
 
-	public function getUserId() {
+	public function getUserId(): mixed {
 		return 'fullaccess';
 	}
+
+	public function authenticate(): void {
+		// nothing to do for full access
+	}
 }
+

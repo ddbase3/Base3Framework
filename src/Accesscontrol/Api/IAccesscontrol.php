@@ -16,5 +16,11 @@ interface IAccesscontrol {
 	 */
 	public function getUserId();
 
+	/**
+	 * Explicitly triggers the authentication process.
+	 *
+	 * Used to initialize session/user context before any access is attempted.
+	 */
+	public function authenticate(): void;
 }
 
