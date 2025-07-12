@@ -94,6 +94,7 @@ make           # Merge all plugin composer.json files and install dependencies
 make install   # Same as above
 make update    # Merge and update all dependencies
 make clean     # Remove merged composer.json and vendor directory
+make doc       # Create documentation
 ```
 
 ## Framework Components
