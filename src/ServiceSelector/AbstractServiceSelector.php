@@ -26,6 +26,7 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 	protected IAccesscontrol $accesscontrol;
 	protected IClassMap $classmap;
 	protected IRequest $request;
+	protected array $middlewares;
 
 	/**
 	 * Constructor.
@@ -33,10 +34,6 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 	 */
 	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
-		$this->configuration = $this->servicelocator->get('configuration');
-		$this->classmap = $this->servicelocator->get('classmap');
-		$this->accesscontrol = $this->servicelocator->get('accesscontrol');
-		$this->request = $this->servicelocator->get(IRequest::class);
 	}
 
 	/**
@@ -45,18 +42,18 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 	 * @return string Final rendered output
 	 */
 	public function go(): string {
-		$middlewares = $this->servicelocator->get('middlewares');
-		if (empty($middlewares)) return $this->process();
+		$this->middlewares = $this->servicelocator->get('middlewares');
+		if (empty($this->middlewares)) return $this->process();
 
 		$prev = null;
-		foreach ($middlewares as $middleware) {
+		foreach ($this->middlewares as $middleware) {
 			if ($prev !== null) $prev->setNext($middleware);
 			$prev = $middleware;
 		}
 
 		$prev->setNext($this);
 
-		return $middlewares[0]->process();
+		return $this->middlewares[0]->process();
 	}
 
 	/**
@@ -75,6 +72,11 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 	 * @return string Rendered output
 	 */
 	public function process(): string {
+		$this->configuration = $this->servicelocator->get('configuration');
+		$this->classmap = $this->servicelocator->get('classmap');
+		$this->accesscontrol = $this->servicelocator->get('accesscontrol');
+		$this->request = $this->servicelocator->get(IRequest::class);
+
 		$out = $this->request->get('out', 'html');
 		$data = $this->request->get('data', '');
 		$app = $this->request->get('app', '');
