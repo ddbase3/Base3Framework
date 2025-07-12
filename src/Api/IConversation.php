@@ -2,61 +2,70 @@
 
 namespace Base3\Api;
 
-interface IConversation
-{
-    /**
-     * Führt eine Konversation mit multimodalem Inhalt.
-     *
-     * @param array $messages Array von Nachrichten. Jede Nachricht besteht aus:
-     * [
-     *   'role' => 'system' | 'user' | 'assistant' | 'function',
-     *   'content' => mixed (z.B. Text, Bild etc.),
-     * ]
-     * @param array $context Kontext und Optionen (model, temperature, tools etc.)
-     * @return string Antwort der KI als Klartext
-     */
-    public function chat(array $messages, array $context = []): string;
+/**
+ * Interface IConversation
+ *
+ * Defines a multimodal conversation interface for AI models, including support for raw responses,
+ * runtime configuration, tool call extraction, and final response evaluation.
+ */
+interface IConversation {
 
-    /**
-     * Gibt die vollständige rohe Antwort der KI zurück (inkl. Tool Calls, Funktionen, etc.).
-     *
-     * @param array $messages
-     * @param array $context
-     * @return mixed
-     */
-    public function raw(array $messages, array $context = []);
+	/**
+	 * Starts a conversation with multimodal input.
+	 *
+	 * @param array $messages List of messages, each with:
+	 * [
+	 *   'role' => 'system' | 'user' | 'assistant' | 'function',
+	 *   'content' => mixed (e.g. text, image, etc.),
+	 * ]
+	 * @param array $context Context and options (e.g. model, temperature, tools)
+	 * @return string AI's textual response
+	 */
+	public function chat(array $messages, array $context = []): string;
 
-    /**
-     * Gibt den Namen oder die Kennung des verwendeten KI-Modells zurück.
-     *
-     * @return string
-     */
-    public function getModel(): string;
+	/**
+	 * Returns the full raw response from the AI model.
+	 *
+	 * Includes tool calls, function executions, etc.
+	 *
+	 * @param array $messages Same format as in chat()
+	 * @param array $context Optional context and configuration
+	 * @return mixed Full raw AI response
+	 */
+	public function raw(array $messages, array $context = []);
 
-    /**
-     * Konfiguriert die KI zur Laufzeit.
-     *
-     * @param array $options
-     * @return void
-     */
-    public function configure(array $options): void;
+	/**
+	 * Returns the name or identifier of the AI model in use.
+	 *
+	 * @return string Model identifier (e.g. "gpt-4-turbo")
+	 */
+	public function getModel(): string;
 
-    /**
-     * Optional: Gibt eine formatierte Tool-Anfrage zurück, z.B. für CRM-Anbindung
-     *
-     * Erkennt, ob eine Aktion durchzuführen ist, und gibt z. B. ein JSON für einen API-Call zurück.
-     *
-     * @param array $response Die rohe KI-Antwort
-     * @return array|null Rückgabe einer Tool-Call-Anfrage oder null
-     */
-    public function extractToolCall($response): ?array;
+	/**
+	 * Configures the conversation engine at runtime.
+	 *
+	 * @param array $options Key-value options (e.g. temperature, system prompt, etc.)
+	 * @return void
+	 */
+	public function configure(array $options): void;
 
-    /**
-     * Optional: Erkennt, ob die Antwort an den User zurückgegeben werden kann
-     *
-     * @param mixed $response
-     * @return bool
-     */
-    public function isFinalResponse($response): bool;
+	/**
+	 * (Optional) Extracts a tool call instruction from a raw response.
+	 *
+	 * Useful for integrations (e.g. CRM API requests).
+	 *
+	 * @param mixed $response Raw response returned by raw()
+	 * @return array|null Structured tool call request or null if none
+	 */
+	public function extractToolCall($response): ?array;
+
+	/**
+	 * (Optional) Determines whether the response is ready to be shown to the user.
+	 *
+	 * @param mixed $response Raw or structured response
+	 * @return bool True if response is final and displayable
+	 */
+	public function isFinalResponse($response): bool;
+
 }
 

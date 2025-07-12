@@ -2,36 +2,45 @@
 
 namespace Base3\Hook;
 
+/**
+ * Interface IHookListener
+ *
+ * Represents a listener that can subscribe to and handle named hooks.
+ */
 interface IHookListener {
 
 	/**
-	 * Only active Listeners are handled.
+	 * Determines whether the listener is currently active.
 	 *
-	 * @return bool
+	 * Only active listeners are invoked.
+	 *
+	 * @return bool True if the listener is active, false otherwise
 	 */
 	public function isActive(): bool;
 
 	/**
-	 * Wird beim Hook-Aufruf aufgerufen.
-	 * Die Signatur kannst du je nach Bedarf anpassen.
+	 * Called when a hook is triggered.
 	 *
-	 * @param string $hookName
-	 * @param mixed ...$args
-	 * @return mixed
+	 * Signature can be adjusted to your specific needs.
+	 *
+	 * @param string $hookName Name of the triggered hook
+	 * @param mixed ...$args Optional additional hook arguments
+	 * @return mixed Result of hook handling
 	 */
 	public function handle(string $hookName, ...$args);
 
 	/**
-	 * Liefert eine Liste der Hooks, die der Listener abonniert,
-	 * inklusive Prioritäten:
+	 * Returns a list of hook names the listener subscribes to, with priorities.
 	 *
+	 * Example:
 	 * [
-	 *   'hook.name' => int priority,
-	 *   'another.hook' => int priority,
+	 *   'hook.name' => 10,
+	 *   'another.hook' => 0,
 	 * ]
 	 *
-	 * @return array<string,int>
+	 * @return array<string, int> Associative array of hook names and their priority
 	 */
 	public static function getSubscribedHooks(): array;
+
 }
 
