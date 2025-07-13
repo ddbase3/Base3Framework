@@ -35,24 +35,3 @@ class LangBasedServiceSelector extends AbstractServiceSelector {
 		}
 	}
 }
-
-/*
-// .htaccess:
-
-<files *.ini>
-order deny,allow
-deny from all
-</files>
-
-RewriteEngine On
-RewriteRule ^docs/ - [L]
-RewriteRule ^assets/ - [L]
-RewriteRule ^tpl/ - [L]
-RewriteRule ^userfiles/ - [L]
-RewriteRule ^favicon.ico - [L]
-RewriteRule ^robots.txt - [L]
-RewriteRule ^$ index.html
-RewriteRule ^(.+)/(.+)\.(.+) index.php?data=$1&name=$2&out=$3 [L,QSA]
-RewriteRule ^(.+)\.(.+) index.php?name=$1&out=$2 [L,QSA]
-
-*/

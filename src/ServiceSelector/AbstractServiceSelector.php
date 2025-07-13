@@ -18,6 +18,31 @@ use Base3\ServiceSelector\Api\IServiceSelector;
  *
  * Handles common logic like middleware chaining, output routing, and basic request handling.
  * Subclasses can override language handling via handleLanguage().
+ *
+ * Example .htaccess supporting these ServiceSelectors:
+ *
+ * <files *.ini>
+ * order deny,allow
+ * deny from all
+ * </files>
+ *
+ * RewriteEngine On
+ * RewriteRule ^docs/ - [L]
+ * RewriteRule ^assets/ - [L]
+ * RewriteRule ^plugin/(.*)/assets/ - [L]
+ * RewriteRule ^dev/ - [L]
+ * RewriteRule ^plugin/(.*)/dev/ - [L]
+ * RewriteRule ^tpl/ - [L]
+ * RewriteRule ^userfiles/ - [L]
+ * RewriteRule ^favicon.ico - [L]
+ * RewriteRule ^robots.txt - [L]
+ * RewriteRule ^$ index.php
+ *
+ * RewriteRule ^(.+)/(.+)\.(.+) index.php?data=$1&name=$2&out=$3 [L,QSA]
+ * RewriteRule ^(.+)\.(.+) index.php?name=$1&out=$2 [L,QSA]
+ *
+ * #RewriteRule ^(.+)/(.+)\.(.+) index.php?app=$1&name=$2&out=$3 [L,QSA]
+ * #RewriteRule ^(.+)\.(.+) index.php?app=&name=$1&out=$2 [L,QSA]
  */
 abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware {
 
@@ -124,4 +149,3 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 		// default: do nothing
 	}
 }
-

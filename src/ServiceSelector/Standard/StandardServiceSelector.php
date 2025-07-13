@@ -21,23 +21,3 @@ class StandardServiceSelector extends AbstractServiceSelector {
 		return self::$instance;
 	}
 }
-
-/*
-// .htaccess:
-
-<files *.ini>
-order deny,allow
-deny from all
-</files>
-
-RewriteEngine On
-RewriteRule ^assets/ - [L]
-RewriteRule ^tpl/ - [L]
-RewriteRule ^userfiles/ - [L]
-RewriteRule ^favicon.ico - [L]
-RewriteRule ^robots.txt - [L]
-RewriteRule ^$ index.html
-RewriteRule ^(.+)/(.+)\.(.+) index.php?app=$1&name=$2&out=$3 [L,QSA]
-RewriteRule ^(.+)\.(.+) index.php?app=&name=$1&out=$2 [L,QSA]
-
-*/
