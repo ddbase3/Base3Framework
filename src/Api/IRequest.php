@@ -117,6 +117,16 @@ interface IRequest {
 	public function allFiles(): array;
 
 	/**
+	 * Returns the decoded JSON body of the request, if available.
+	 *
+	 * This is useful for API calls with Content-Type: application/json,
+	 * where $_POST is typically empty and the body must be read manually.
+	 *
+	 * @return array<string, mixed> Parsed JSON data as associative array, or empty array if invalid or missing.
+	 */
+	public function getJsonBody(): array;
+
+	/**
 	 * Determines whether the request is a CLI call.
 	 *
 	 * @return bool True if CLI, false otherwise

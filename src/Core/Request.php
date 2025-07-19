@@ -13,6 +13,8 @@ class Request implements IRequest {
 	protected \ArrayAccess|array $server = [];
 	protected \ArrayAccess|array $files = [];
 
+	private ?array $jsonBody = null;
+
 	public function __construct() {
 		// intentionally empty for lazy loading
 	}
@@ -101,6 +103,13 @@ class Request implements IRequest {
 
 	public function allFiles(): array {
 		return $this->toArray($this->files);
+	}
+
+	public function getJsonBody(): array {
+		if ($this->jsonBody === null) {
+			$this->jsonBody = json_decode(file_get_contents('php://input'), true) ?? [];
+		}
+		return $this->jsonBody;
 	}
 
 	public function isCli(): bool {
