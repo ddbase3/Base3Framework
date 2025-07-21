@@ -50,7 +50,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 		if (empty($this->host) || empty($this->user) || empty($this->pass) || empty($this->name)) return;
 		$this->connection = new \mysqli($this->host, $this->user, $this->pass, $this->name);
 		if ($this->connection->connect_errno) return;
-		$this->connection->set_charset("utf8");
+		$this->connection->set_charset('utf8mb4');
 		$this->connected = true;
 	}
 
