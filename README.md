@@ -197,6 +197,54 @@ class HelloController implements IPage {
 
 3. Visit `/hello.php` and you will see the rendered output.
 
+## 🔌 Available BASE3 Plugins
+
+The BASE3 Framework can be extended through numerous plugins that add modular functionality, visualizations, management tools, and AI-based features. Below is a selection of useful extensions:
+
+### 📊 Data & Visualization
+
+- **DataHawk**  
+  Interactive reports with configurable tables and charts directly within BASE3 pages.
+- **Vizion**  
+  Visual representation of data using bar, pie, line charts, etc., based on DataHawk.
+
+### 🤖 AI & Automation
+
+- **MissionBay**  
+  Agent-based system for orchestrating autonomous tasks, event-driven communication, and workflows.
+
+### ⚙️ Management & Infrastructure
+
+- **Base3Manager**  
+  UI for managing and activating BASE3 plugins.
+- **ManageWebsite**, **ManageDatabase**, **ManageGit**, **ManageServer**, **ManageIlias**  
+  Specialized manager plugins for system or project-level administration.
+
+### 🛠️ Development Tools
+
+- **Base3Tools**  
+  Collection of useful development tools for working with BASE3.
+- **Debugger**, **IliasDebugger**  
+  Advanced debugging plugins – also suitable for ILIAS-based projects.
+
+### 🧩 ILIAS Integration
+
+- **Base3IliasAdapter**  
+  UI hooks and extensions for deep integration with ILIAS.
+- **ManageBase3Ilias**  
+  Manage and configure BASE3 components within ILIAS environments.
+
+### 📦 Other Plugins
+
+- **ModuledPage**  
+  Modular page elements for structured content presentation.
+- **FreeTemplate**  
+  Starter template for custom BASE3 plugins (LGPL).
+- **OpenAiConversation**  
+  Flow-based chatbot with OpenAI integration, suitable for RAG-based applications.
+
+> You can find more plugins at: [github.com/topics/base3-plugin](https://github.com/topics/base3-plugin)
+
 ## Contributing
 
 Contributions are welcome. Please follow PSR-12 and document new interfaces clearly.
