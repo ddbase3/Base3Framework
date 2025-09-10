@@ -2,6 +2,8 @@
 
 namespace Base3\ServiceSelector\Standard;
 
+use Base3\Api\IContainer;
+use Base3\Core\ServiceLocator;
 use Base3\ServiceSelector\AbstractServiceSelector;
 
 /**
@@ -9,15 +11,7 @@ use Base3\ServiceSelector\AbstractServiceSelector;
  */
 class StandardServiceSelector extends AbstractServiceSelector {
 
-	private static ?self $instance = null;
-
-	/**
-	 * Returns the singleton instance.
-	 *
-	 * @return self
-	 */
-	public static function getInstance(): self {
-		if (self::$instance === null) self::$instance = new self();
-		return self::$instance;
+	public function __construct(protected IContainer $container) {
+		parent::__construct($container);
 	}
 }

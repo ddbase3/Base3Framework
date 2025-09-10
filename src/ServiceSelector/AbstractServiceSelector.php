@@ -4,10 +4,10 @@ namespace Base3\ServiceSelector;
 
 use Base3\Api\ICheck;
 use Base3\Api\IClassMap;
+use Base3\Api\IContainer;
 use Base3\Api\IOutput;
 use Base3\Api\IRequest;
 use Base3\Accesscontrol\Api\IAccesscontrol;
-use Base3\Core\ServiceLocator;
 use Base3\Configuration\Api\IConfiguration;
 use Base3\Middleware\Api\IMiddleware;
 use Base3\Page\Api\IPageCatchall;
@@ -46,7 +46,6 @@ use Base3\ServiceSelector\Api\IServiceSelector;
  */
 abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware {
 
-	protected ServiceLocator $servicelocator;
 	protected IConfiguration $configuration;
 	protected IAccesscontrol $accesscontrol;
 	protected IClassMap $classmap;
@@ -55,11 +54,9 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 
 	/**
 	 * Constructor.
-	 * Initializes core services from the service locator.
+	 * Initializes core services from the container.
 	 */
-	public function __construct() {
-		$this->servicelocator = ServiceLocator::getInstance();
-	}
+	public function __construct(protected IContainer $container) {}
 
 	/**
 	 * Starts the application by processing middleware and output routing.
@@ -67,7 +64,7 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 	 * @return string Final rendered output
 	 */
 	public function go(): string {
-		$this->middlewares = $this->servicelocator->get('middlewares');
+		$this->middlewares = $this->container->get('middlewares');
 		if (empty($this->middlewares)) return $this->process();
 
 		$prev = null;
@@ -97,10 +94,10 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 	 * @return string Rendered output
 	 */
 	public function process(): string {
-		$this->configuration = $this->servicelocator->get('configuration');
-		$this->classmap = $this->servicelocator->get('classmap');
-		$this->accesscontrol = $this->servicelocator->get('accesscontrol');
-		$this->request = $this->servicelocator->get(IRequest::class);
+		$this->configuration = $this->container->get('configuration');
+		$this->classmap = $this->container->get('classmap');
+		$this->accesscontrol = $this->container->get('accesscontrol');
+		$this->request = $this->container->get(IRequest::class);
 
 		$out = $this->request->get('out', 'html');
 		$data = $this->request->get('data', '');

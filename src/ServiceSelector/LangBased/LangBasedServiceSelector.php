@@ -2,6 +2,8 @@
 
 namespace Base3\ServiceSelector\LangBased;
 
+use Base3\Api\IContainer;
+use Base3\Core\ServiceLocator;
 use Base3\ServiceSelector\AbstractServiceSelector;
 
 /**
@@ -11,16 +13,8 @@ use Base3\ServiceSelector\AbstractServiceSelector;
  */
 class LangBasedServiceSelector extends AbstractServiceSelector {
 
-	private static ?self $instance = null;
-
-	/**
-	 * Returns the singleton instance.
-	 *
-	 * @return self
-	 */
-	public static function getInstance(): self {
-		if (self::$instance === null) self::$instance = new self();
-		return self::$instance;
+	public function __construct(protected IContainer $container) {
+		parent::__construct($container);
 	}
 
 	/**
@@ -30,7 +24,7 @@ class LangBasedServiceSelector extends AbstractServiceSelector {
 	 */
 	protected function handleLanguage(string $data): void {
 		if (strlen($data) === 2) {
-			$language = $this->servicelocator->get('language');
+			$language = $this->container->get('language');
 			$language->setLanguage($data);
 		}
 	}
