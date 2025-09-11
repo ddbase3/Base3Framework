@@ -20,16 +20,25 @@ final class GenericOutputRoute implements IRoute {
         $path = explode('?', $path, 2)[0];
         $path = ltrim($path, '/');
 
-        $m = null;
+        // Sprachcode + Name
+        if (preg_match('#^(?P<data>[a-z]{2})/(?P<name>[^/\.]+)\.(?P<out>php|html|json|xml|help)$#i', $path, $m)) {
+            $instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, $m['name']);
+            if (is_object($instance)) {
+                return ['data' => $m['data'], 'name' => $m['name'], 'out' => $m['out']];
+            }
+            return null;
+        }
+
+        // Nur Name
         if (preg_match('#^(?P<name>[^/\.]+)\.(?P<out>php|html|json|xml|help)$#i', $path, $m)) {
-            // prüfen, ob wirklich ein IOutput existiert
             $instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, $m['name']);
             if (is_object($instance)) {
                 return ['data' => '', 'name' => $m['name'], 'out' => $m['out']];
             }
-            return null; // kein IOutput → Router probiert nächste Route
+            return null;
         }
 
+        // Root oder index.php
         if ($path === '' || $path === 'index.php') {
             $instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, 'index');
             if (is_object($instance)) {
@@ -44,6 +53,7 @@ final class GenericOutputRoute implements IRoute {
     public function dispatch(array $match): string {
         $name = $match['name'];
         $out  = $match['out'];
+        $data = $match['data'] ?? '';
 
         if ($out === 'php') {
             $out = 'html';
@@ -51,6 +61,11 @@ final class GenericOutputRoute implements IRoute {
 
         $_GET['name'] = $name;
         $_REQUEST['name'] = $name;
+
+        // Sprache weitergeben
+        if ($this->language && $data !== '' && strlen($data) === 2 && method_exists($this->language, 'setLanguage')) {
+            $this->language->setLanguage($data);
+        }
 
         $base = $this->config->get('base');
         if (!empty($this->accesscontrol->getUserId()) && !empty($base['intern'] ?? '') && $name === 'index') {
@@ -71,7 +86,7 @@ final class GenericOutputRoute implements IRoute {
             header('Content-Type: text/html; charset=utf-8');
         }
 
-        return (string) $instance->getOutput($out);
+        return (string)$instance->getOutput($out);
     }
 }
 
