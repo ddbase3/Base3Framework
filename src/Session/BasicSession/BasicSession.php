@@ -23,8 +23,9 @@ class BasicSession implements ISession {
 			"cookiedomain" => ""
 		], $this->configuration->get('session') ?? []);
 
-		$out = $_REQUEST['out'] ?? null;
-		if (!in_array($out, $config['extensions'])) return;
+		// $_REQUEST['out'] nicht mehr gesetzt, also deaktiviert (wegen RoutungServiceSelector)
+		// $out = $_REQUEST['out'] ?? null;
+		// if (!in_array($out, $config['extensions'])) return;
 
 		session_start();
 		$this->isStarted = true;

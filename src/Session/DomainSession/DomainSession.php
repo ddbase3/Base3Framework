@@ -21,8 +21,9 @@ class DomainSession implements ISession {
 			"cookiedomain" => ""
 		], $this->configuration->get('session') ?? []);
 
-		$out = $_REQUEST['out'] ?? null;
-		if (!in_array($out, $config['extensions'])) return;
+		// $_REQUEST['out'] nicht mehr gesetzt, also deaktiviert (wegen RoutungServiceSelector)
+		// $out = $_REQUEST['out'] ?? null;
+		// if (!in_array($out, $config['extensions'])) return;
 
 		if (!empty($config["cookiedomain"])) {
 			ini_set('session.cookie_domain', $config["cookiedomain"]);
