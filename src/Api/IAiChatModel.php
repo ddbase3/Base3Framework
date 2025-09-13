@@ -15,11 +15,13 @@ interface IAiChatModel {
 
 	/**
 	 * Returns the raw model response (full object).
+	 * Can include tool calls if $tools are passed.
 	 *
 	 * @param array $messages
+	 * @param array $tools Optional tool definitions
 	 * @return mixed Raw result from API
 	 */
-	public function raw(array $messages): mixed;
+	public function raw(array $messages, array $tools = []): mixed;
 
 	/**
 	 * Sets options like model, temperature, etc.
