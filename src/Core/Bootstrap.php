@@ -38,7 +38,7 @@ class Bootstrap implements IBootstrap {
 			->set(IClassMap::class, 'classmap', IContainer::ALIAS)
                         ->set('accesscontrol', fn($c) => new NoAccesscontrol(), IContainer::SHARED)
                         ->set(IAccesscontrol::class, 'accesscontrol', IContainer::ALIAS)
-			->set(IServiceSelector::class, fn() => new StandardServiceSelector(), IContainer::SHARED)
+			->set(IServiceSelector::class, fn($c) => new StandardServiceSelector($c), IContainer::SHARED)
 			->set('middlewares', [])
 		;
 
