@@ -27,7 +27,7 @@ class BasicSession implements ISession {
 		// $out = $_REQUEST['out'] ?? null;
 		// if (!in_array($out, $config['extensions'])) return;
 
-		session_start();
+		if (session_status() === PHP_SESSION_NONE) session_start();
 		$this->isStarted = true;
 	}
 

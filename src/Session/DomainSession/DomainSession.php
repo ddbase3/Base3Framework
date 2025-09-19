@@ -29,7 +29,7 @@ class DomainSession implements ISession {
 			ini_set('session.cookie_domain', $config["cookiedomain"]);
 		}
 
-		session_start();
+		if (session_status() === PHP_SESSION_NONE) session_start();
 		$this->started = true;
 	}
 
