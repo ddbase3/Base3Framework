@@ -2,10 +2,16 @@
 
 namespace Base3\Logger\DatabaseLogger;
 
-use Base3\Logger\Api\ILogger;
+use Base3\Logger\AbstractLogger;
 use Base3\Database\Api\IDatabase;
 
-class DatabaseLogger implements ILogger {
+/**
+ * Class DatabaseLogger
+ *
+ * Database-backed logger implementation.
+ * Stores logs in per-scope tables prefixed with "logger_".
+ */
+class DatabaseLogger extends AbstractLogger {
 
 	private IDatabase $database;
 
@@ -14,30 +20,34 @@ class DatabaseLogger implements ILogger {
 	}
 
 	/**
-	 * Write a log entry into the scope table
+	 * Implementation of logLevel() from AbstractLogger.
+	 *
+	 * @param string $level One of the ILogger::* constants
+	 * @param string|\Stringable $message The log message
+	 * @param array<string,mixed> $context Contextual data (must contain "scope" and "timestamp")
+	 * @return void
 	 */
-	public function log(string $scope, string $log, ?int $timestamp = null): bool {
-		if ($timestamp === null) {
-			$timestamp = time();
-		}
+	public function logLevel(string $level, string|\Stringable $message, array $context = []): void {
+		$scope = $context['scope'] ?? 'default';
+		$timestamp = $context['timestamp'] ?? time();
 
 		$table = $this->getTableName($scope);
 		$this->ensureTableExists($table);
 
 		$sql = sprintf(
-			"INSERT INTO %s (`timestamp`, log) VALUES (%d, '%s')",
+			"INSERT INTO %s (`timestamp`, level, log) VALUES (%d, '%s', '%s')",
 			$table,
 			$timestamp,
-			$this->database->escape($log)
+			$this->database->escape($level),
+			$this->database->escape((string) $message)
 		);
 
 		$this->database->connect();
 		$this->database->nonQuery($sql);
-		return !$this->database->isError();
 	}
 
 	/**
-	 * Return all available scopes (logger_* tables)
+	 * {@inheritdoc}
 	 */
 	public function getScopes(): array {
 		$result = [];
@@ -52,12 +62,15 @@ class DatabaseLogger implements ILogger {
 		return $result;
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	public function getNumOfScopes() {
 		return count($this->getScopes());
 	}
 
 	/**
-	 * Return the latest logs for a given scope
+	 * {@inheritdoc}
 	 */
 	public function getLogs(string $scope, int $num = 50, bool $reverse = true): array {
 		$table = $this->getTableName($scope);
@@ -65,7 +78,7 @@ class DatabaseLogger implements ILogger {
 
 		$order = $reverse ? "DESC" : "ASC";
 		$sql = sprintf(
-			"SELECT `timestamp`, log FROM %s ORDER BY id %s LIMIT %d",
+			"SELECT `timestamp`, level, log FROM %s ORDER BY id %s LIMIT %d",
 			$table,
 			$order,
 			$num
@@ -77,7 +90,8 @@ class DatabaseLogger implements ILogger {
 		foreach ($rows as $row) {
 			$logs[] = [
 				"timestamp" => date("Y-m-d H:i:s", (int)$row['timestamp']),
-				"log" => $row['log']
+				"level"     => $row['level'],
+				"log"       => $row['log']
 			];
 		}
 		return $logs;
@@ -96,6 +110,7 @@ class DatabaseLogger implements ILogger {
 			"CREATE TABLE IF NOT EXISTS %s (
 				id INT AUTO_INCREMENT PRIMARY KEY,
 				`timestamp` INT NOT NULL,
+				level VARCHAR(20) NOT NULL,
 				log TEXT NOT NULL
 			)",
 			$table

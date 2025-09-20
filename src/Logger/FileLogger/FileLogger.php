@@ -2,107 +2,149 @@
 
 namespace Base3\Logger\FileLogger;
 
-use Base3\Logger\Api\ILogger;
+use Base3\Logger\AbstractLogger;
 
-class FileLogger implements ILogger {
+/**
+ * Class FileLogger
+ *
+ * Simple file-based logger implementation.
+ * Stores logs in per-scope files under the FileLogger directory.
+ */
+class FileLogger extends AbstractLogger {
 
-	private $dir = DIR_LOCAL;
+	private string $dir = DIR_LOCAL;
 
 	public function __construct() {
 		$this->dir = rtrim($this->dir, DIRECTORY_SEPARATOR);
 	}
 
-	// Implementation of ILogger
+	/**
+	 * Implementation of logLevel() from AbstractLogger.
+	 *
+	 * @param string $level One of the ILogger::* constants
+	 * @param string|\Stringable $message The log message
+	 * @param array<string,mixed> $context Contextual data (must contain "scope" and "timestamp")
+	 * @return void
+	 */
+	public function logLevel(string $level, string|\Stringable $message, array $context = []): void {
+		$scope = $context['scope'] ?? 'default';
+		$timestamp = $context['timestamp'] ?? time();
 
-	// MicroService: (später, abgeleitet von dieser Klasse, z.B. als "class FileLoggerService")
-	// Parameter timestamp ist optional, alternativ wird der aktuelle Server-Timestamp verwendet
-	// Beispiel: http://www.base3.de/base3xrmlogger/filelogger.json?call=log&params[scope]=test&params[log]=Blub&params[timestamp]=1566282924
-	// Beispiel: php index.php name=filelogger out=json call=log params[scope]=test params[log]=EinTestLog params[timestamp]=1566282924
-	public function log(string $scope, string $log, ?int $timestamp = null): bool {
-		if ($timestamp == null) $timestamp = time();
 		$dir = $this->dir . DIRECTORY_SEPARATOR . "FileLogger";
-		if (!is_dir($dir)) mkdir($dir, 0777, true);
-		$fp = fopen($dir . DIRECTORY_SEPARATOR . $scope . ".log", "a");
-		fwrite($fp, date("Y-m-d H:i:s", $timestamp) . "; " . $log . "\n");
+		if (!is_dir($dir)) {
+			mkdir($dir, 0777, true);
+		}
+
+		$file = $dir . DIRECTORY_SEPARATOR . $scope . ".log";
+		$fp = fopen($file, "a");
+
+		// Example line format: 2025-09-20 18:30:00; [info]; message text
+		$line = date("Y-m-d H:i:s", $timestamp)
+			. "; [" . strtoupper($level) . "]; "
+			. (string) $message
+			. "\n";
+
+		fwrite($fp, $line);
 		fclose($fp);
-		return true;
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	public function getScopes(): array {
 		$dir = $this->dir . DIRECTORY_SEPARATOR . "FileLogger";
+		if (!is_dir($dir)) {
+			return [];
+		}
+
+		$scopes = [];
 		if ($handle = opendir($dir)) {
-			$scopes = array();
 			while (false !== ($entry = readdir($handle))) {
-				if ($entry == "." || $entry == ".." || is_dir($dir . DIRECTORY_SEPARATOR . $entry) || substr($entry, -4) != ".log") continue;
+				if ($entry === "." || $entry === "..") continue;
+				if (is_dir($dir . DIRECTORY_SEPARATOR . $entry)) continue;
+				if (substr($entry, -4) !== ".log") continue;
+
 				$scopes[] = substr($entry, 0, -4);
 			}
 			closedir($handle);
-			return $scopes;
 		}
-		return array();
+		return $scopes;
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	public function getNumOfScopes() {
 		return sizeof($this->getScopes());
 	}
 
+	/**
+	 * {@inheritdoc}
+	 */
 	public function getLogs(string $scope, int $num = 50, bool $reverse = true): array {
-		$logs = array();
 		$dir = $this->dir . DIRECTORY_SEPARATOR . "FileLogger";
 		$file = $dir . DIRECTORY_SEPARATOR . $scope . ".log";
+
 		$str = $this->tail($file, $num);
 		$lines = explode("\n", $str);
-		foreach ($lines as $line) $logs[] = array("timestamp" => substr($line, 0, 19), "log" => substr($line, 21));
+		$logs = [];
+
+		foreach ($lines as $line) {
+			if (trim($line) === '') continue;
+
+			// Parse: "2025-09-20 18:30:00; [INFO]; message"
+			$parts = explode("; ", $line, 3);
+			$logs[] = [
+				"timestamp" => $parts[0] ?? '',
+				"level"     => trim($parts[1] ?? '', "[]"),
+				"log"       => $parts[2] ?? ''
+			];
+		}
+
 		return $reverse ? array_reverse($logs) : $logs;
 	}
 
-	// private methods
+	// -----------------------------------------------------
+	// private helpers
+	// -----------------------------------------------------
 
 	/**
-	 * Slightly modified version of http://www.geekality.net/2011/05/28/php-tail-tackling-large-files/
-	 * @author Torleif Berger, Lorenzo Stanco
-	 * @link http://stackoverflow.com/a/15025877/995958
-	 * @license http://creativecommons.org/licenses/by/3.0/
+	 * Tail helper: reads the last N lines of a file efficiently.
+	 *
+	 * @param string $filepath File path
+	 * @param int $lines Number of lines to read
+	 * @param bool $adaptive Adjust buffer size based on requested lines
+	 * @return string The last N lines joined by newline
 	 */
-	private function tail($filepath, $lines = 1, $adaptive = true) {
-		// Open file
+	private function tail(string $filepath, int $lines = 1, bool $adaptive = true): string {
+		if (!file_exists($filepath)) return '';
+
 		$f = @fopen($filepath, "rb");
-		if ($f === false) return false;
-		// Sets buffer size, according to the number of lines to retrieve.
-		// This gives a performance boost when reading a few lines from the file.
+		if ($f === false) return '';
+
 		if (!$adaptive) $buffer = 4096;
 		else $buffer = ($lines < 2 ? 64 : ($lines < 10 ? 512 : 4096));
-		// Jump to last character
-		fseek($f, -1, SEEK_END);
-		// Read it and adjust line number if necessary
-		// (Otherwise the result would be wrong if file doesn't end with a blank line)
-		if (fread($f, 1) != "\n") $lines -= 1;
 
-		// Start reading
+		fseek($f, -1, SEEK_END);
+		if (fread($f, 1) !== "\n") $lines -= 1;
+
 		$output = '';
 		$chunk = '';
-		// While we would like more
+
 		while (ftell($f) > 0 && $lines >= 0) {
-			// Figure out how far back we should jump
 			$seek = min(ftell($f), $buffer);
-			// Do the jump (backwards, relative to where we are)
 			fseek($f, -$seek, SEEK_CUR);
-			// Read a chunk and prepend it to our output
 			$output = ($chunk = fread($f, $seek)) . $output;
-			// Jump back to where we started reading
 			fseek($f, -mb_strlen($chunk, '8bit'), SEEK_CUR);
-			// Decrease our line counter
 			$lines -= substr_count($chunk, "\n");
 		}
-		// While we have too many lines
-		// (Because of buffer size we might have read too many)
+
 		while ($lines++ < 0) {
-			// Find first newline and remove all text before that
 			$output = substr($output, strpos($output, "\n") + 1);
 		}
-		// Close file and return
+
 		fclose($f);
 		return trim($output);
 	}
-
 }
+
