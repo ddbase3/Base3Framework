@@ -13,12 +13,12 @@ use Base3\Logger\Api\ILogger;
  */
 class LoggerProxy implements ILogger, ICheck {
 
-	private ILogger $connector;
+	private $connector;
 
 	/**
 	 * @param ILogger $connector Underlying logger instance
 	 */
-	public function __construct(ILogger $connector) {
+	public function __construct($connector) {
 		$this->connector = $connector;
 	}
 
