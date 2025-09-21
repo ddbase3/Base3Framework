@@ -64,7 +64,7 @@ class MasterWorker implements IOutput {
 			$tj1 = microtime(true) - $tj0;
 			$str = $job["workername"] . " | " . $job["job"] . " | Laufzeit: " . number_format($tj1, 3, ",", ".") . " Sek. | " . $res;
 			echo $str . "\n";
-			$this->logger->log("masterworker", $str);
+			$this->logger->info($str, ['scope' => 'masterworker']);
 
 			// usleep(300000); // 500ms
 			// sleep(1);	// 1s
@@ -97,7 +97,7 @@ class MasterWorker implements IOutput {
 				$tj1 = microtime(true) - $tj0;
 				$str = $job["workername"] . " | " . $job["job"] . " | Laufzeit: " . number_format($tj1, 3, ",", ".") . " Sek. | " . $res;
 				echo $str . "\n";
-				$this->logger->log("masterworker", $str);
+				$this->logger->info($str, ['scope' => 'masterworker']);
 
 				// usleep(500000); // 500ms
 				// sleep(1);	// 1s
@@ -109,7 +109,7 @@ class MasterWorker implements IOutput {
 		$tm1 = microtime(true) - $tm0;
 		$str = "Laufzeit: " . number_format($tm1, 3, ",", ".") . " Sek.";
 		echo $str . "\n";
-		$this->logger->log("masterworker", $str);
+		$this->logger->info($str, ['scope' => 'masterworker']);
 
 	}
 

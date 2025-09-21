@@ -50,7 +50,7 @@ class MasterXrm extends AbstractXrm implements ICheck {
 	}
 
 	public function getEntry($id) {
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "id" => $id)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "id" => $id)), ['scope' => 'xrm']);
 		// TODO Duplikate sortieren
 		$entries = array();
 		$this->xrms = $this->getXrms();
@@ -69,12 +69,12 @@ class MasterXrm extends AbstractXrm implements ICheck {
 		$entry = sizeof($entries) ? (object) array_pop($entries) : null;
 		if ($entry != null) $entry->xrmnames = array_unique($xrmnames);
 
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "num" => sizeof($entries) ? 1 : 0)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "num" => sizeof($entries) ? 1 : 0)), ['scope' => 'xrm']);
 		return $entry;
 	}
 
 	public function getAllocIds($id) {
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "id" => $id)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "id" => $id)), ['scope' => 'xrm']);
 		$entries = array();
 		$this->xrms = $this->getXrms();
 		foreach ($this->xrms as $name => $xrmclosure) {
@@ -82,22 +82,22 @@ class MasterXrm extends AbstractXrm implements ICheck {
 			$es = $xrm->getAllocIds($id);
 			if ($es != null && sizeof($es)) $entries = array_merge($entries, $es);
 		}
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "num" => sizeof($entries))));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 
 	public function getEntries($ids) {
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "ids" => $ids)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "ids" => $ids)), ['scope' => 'xrm']);
 
 		$this->xrms = $this->getXrms();
 		// TODO Duplikate sortieren
 
 		$entries = array();
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "numxrms" => sizeof($this->xrms))));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "numxrms" => sizeof($this->xrms))), ['scope' => 'xrm']);
 		foreach ($this->xrms as $name => $xrmclosure) {
 			$xrm = $xrmclosure();
 			$es = $xrm->getEntries($ids);
-//$this->logger->log("syncjob", $name." | ".sizeof($ids)." | ".sizeof($es));
+//$this->logger->info($name." | ".sizeof($ids)." | ".sizeof($es), ['scope' => 'syncjob']);
 
 			if (is_array($es)) foreach ($es as $en) {
 				$e = (object) $en;
@@ -112,26 +112,26 @@ class MasterXrm extends AbstractXrm implements ICheck {
 
 		}
 
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "num" => sizeof($entries))));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 
 	public function getAllEntryIds() {
 		$entries = array();
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllEntryIds")));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllEntryIds")), ['scope' => 'xrm']);
 		$this->xrms = $this->getXrms();
 		foreach ($this->xrms as $xrmclosure) {
 			$xrm = $xrmclosure();
 			$es = $xrm->getAllEntryIds();
 			if (is_array($es)) $entries = array_merge($entries, $es);
 		}
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllEntryIds", "num" => sizeof($entries))));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllEntryIds", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 
 	public function getXrmEntryIds($xrmname, $invert = false) {
 		$entries = array();
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getXrmEntryIds", "xrmname" => $xrmname)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getXrmEntryIds", "xrmname" => $xrmname)), ['scope' => 'xrm']);
 		$this->xrms = $this->getXrms();
 		foreach ($this->xrms as $nn => $xrmclosure) {
 			$xrm = $xrmclosure();
@@ -148,7 +148,7 @@ class MasterXrm extends AbstractXrm implements ICheck {
 			$es = $xrm->getXrmEntryIds($xrmname, $invert);
 			$entries = array_merge($entries, $es);
 		}
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getXrmEntryIds", "num" => sizeof($entries))));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getXrmEntryIds", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 

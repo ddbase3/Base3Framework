@@ -196,9 +196,9 @@ class SimpleXrm extends AbstractXrm implements ICheck {
 	}
 
 	public function getEntry($id) {
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "id" => $id)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "id" => $id)), ['scope' => 'xrm']);
 		$entries = $this->getEntries(array($id));
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "num" => sizeof($entries) ? 1 : 0)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "num" => sizeof($entries) ? 1 : 0)), ['scope' => 'xrm']);
 		return sizeof($entries) ? array_pop($entries) : null;
 	}
 
@@ -215,7 +215,7 @@ class SimpleXrm extends AbstractXrm implements ICheck {
 	}
 
 	private function getEntriesSub(&$ids) {
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "ids" => $ids)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "ids" => $ids)), ['scope' => 'xrm']);
 
 		$entrytypes = array();
 		$entryback = array();
@@ -233,7 +233,7 @@ class SimpleXrm extends AbstractXrm implements ICheck {
 		$sql = "SELECT LOWER(HEX(`id`)) AS `uuid`, `type`, `name`, `archive` FROM `entry` WHERE `id` IN (0x" . implode(", 0x", $selids) . ")";
 		$sysentries = $this->database->multiQuery($sql);
 		if (!sizeof($sysentries)) {
-			if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "num" => 0)));
+			if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "num" => 0)), ['scope' => 'xrm']);
 			return array();
 		}
 
@@ -304,7 +304,7 @@ class SimpleXrm extends AbstractXrm implements ICheck {
 			if ($access == "none") unset($entries[$id]);
 		}
 
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "num" => sizeof($entries))));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 
@@ -313,7 +313,7 @@ class SimpleXrm extends AbstractXrm implements ICheck {
 		// no access check on allocs, because only ids
 		// jetzt doch
 
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "id" => $id)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "id" => $id)), ['scope' => 'xrm']);
 
 		$this->database->connect();
 
@@ -359,7 +359,7 @@ class SimpleXrm extends AbstractXrm implements ICheck {
 		$filter = new \Base3\Xrm\XrmFilter("ids", "in", $entries);
 		$es = $this->xrmglobal->getEntriesIntern($filter, true);
 
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "num" => sizeof($entries), "entries" => $entries)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "num" => sizeof($entries), "entries" => $entries)), ['scope' => 'xrm']);
 		return $es;
 	}
 
@@ -368,7 +368,7 @@ class SimpleXrm extends AbstractXrm implements ICheck {
 		// no access check on allocs, because only ids
 		// jetzt doch
 
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllEntryIds")));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllEntryIds")), ['scope' => 'xrm']);
 
 		$groups = array();
 		$user = (object) $this->usermanager->getUser();
@@ -397,7 +397,7 @@ class SimpleXrm extends AbstractXrm implements ICheck {
 		$sysentries = $this->database->multiQuery($sql);
 		foreach ($sysentries as $sysentry) $entries[] = $sysentry["uuid"];
 
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllEntryIds", "num" => sizeof($entries))));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllEntryIds", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 
@@ -407,9 +407,9 @@ class SimpleXrm extends AbstractXrm implements ICheck {
 		// jetzt doch
 
 		if ((!$invert && $xrmname != $this->xrmname) || ($invert && $xrmname == $this->xrmname)) return array();
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getXrmEntryIds", "xrmname" => $xrmname)));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getXrmEntryIds", "xrmname" => $xrmname)), ['scope' => 'xrm']);
 		$entries = $this->getAllEntryIds();
-		if ($this->logging) $this->logger->log("xrm", json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getXrmEntryIds", "num" => sizeof($entries))));
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getXrmEntryIds", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 

@@ -53,7 +53,7 @@ abstract class AbstractSyncJob implements ICron {
 	// Protected methods
 
 	protected function log($message) {
-		$this->logger->log("SyncJob", $this->getName() . " - " . $message);
+		$this->logger->info($this->getName() . " - " . $message, ['scope' => 'SyncJob']);
 	}
 
 	protected function getAppEntriesChange() { return array(); }
