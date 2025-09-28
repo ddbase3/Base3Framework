@@ -2,39 +2,41 @@
 
 namespace Base3\Session\DomainSession;
 
-use Base3\Session\Api\ISession;
+use Base3\Session\AbstractSession;
 use Base3\Configuration\Api\IConfiguration;
 
-class DomainSession implements ISession {
-
-	private bool $started = false;
+class DomainSession extends AbstractSession {
 
 	public function __construct(
 		private readonly IConfiguration $configuration
 	) {}
 
-	public function start(): void {
-		if ($this->started || PHP_SAPI === 'cli') return;
+	public function start(): bool {
+		if ($this->isStarted) {
+			return true;
+		}
+
+		if (PHP_SAPI === 'cli') {
+			return false;
+		}
 
 		$config = array_merge([
 			"extensions" => [],
 			"cookiedomain" => ""
 		], $this->configuration->get('session') ?? []);
 
-		// $_REQUEST['out'] nicht mehr gesetzt, also deaktiviert (wegen RoutungServiceSelector)
-		// $out = $_REQUEST['out'] ?? null;
-		// if (!in_array($out, $config['extensions'])) return;
-
 		if (!empty($config["cookiedomain"])) {
 			ini_set('session.cookie_domain', $config["cookiedomain"]);
 		}
 
-		if (session_status() === PHP_SESSION_NONE) session_start();
-		$this->started = true;
-	}
+		if (session_status() === PHP_SESSION_NONE) {
+			if (!session_start()) {
+				return false;
+			}
+		}
 
-	public function started(): bool {
-		return $this->started;
+		$this->isStarted = true;
+		return true;
 	}
 }
 

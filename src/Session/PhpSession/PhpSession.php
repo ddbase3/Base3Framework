@@ -1,15 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Base3\Session\BasicSession;
+namespace Base3\Session\PhpSession;
 
 use Base3\Session\AbstractSession;
-use Base3\Configuration\Api\IConfiguration;
 
-class BasicSession extends AbstractSession {
-
-	public function __construct(
-		private readonly IConfiguration $configuration
-	) {}
+class PhpSession extends AbstractSession {
 
 	public function start(): bool {
 		if ($this->isStarted) {
@@ -19,11 +14,6 @@ class BasicSession extends AbstractSession {
 		if (PHP_SAPI === 'cli') {
 			return false;
 		}
-
-		$config = array_merge([
-			"extensions" => [],
-			"cookiedomain" => ""
-		], $this->configuration->get('session') ?? []);
 
 		if (session_status() === PHP_SESSION_NONE) {
 			if (!session_start()) {
