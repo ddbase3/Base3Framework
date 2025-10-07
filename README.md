@@ -203,44 +203,46 @@ The BASE3 Framework can be extended through numerous plugins that add modular fu
 
 ### 📊 Data & Visualization
 
-- **DataHawk**  
+- **[DataHawk](https://github.com/ddbase3/DataHawk)**  
   Interactive reports with configurable tables and charts directly within BASE3 pages.
-- **Vizion**  
+- **[Vizion](https://github.com/ddbase3/Vizion)**  
   Visual representation of data using bar, pie, line charts, etc., based on DataHawk.
 
 ### 🤖 AI & Automation
 
-- **MissionBay**  
+- **[Chatbot](https://github.com/ddbase3/Chatbot)**  
+  Chatbot UI for integration anywhere in a webproject, i.e. as a page module or a bubble.
+- **[MissionBay](https://github.com/ddbase3/MissionBay)**  
   Agent-based system for orchestrating autonomous tasks, event-driven communication, and workflows.
 
 ### ⚙️ Management & Infrastructure
 
-- **Base3Manager**  
+- **[Base3Manager](https://github.com/ddbase3/Base3Manager)**  
   UI for managing and activating BASE3 plugins.
-- **ManageWebsite**, **ManageDatabase**, **ManageGit**, **ManageServer**, **ManageIlias**  
+- **[ManageWebsite](https://github.com/ddbase3/ManageWebsite)**, **[ManageDatabase](https://github.com/ddbase3/ManageDatabase)**, **[ManageGit](https://github.com/ddbase3/ManageGit)**, **[ManageServer](https://github.com/ddbase3/ManageServer)**, **[ManageIlias](https://github.com/ddbase3/ManageIlias)**, and more 
   Specialized manager plugins for system or project-level administration.
 
 ### 🛠️ Development Tools
 
-- **Base3Tools**  
+- **[Base3Tools](https://github.com/ddbase3/Base3Tools)**  
   Collection of useful development tools for working with BASE3.
-- **Debugger**, **IliasDebugger**  
+- **[Debugger](https://github.com/ddbase3/Debugger)**, **[IliasDebugger](https://github.com/ddbase3/IliasDebugger)**  
   Advanced debugging plugins – also suitable for ILIAS-based projects.
 
 ### 🧩 ILIAS Integration
 
-- **Base3IliasAdapter**  
-  UI hooks and extensions for deep integration with ILIAS.
-- **ManageBase3Ilias**  
-  Manage and configure BASE3 components within ILIAS environments.
+- **[Base3IliasAdapter](https://github.com/ddbase3/Base3IliasAdapter)**  
+  ILIAS UI hook plugin - extensions for deep integration with ILIAS.
+- **[ManageBase3Ilias](https://github.com/ddbase3/ManageBase3Ilias)**  
+  BASE3 Manager plugin for managing and configure BASE3 components within ILIAS environments.
 
 ### 📦 Other Plugins
 
-- **ModuledPage**  
+- **[ModuledPage](https://github.com/ddbase3/ModuledPage)**  
   Modular page elements for structured content presentation.
-- **FreeTemplate**  
+- **[FreeTemplate](https://github.com/ddbase3/FreeTemplate)**  
   Starter template for custom BASE3 plugins (LGPL).
-- **OpenAiConversation**  
+- **[OpenAiConversation](https://github.com/ddbase3/OpenAiConversation)**  
   Flow-based chatbot with OpenAI integration, suitable for RAG-based applications.
 
 > You can find more plugins at: [github.com/topics/base3-plugin](https://github.com/topics/base3-plugin)
@@ -256,7 +258,7 @@ Contributions are welcome. Please follow PSR-12 and document new interfaces clea
 
 ## License
 
-Base3Framework is licensed under the LGPL License. See the LICENSE file for more details.
+Base3Framework is licensed under the GPL 3.0 License. See the LICENSE file for more details.
 
 ## Documentation
 
@@ -264,6 +266,5 @@ For more detailed documentation, please visit the official website or check the 
 
 ## Links
 
-* [BASE3 on Wikipedia (German)](https://de.wikipedia.org/wiki/BASE3_Framework)
 * [Official project page (documentation)](https://base3.de/crm.php?id=05fdf4d623714e24a7418c160795ef34)
 
