@@ -120,6 +120,69 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		return [];
 	}
 
+	public function &getInstances(array $criteria = []) {
+		$instances = [];
+
+		$app = $criteria['app'] ?? null;
+		$interface = $criteria['interface'] ?? null;
+		$name = $criteria['name'] ?? null;
+
+		// app + interface + name
+		if ($app && $interface && $name) {
+			$inst = $this->getInstanceByAppInterfaceName($app, $interface, $name);
+			if ($inst) $instances[] = $inst;
+			return $instances;
+		}
+
+		// app + interface
+		if ($app && $interface) {
+			$instances = $this->getInstancesByAppInterface($app, $interface);
+			return $instances;
+		}
+
+		// app + name
+		if ($app && $name) {
+			$inst = $this->getInstanceByAppName($app, $name);
+			if ($inst) $instances[] = $inst;
+			return $instances;
+		}
+
+		// interface + name
+		if ($interface && $name) {
+			$inst = $this->getInstanceByInterfaceName($interface, $name);
+			if ($inst) $instances[] = $inst;
+			return $instances;
+		}
+
+		// interface
+		if ($interface) {
+			$instances = $this->getInstancesByInterface($interface);
+			return $instances;
+		}
+
+		// name
+		if ($name) {
+			$map = $this->getMap();
+			foreach ($map as $app => $data) {
+				if (!isset($data['name'][$name])) continue;
+				$c = $data['name'][$name];
+				if (class_exists($c)) $instances[] = $this->instantiate($c);
+			}
+			return $instances;
+		}
+
+		// no criteria: all instances
+		$map = $this->getMap();
+		foreach ($map as $app => $data) {
+			if (!isset($data['name'])) continue;
+			foreach ($data['name'] as $c) {
+				if (class_exists($c)) $instances[] = $this->instantiate($c);
+			}
+		}
+
+		return $instances;
+	}
+
 	public function &getInstancesByInterface($interface) {
 		$instances = [];
 		foreach ($this->getMap() as $app => $m) {
