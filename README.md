@@ -230,7 +230,8 @@ The BASE3 Framework can be extended through numerous plugins that add modular fu
   Advanced debugging plugins – also suitable for ILIAS-based projects.
 
 ### 🧩 ILIAS Integration
-
+- **[Base3Ilias](https://github.com/ddbase3/Base3Ilias)**
+  BASE3 ILIAS Bridge for DI container connections
 - **[Base3IliasAdapter](https://github.com/ddbase3/Base3IliasAdapter)**  
   ILIAS UI hook plugin - extensions for deep integration with ILIAS.
 - **[ManageBase3Ilias](https://github.com/ddbase3/ManageBase3Ilias)**  
