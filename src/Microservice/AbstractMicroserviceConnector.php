@@ -48,13 +48,22 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 			'binarystream' => $binarystream,
 			'serialized' => $serialized
 		];
+
 		$response = $this->httpPost($this->url, $data);
 
-                if (!$response) return null;
+		if ($response === false || $response === null || $response === '') return null;
 
 		if ($binarystream) return $response;
-		if ($serialized) return unserialize($response);
-		return json_decode($response, true);
+
+		if ($serialized) {
+			$result = @unserialize($response);
+			return $result === false && $response !== 'b:0;' ? null : $result;
+		}
+
+		$decoded = json_decode($response, true);
+		if (json_last_error() === JSON_ERROR_NONE) return $decoded;
+
+		return null;
 	}
 
 	protected function getMethodData($method) {
