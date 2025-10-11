@@ -2,12 +2,15 @@
 
 namespace Base3\Microservice\Api;
 
+use Base3\Api\IConnector;
+use Base3\Api\IProxy;
+
 /**
  * Interface IMicroserviceConnector
  *
  * Provides the base URL or identifier of the connected microservice.
  */
-interface IMicroserviceConnector {
+interface IMicroserviceConnector extends IConnector, IProxy {
 
 	/**
 	 * Returns the base URL or connection identifier of the microservice.

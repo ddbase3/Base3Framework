@@ -111,4 +111,10 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 	public function getMicroserviceUrl() {
 		return $this->url;
 	}
+
+	// Implementation of IProxy
+
+	public function getProxiedInstance(): object {
+		return $this;
+	}
 }
