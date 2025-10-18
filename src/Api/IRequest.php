@@ -39,6 +39,27 @@ interface IRequest {
 	public function post(string $key, $default = null);
 
 	/**
+	 * Returns a value from GET or POST.
+	 *
+	 * POST takes precedence over GET.
+	 * Nested array notation (e.g. "options[type]") is supported.
+	 *
+	 * @param string $key Parameter name
+	 * @param mixed $default Default value if not set in both POST and GET
+	 * @return mixed
+	 */
+	public function request(string $key, $default = null);
+
+	/**
+	 * Returns all request parameters merged from POST and GET.
+	 *
+	 * POST overrides GET in case of duplicate keys.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function allRequest(): array;
+
+	/**
 	 * Returns a value from the COOKIE array.
 	 *
 	 * @param string $key Cookie name
@@ -139,6 +160,5 @@ interface IRequest {
 	 * @return string One of the CONTEXT_* constants
 	 */
 	public function getContext(): string;
-
 }
 
