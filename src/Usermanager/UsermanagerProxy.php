@@ -3,6 +3,7 @@
 namespace Base3\Usermanager;
 
 use Base3\Usermanager\Api\IUsermanager;
+use Base3\Usermanager\User;
 
 class UsermanagerProxy implements IUsermanager {
 
@@ -13,11 +14,18 @@ class UsermanagerProxy implements IUsermanager {
 	}
 
 	public function getUser() {
-		return $this->connector->getUser();
+		$user = $this->connector->getUser();
+		return is_array($user) ? User::fromArray($user) : $user;
 	}
 
 	public function getGroups() {
-		return $this->connector->getGroups();
+		$groups = $this->connector->getGroups();
+
+		if (is_array($groups) && isset($groups[0]) && is_array($groups[0])) {
+			return array_map(fn($g) => User::fromArray($g), $groups);
+		}
+
+		return $groups;
 	}
 
 	public function registUser($userid, $password, $data = null) {
@@ -29,6 +37,12 @@ class UsermanagerProxy implements IUsermanager {
 	}
 
 	public function getAllUsers() {
-		return $this->connector->getAllUsers();
+		$users = $this->connector->getAllUsers();
+
+		if (is_array($users) && isset($users[0]) && is_array($users[0])) {
+			return array_map(fn($u) => User::fromArray($u), $users);
+		}
+
+		return $users;
 	}
 }
