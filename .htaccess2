@@ -1,0 +1,24 @@
+<files *.ini>
+order deny,allow
+deny from all
+</files>
+
+RewriteEngine On
+
+# allow well-known (standardized protocol endpoints: ActivityPub, ACME, OpenID, ...)
+RewriteRule ^\.well-known/ - [L]
+
+# allow static assets
+RewriteRule ^assets/ - [L]
+RewriteRule ^plugin/(.*)/assets/ - [L]
+RewriteRule ^tpl/ - [L]
+RewriteRule ^userfiles/ - [L]
+
+# allow common special files
+RewriteRule ^favicon.ico - [L]
+RewriteRule ^robots.txt - [L]
+RewriteRule ^sitemap.* - [L]
+
+# everything else goes to the framework
+RewriteRule ^.*$ index.php [L,QSA]
+
