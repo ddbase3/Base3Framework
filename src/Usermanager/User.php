@@ -10,4 +10,15 @@ class User {
 	public $lang;		// "de", "en", ...
 	public $role;		// "visit" | "member" | "admin"
 
+	public static function fromArray(array $data): self {
+		$user = new self();
+
+		foreach (['id', 'name', 'email', 'lang', 'role'] as $key) {
+			if (array_key_exists($key, $data)) {
+				$user->$key = $data[$key];
+			}
+		}
+
+		return $user;
+	}
 }
