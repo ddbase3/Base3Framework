@@ -63,6 +63,10 @@ test:
 	@echo "✅ Running PHPUnit tests..."
 	phpunit
 
+test-issues:
+	@echo "✅ Running PHPUnit tests and display all issues..."
+	phpunit --display-all-issues
+
 doc:
 	phpdoc run -d src,plugin/*/src -t docs/phpdoc
 
