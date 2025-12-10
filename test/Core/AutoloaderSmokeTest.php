@@ -1,51 +1,44 @@
-<?php
-
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace Base3\Test\Core;
 
 use PHPUnit\Framework\TestCase;
 use Base3\Core\Autoloader;
 
-class AutoloaderSmokeTest extends TestCase
-{
-    public static function setUpBeforeClass(): void
-    {
-        // Autoloader registrieren
-        Autoloader::register();
+class AutoloaderSmokeTest extends TestCase {
 
-        // Dynamische Plugins zum Autoloader hinzufügen
-        self::addPlugins();
-    }
+	public static function setUpBeforeClass(): void {
+		// Register autoloader
+		Autoloader::register();
 
-    /**
-     * Plugins dynamisch hinzufügen
-     */
-    private static function addPlugins(): void
-    {
-        // Dynamisch alle Plugins hinzufügen
-        foreach (glob(DIR_PLUGIN . '*', GLOB_ONLYDIR) as $pluginPath) {
-            $pluginName = basename($pluginPath);
-            $srcPath = realpath($pluginPath . '/src');
-            $testPath = realpath($pluginPath . '/test');
+		// Add plugins dynamically (explicitly)
+		self::addPlugins();
+	}
 
-            if ($srcPath !== false) {
-                // Füge das Plugin zum Autoloader hinzu
-                echo "Plugin '$pluginName' hinzugefügt (src): $srcPath\n";
-                Autoloader::registerPlugin($pluginName, $srcPath . '/');
-            }
+	/**
+	 * Add plugins dynamically to the autoloader.
+	 */
+	private static function addPlugins(): void {
+		foreach (glob(DIR_PLUGIN . '*', GLOB_ONLYDIR) as $pluginPath) {
+			$pluginName = basename($pluginPath);
+			$srcPath = realpath($pluginPath . '/src');
+			$testPath = realpath($pluginPath . '/test');
 
-            if ($testPath !== false) {
-                echo "Plugin '$pluginName' hinzugefügt (test): $testPath\n";
-                Autoloader::registerPlugin($pluginName . '\\Test', $testPath . '/');
-            }
-        }
-    }
+			if ($srcPath !== false) {
+				echo "Plugin '$pluginName' hinzugefügt (src): $srcPath\n";
+				Autoloader::registerPlugin($pluginName . '\\', $srcPath . '/');
+			}
 
-    public function testAutoloaderLoadsDummyClass(): void
-    {
-        $dummy = new \Base3\Test\Dummy\DummyClass();
-        $this->assertSame('Hello from DummyClass!', $dummy->sayHello());
-    }
+			if ($testPath !== false) {
+				echo "Plugin '$pluginName' hinzugefügt (test): $testPath\n";
+				Autoloader::registerPlugin($pluginName . '\\Test\\', $testPath . '/');
+			}
+		}
+	}
+
+	public function testAutoloaderLoadsDummyClass(): void {
+		$dummy = new \Base3\Test\Dummy\DummyClass();
+		$this->assertSame('Hello from DummyClass!', $dummy->sayHello());
+	}
+
 }
-
