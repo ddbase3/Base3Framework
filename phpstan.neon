@@ -19,9 +19,7 @@ parameters:
 			- plugin/*/tpl (?)
 			- plugin/*/test (?)
 
-	# Start practical: fix symbol discovery first, then turn this back on later
-	checkMissingTypehints: false
-
+	checkMissingTypehints: true
 	treatPhpDocTypesAsCertain: false
 	reportUnmatchedIgnoredErrors: true
 
