@@ -61,11 +61,24 @@ clean:
 
 test:
 	@echo "✅ Running PHPUnit tests..."
-	phpunit
+	phpunit --no-coverage
 
 test-issues:
 	@echo "✅ Running PHPUnit tests and display all issues..."
 	phpunit --display-all-issues
+
+coverage:
+	@echo "📊 Building coverage report..."
+	php \
+		-d pcov.enabled=1 \
+		-d pcov.directory=/srv/www/html/contourz.photo/test.contourz.photo \
+		-d pcov.exclude='#/(vendor|docs|tmp|public|plugin/[^/]+/tpl)/#' \
+		$$(command -v phpunit) \
+		--coverage-html docs/coverage \
+		--coverage-text
+
+coverage-clean:
+	rm -rf docs/coverage
 
 doc:
 	phpdoc run -d src,plugin/*/src -t docs/phpdoc
