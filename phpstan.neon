@@ -1,0 +1,27 @@
+parameters:
+	level: 6
+	phpVersion: 80300
+
+	bootstrapFiles:
+		- tools/phpstan/bootstrap.php
+
+	paths:
+		- src
+		- plugin
+
+	excludePaths:
+		analyseAndScan:
+			- tmp (?)
+			- docs (?)
+			- public (?)
+			- vendor (?)
+			- plugin/*/vendor (?)
+			- plugin/*/tpl (?)
+			- plugin/*/test (?)
+
+	# Start practical: fix symbol discovery first, then turn this back on later
+	checkMissingTypehints: false
+
+	treatPhpDocTypesAsCertain: false
+	reportUnmatchedIgnoredErrors: true
+

@@ -86,3 +86,7 @@ doc:
 doc-clean:
 	rm -rf docs/phpdoc
 
+stan:
+	@echo "🔎 Running PHPStan..."
+	php -d memory_limit=1G $$(command -v phpstan) analyse -c phpstan.neon
+

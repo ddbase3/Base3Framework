@@ -5,10 +5,10 @@ namespace Base3\Xrm;
 class XrmFilter {
 
 	// string
-	public $attr;
+	public string $attr;
 
 	// string
-	public $op;
+	public string $op;
 
 	// mixed (z.B. Array von Filtern bei conj/or oder conj/and)
 	public $val;
@@ -49,5 +49,4 @@ class XrmFilter {
 		if (isset($d["offset"])) $this->offset = $d["offset"];
 		if (isset($d["limit"])) $this->limit = $d["limit"];
 	}
-
 }
