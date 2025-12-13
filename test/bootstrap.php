@@ -19,6 +19,9 @@ define('DIR_SRC', DIR_ROOT . 'src' . DIRECTORY_SEPARATOR);
 define('DIR_PLUGIN', DIR_ROOT . 'plugin' . DIRECTORY_SEPARATOR);
 define('DIR_TEST', DIR_ROOT . 'test' . DIRECTORY_SEPARATOR);
 
+// --- Test-only stubs ----------------------------------------------------------
+require_once DIR_TEST . 'Dummy' . DIRECTORY_SEPARATOR . 'PhpUnitPharClassLoaderStub.php';
+
 // --- Autoload: Composer (root) ------------------------------------------------
 $rootComposerAutoload = DIR_ROOT . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
 if (is_file($rootComposerAutoload)) {
