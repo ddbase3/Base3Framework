@@ -4,7 +4,7 @@ namespace Base3\Core;
 
 use Base3\Api\IBase;
 
-class ClassMapComposer extends AbstractClassMap {
+class ComposerClassMap extends AbstractClassMap {
 
 	protected function generateFromComposerClassMap(): void {
 		$classmap = require dirname(__DIR__, 3) . '/vendor/composer/autoload_classmap.php';
@@ -45,4 +45,3 @@ class ClassMapComposer extends AbstractClassMap {
 		return [];
 	}
 }
-
