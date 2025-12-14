@@ -2,80 +2,79 @@
 
 namespace Base3\Event;
 
-class EventManager implements IEventManager
-{
-    /** @var array<string, array<int, array<callable>>> */
-    protected array $listeners = [];
+class EventManager implements IEventManager {
+	/** @var array<string, array<int, array<callable>>> */
+	protected array $listeners = [];
 
-    public function on(string $event, callable $listener, int $priority = 0): void
-    {
-        $this->listeners[$event][$priority][] = $listener;
-    }
+	public function on(string $event, callable $listener, int $priority = 0): void {
+		$this->listeners[$event][$priority][] = $listener;
+	}
 
-    public function once(string $event, callable $listener, int $priority = 0): void
-    {
-        $wrapper = null;
-        $wrapper = function (...$args) use (&$wrapper, $event, $listener) {
-            $this->off($event, $wrapper);
-            return $listener(...$args);
-        };
-        $this->on($event, $wrapper, $priority);
-    }
+	public function once(string $event, callable $listener, int $priority = 0): void {
+		$wrapper = null;
+		$wrapper = function (...$args) use (&$wrapper, $event, $listener) {
+			$this->off($event, $wrapper);
+			return $listener(...$args);
+		};
 
-    public function off(string $event, callable $listener): void
-    {
-        if (!isset($this->listeners[$event])) return;
+		$this->on($event, $wrapper, $priority);
+	}
 
-        foreach ($this->listeners[$event] as $priority => $handlers) {
-            foreach ($handlers as $i => $handler) {
-                if ($handler === $listener) {
-                    unset($this->listeners[$event][$priority][$i]);
-                }
-            }
-            if (empty($this->listeners[$event][$priority])) {
-                unset($this->listeners[$event][$priority]);
-            }
-        }
+	public function off(string $event, callable $listener): void {
+		if (!isset($this->listeners[$event])) {
+			return;
+		}
 
-        if (empty($this->listeners[$event])) {
-            unset($this->listeners[$event]);
-        }
-    }
+		foreach ($this->listeners[$event] as $priority => $handlers) {
+			foreach ($handlers as $i => $handler) {
+				if ($handler === $listener) {
+					unset($this->listeners[$event][$priority][$i]);
+				}
+			}
 
-    public function fire(object|string $event, ...$args): array
-    {
-        $eventName = \is_string($event) ? $event : \get_class($event);
-        $allListeners = $this->collectMatchingListeners($eventName);
+			if (empty($this->listeners[$event][$priority])) {
+				unset($this->listeners[$event][$priority]);
+			}
+		}
 
-        $results = [];
-        foreach ($allListeners as $listener) {
-            $result = $listener($event, ...$args);
-            $results[] = $result;
+		if (empty($this->listeners[$event])) {
+			unset($this->listeners[$event]);
+		}
+	}
 
-            if (\is_object($event) && $event instanceof StoppableEvent && $event->isPropagationStopped()) {
-                break;
-            }
-        }
+	public function fire(object|string $event, ...$args): array {
+		$eventName = \is_string($event) ? $event : \get_class($event);
+		$listeners = $this->collectMatchingListeners($eventName);
 
-        return $results;
-    }
+		$results = [];
+		foreach ($listeners as $listener) {
+			$results[] = $listener($event, ...$args);
 
-    protected function collectMatchingListeners(string $eventName): array
-    {
-        $matched = [];
+			if (\is_object($event) && $event instanceof StoppableEvent && $event->isPropagationStopped()) {
+				break;
+			}
+		}
 
-        foreach ($this->listeners as $pattern => $priorityMap) {
-            if (\fnmatch($pattern, $eventName)) {
-                \krsort($priorityMap);
-                foreach ($priorityMap as $listeners) {
-                    foreach ($listeners as $listener) {
-                        $matched[] = $listener;
-                    }
-                }
-            }
-        }
+		return $results;
+	}
 
-        return $matched;
-    }
+	protected function collectMatchingListeners(string $eventName): array {
+		$matchedListeners = [];
+
+		foreach ($this->listeners as $pattern => $priorityMap) {
+			if (!\fnmatch($pattern, $eventName)) {
+				continue;
+			}
+
+			\krsort($priorityMap);
+
+			foreach ($priorityMap as $listeners) {
+				foreach ($listeners as $listener) {
+					$matchedListeners[] = $listener;
+				}
+			}
+		}
+
+		return $matchedListeners;
+	}
 }
-
