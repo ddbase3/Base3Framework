@@ -67,7 +67,7 @@ composer --working-dir=plugin install
 Optional merging of plugin composer files:
 
 ```bash
-php setup/merge-composer.php
+php tools/setup/merge-composer.php
 composer --working-dir=plugin install
 ```
 
