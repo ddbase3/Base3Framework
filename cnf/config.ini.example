@@ -2,6 +2,7 @@
 
 [base]
 url = "https://mysite.com/"
+endpoint = ""
 intern = ""
 
 [session]
