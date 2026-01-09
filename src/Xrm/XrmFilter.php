@@ -4,49 +4,54 @@ namespace Base3\Xrm;
 
 class XrmFilter {
 
-	// string
-	public string $attr;
+	public string $attr = '';
+	public string $op = '';
+	public mixed $val = null;
+	public ?int $offset = null;
+	public ?int $limit = null;
 
-	// string
-	public string $op;
-
-	// mixed (z.B. Array von Filtern bei conj/or oder conj/and)
-	public $val;
-
-	// int, null bei kein Offset (oder Offset 0)
-	public $offset;
-
-	// int, null bei kein Limit (oder bis zum Ende)
-	public $limit;
-
-	public function __construct($attr = null, $op = null, $val = null, $offset = null, $limit = null) {
-		$this->attr = $attr;
-		$this->op = $op;
+	public function __construct(?string $attr = null, ?string $op = null, mixed $val = null, ?int $offset = null, ?int $limit = null) {
+		if ($attr !== null) {
+			$this->attr = $attr;
+		}
+		if ($op !== null) {
+			$this->op = $op;
+		}
 		$this->val = $val;
 		$this->offset = $offset;
 		$this->limit = $limit;
 	}
 
-	public function fromJson($json) {
+	public function fromJson(string $json): void {
 		$data = json_decode($json, true);
 		$this->fromData($data);
 	}
 
-	public function fromData($data) {
+	public function fromData($data): void {
 		$d = is_object($data) ? (array) $data : $data;
-		$this->attr = $d["attr"];
-		$this->op = $d["op"];
-		if ($this->attr == "conj" && $this->op != "not") {
-			$this->val = array();
-			foreach ($d["val"] as $val) {
-				$filter = new XrmFilter;
+
+		$this->attr = (string)($d['attr'] ?? '');
+		$this->op   = (string)($d['op'] ?? '');
+
+		if ($this->attr === '') {
+			throw new \InvalidArgumentException('XrmFilter: missing "attr" in data.');
+		}
+		if ($this->op === '') {
+			throw new \InvalidArgumentException('XrmFilter: missing "op" in data.');
+		}
+
+		if ($this->attr === 'conj' && $this->op !== 'not') {
+			$this->val = [];
+			foreach (($d['val'] ?? []) as $val) {
+				$filter = new XrmFilter();
 				$filter->fromData($val);
 				$this->val[] = $filter;
 			}
 		} else {
-			$this->val = $d["val"];
+			$this->val = $d['val'] ?? null;
 		}
-		if (isset($d["offset"])) $this->offset = $d["offset"];
-		if (isset($d["limit"])) $this->limit = $d["limit"];
+
+		$this->offset = isset($d['offset']) ? (int)$d['offset'] : null;
+		$this->limit  = isset($d['limit'])  ? (int)$d['limit']  : null;
 	}
 }
