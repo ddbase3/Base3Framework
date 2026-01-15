@@ -11,13 +11,18 @@ class PostgresDatabase implements IDatabase, ICheck {
 
 	private static $servicelocator;
 
-	private $connection;
-	private $connected = false;
+	/**
+	 * pg_connect returns a PgSql\Connection object in newer PHP versions,
+	 * but historically it was a resource.
+	 * We keep it broad to avoid runtime breaks across environments.
+	 */
+	private mixed $connection = null;
+	private bool $connected = false;
 
-	private $host;
-	private $user;
-	private $pass;
-	private $name;
+	private ?string $host;
+	private ?string $user;
+	private ?string $pass;
+	private ?string $name;
 
 	public function __construct(IConfiguration $config) {
 		$cnf = $config->get('database');
@@ -45,7 +50,7 @@ class PostgresDatabase implements IDatabase, ICheck {
 		});
 	}
 
-	public function connect() {
+	public function connect(): void {
 		if ($this->connected) return;
 		$dsn = "host={$this->host} dbname={$this->name} user={$this->user} password={$this->pass}";
 		$this->connection = pg_connect($dsn);
@@ -53,22 +58,22 @@ class PostgresDatabase implements IDatabase, ICheck {
 		$this->connected = true;
 	}
 
-	public function connected() {
+	public function connected(): bool {
 		return $this->connected;
 	}
 
-	public function disconnect() {
+	public function disconnect(): void {
 		if ($this->connected && $this->connection) {
 			pg_close($this->connection);
 			$this->connected = false;
 		}
 	}
 
-	public function nonQuery($query) {
+	public function nonQuery(string $query): void {
 		pg_query($this->connection, $query);
 	}
 
-	public function scalarQuery($query) {
+	public function scalarQuery(string $query): mixed {
 		$result = pg_query($this->connection, $query);
 		if (!$result || pg_num_rows($result) == 0) return null;
 		$row = pg_fetch_row($result);
@@ -76,15 +81,15 @@ class PostgresDatabase implements IDatabase, ICheck {
 		return $row[0] ?? null;
 	}
 
-	public function singleQuery($query) {
+	public function singleQuery(string $query): ?array {
 		$result = pg_query($this->connection, $query);
 		if (!$result || pg_num_rows($result) == 0) return null;
 		$row = pg_fetch_assoc($result);
 		pg_free_result($result);
-		return $row;
+		return $row ?: null;
 	}
 
-	public function &listQuery($query) {
+	public function &listQuery(string $query): array {
 		$list = [];
 		$result = pg_query($this->connection, $query);
 		if (!$result || pg_num_rows($result) == 0) return $list;
@@ -93,7 +98,7 @@ class PostgresDatabase implements IDatabase, ICheck {
 		return $list;
 	}
 
-	public function &multiQuery($query) {
+	public function &multiQuery(string $query): array {
 		$rows = [];
 		$result = pg_query($this->connection, $query);
 		if (!$result || pg_num_rows($result) == 0) return $rows;
@@ -102,32 +107,36 @@ class PostgresDatabase implements IDatabase, ICheck {
 		return $rows;
 	}
 
-	public function affectedRows() {
-		return pg_affected_rows($this->connection);
+	public function affectedRows(): int {
+		return (int)pg_affected_rows($this->connection);
 	}
 
-	public function insertId() {
+	public function insertId(): int|string {
 		$result = pg_query($this->connection, "SELECT LASTVAL()");
-		if (!$result) return null;
+		if (!$result) return 0;
 		$row = pg_fetch_row($result);
 		pg_free_result($result);
-		return $row[0] ?? null;
+
+		// LASTVAL() returns text; cast to int if numeric, otherwise return string
+		$val = $row[0] ?? 0;
+		if (is_string($val) && ctype_digit($val)) return (int)$val;
+		return $val;
 	}
 
-	public function escape($str) {
+	public function escape(string $str): string {
 		return pg_escape_string($this->connection, $str);
 	}
 
-	public function isError() {
+	public function isError(): bool {
 		return pg_last_error($this->connection) !== "";
 	}
 
-	public function errorNumber() {
-		return 0; // PostgreSQL gibt keine Fehlernummern zurück
+	public function errorNumber(): int {
+		return 0; // PostgreSQL liefert hier in dieser Implementierung keine Fehlernummern
 	}
 
-	public function errorMessage() {
-		return pg_last_error($this->connection);
+	public function errorMessage(): string {
+		return (string)pg_last_error($this->connection);
 	}
 
 	public function checkDependencies() {
@@ -137,4 +146,3 @@ class PostgresDatabase implements IDatabase, ICheck {
 		];
 	}
 }
-

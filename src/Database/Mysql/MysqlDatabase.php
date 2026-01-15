@@ -11,13 +11,13 @@ class MysqlDatabase implements IDatabase, ICheck {
 
 	private static $servicelocator;
 
-	private $connection;
-	private $connected = false;
+	private ?\mysqli $connection = null;
+	private bool $connected = false;
 
-	private $host;
-	private $user;
-	private $pass;
-	private $name;
+	private ?string $host;
+	private ?string $user;
+	private ?string $pass;
+	private ?string $name;
 
 	public function __construct(IConfiguration $config) {
 		$cnf = $config->get('database');
@@ -45,7 +45,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 		});
 	}
 
-	public function connect() {
+	public function connect(): void {
 		if ($this->connected) return;
 		if (empty($this->host) || empty($this->user) || empty($this->pass) || empty($this->name)) return;
 		$this->connection = new \mysqli($this->host, $this->user, $this->pass, $this->name);
@@ -54,20 +54,20 @@ class MysqlDatabase implements IDatabase, ICheck {
 		$this->connected = true;
 	}
 
-	public function connected() {
+	public function connected(): bool {
 		return $this->connected;
 	}
 
-	public function disconnect() {
+	public function disconnect(): void {
 		$this->connected = false;
 		if ($this->connection) $this->connection->close();
 	}
 
-	public function nonQuery($query) {
+	public function nonQuery(string $query): void {
 		$this->connection->query($query);
 	}
 
-	public function scalarQuery($query) {
+	public function scalarQuery(string $query): mixed {
 		$result = $this->connection->query($query);
 		if (!$result || !$result->num_rows) return null;
 		if ($row = $result->fetch_array(MYSQLI_NUM)) {
@@ -77,7 +77,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 		return null;
 	}
 
-	public function singleQuery($query) {
+	public function singleQuery(string $query): ?array {
 		$result = $this->connection->query($query);
 		if (!$result || !$result->num_rows) return null;
 		if ($row = $result->fetch_assoc()) {
@@ -87,7 +87,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 		return null;
 	}
 
-	public function &listQuery($query) {
+	public function &listQuery(string $query): array {
 		$list = [];
 		$result = $this->connection->query($query);
 		if (!$result || !$result->num_rows) return $list;
@@ -96,7 +96,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 		return $list;
 	}
 
-	public function &multiQuery($query) {
+	public function &multiQuery(string $query): array {
 		$rows = [];
 		$result = $this->connection->query($query);
 		if (!$result || !$result->num_rows) return $rows;
@@ -105,27 +105,27 @@ class MysqlDatabase implements IDatabase, ICheck {
 		return $rows;
 	}
 
-	public function affectedRows() {
+	public function affectedRows(): int {
 		return $this->connection->affected_rows;
 	}
 
-	public function insertId() {
+	public function insertId(): int|string {
 		return $this->connection->insert_id;
 	}
 
-	public function escape($str) {
+	public function escape(string $str): string {
 		return $this->connection->real_escape_string($str);
 	}
 
-	public function isError() {
+	public function isError(): bool {
 		return $this->connection->error !== '';
 	}
 
-	public function errorNumber() {
+	public function errorNumber(): int {
 		return $this->connection->errno;
 	}
 
-	public function errorMessage() {
+	public function errorMessage(): string {
 		return $this->connection->error;
 	}
 
@@ -137,4 +137,3 @@ class MysqlDatabase implements IDatabase, ICheck {
 		];
 	}
 }
-
