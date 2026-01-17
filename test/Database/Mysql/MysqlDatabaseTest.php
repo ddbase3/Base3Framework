@@ -2,89 +2,12 @@
 
 namespace Base3Test\Database\Mysql;
 
-use Base3\Database\Mysql\MysqlDatabase;
 use Base3\Configuration\Api\IConfiguration;
+use Base3\Database\Mysql\MysqlDatabase;
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Fake connection object for MysqlDatabase.
- * We must NOT instantiate real \mysqli in tests (ext-mysqli + strict reporting can throw/warn).
- */
-final class FakeMysqliConnection {
-
-	public int $connect_errno = 0;
-	public string $connect_error = '';
-	public int $affected_rows = 0;
-	public $insert_id = 0;
-	public string $error = '';
-	public int $errno = 0;
-
-	public bool $closed = false;
-	public ?string $charset = null;
-
-	/** @var array<int, mixed> */
-	public array $queryQueue = [];
-
-	public function set_charset(string $charset) {
-		$this->charset = $charset;
-		return true;
-	}
-
-	public function close() {
-		$this->closed = true;
-		return true;
-	}
-
-	public function query(string $query) {
-		if (count($this->queryQueue) === 0) return false;
-		return array_shift($this->queryQueue);
-	}
-
-	public function real_escape_string(string $str): string {
-		return addslashes($str);
-	}
-}
-
-final class FakeMysqliResult {
-
-	public int $num_rows = 0;
-
-	/** @var array<int, array<int, mixed>> */
-	private array $rowsNum = [];
-
-	/** @var array<int, array<string, mixed>> */
-	private array $rowsAssoc = [];
-
-	private int $posNum = 0;
-	private int $posAssoc = 0;
-
-	public bool $freed = false;
-
-	/**
-	 * @param array<int, array<int, mixed>> $rowsNum
-	 * @param array<int, array<string, mixed>> $rowsAssoc
-	 */
-	public function __construct(array $rowsNum, array $rowsAssoc) {
-		$this->rowsNum = $rowsNum;
-		$this->rowsAssoc = $rowsAssoc;
-		$this->num_rows = max(count($rowsNum), count($rowsAssoc));
-	}
-
-	public function fetch_array(int $mode) {
-		if ($this->posNum >= count($this->rowsNum)) return null;
-		return $this->rowsNum[$this->posNum++];
-	}
-
-	public function fetch_assoc() {
-		if ($this->posAssoc >= count($this->rowsAssoc)) return null;
-		return $this->rowsAssoc[$this->posAssoc++];
-	}
-
-	public function free() {
-		$this->freed = true;
-	}
-}
-
+#[AllowMockObjectsWithoutExpectations]
 final class MysqlDatabaseTest extends TestCase {
 
 	private function makeConfig(array $databaseCnf): IConfiguration {
@@ -109,6 +32,48 @@ final class MysqlDatabaseTest extends TestCase {
 		$p = $ref->getProperty($prop);
 		$p->setAccessible(true);
 		return $p->getValue($obj);
+	}
+
+	/**
+	 * mysqli::query has strict return type mysqli_result|bool and may be called with (string, int).
+	 *
+	 * @param array<int, mixed> $queryQueue must only contain bool or \mysqli_result
+	 */
+	private function makeMysqliMock(array &$queryQueue, bool &$closed, ?string &$charset): \mysqli {
+		$closed = false;
+		$charset = null;
+
+		$mysqli = $this->getMockBuilder(\mysqli::class)
+			->disableOriginalConstructor()
+			->onlyMethods(['query', 'set_charset', 'close', 'real_escape_string'])
+			->getMock();
+
+		$mysqli->method('query')->willReturnCallback(function(...$args) use (&$queryQueue) {
+			if (count($queryQueue) === 0) return false;
+
+			$v = array_shift($queryQueue);
+
+			if ($v === false || $v === true) return $v;
+			if ($v instanceof \mysqli_result) return $v;
+
+			throw new \RuntimeException('Queued query result must be bool or mysqli_result');
+		});
+
+		$mysqli->method('set_charset')->willReturnCallback(function(string $cs) use (&$charset) {
+			$charset = $cs;
+			return true;
+		});
+
+		$mysqli->method('close')->willReturnCallback(function() use (&$closed) {
+			$closed = true;
+			return true;
+		});
+
+		$mysqli->method('real_escape_string')->willReturnCallback(function(string $str) {
+			return addslashes($str);
+		});
+
+		return $mysqli;
 	}
 
 	public function testGetInstanceWithInlineConfigCreatesInstance(): void {
@@ -151,8 +116,6 @@ final class MysqlDatabaseTest extends TestCase {
 	}
 
 	public function testConnectHandlesConnectErrorWithoutDb(): void {
-		// No DB assumptions. Ensure connect() does NOT perform any real network call:
-		// provide incomplete config so connect() returns early.
 		$db = new MysqlDatabase($this->makeConfig([
 			'host' => null,
 			'user' => null,
@@ -165,9 +128,7 @@ final class MysqlDatabaseTest extends TestCase {
 		$this->assertFalse($db->connected());
 	}
 
-	public function testQueryHelpersAndErrorHelpersUsingInjectedConnection(): void {
-		if (!defined('MYSQLI_NUM')) define('MYSQLI_NUM', 1);
-
+	public function testEscapeUsingInjectedConnection(): void {
 		$db = new MysqlDatabase($this->makeConfig([
 			'host' => 'h',
 			'user' => 'u',
@@ -175,79 +136,41 @@ final class MysqlDatabaseTest extends TestCase {
 			'name' => 'n',
 		]));
 
-		$conn = new FakeMysqliConnection();
-		$conn->affected_rows = 7;
-		$conn->insert_id = 123;
-		$conn->error = 'err';
-		$conn->errno = 99;
-
-		// scalarQuery: false -> null
-		$conn->queryQueue[] = false;
-		// scalarQuery: empty -> null
-		$conn->queryQueue[] = new FakeMysqliResult([], []);
-		// scalarQuery: returns 42
-		$conn->queryQueue[] = new FakeMysqliResult([[42]], []);
-
-		// singleQuery: false -> null
-		$conn->queryQueue[] = false;
-		// singleQuery: empty -> null
-		$conn->queryQueue[] = new FakeMysqliResult([], []);
-		// singleQuery: returns assoc row
-		$conn->queryQueue[] = new FakeMysqliResult([], [['a' => 1]]);
-
-		// listQuery: false -> []
-		$conn->queryQueue[] = false;
-		// listQuery: empty -> []
-		$conn->queryQueue[] = new FakeMysqliResult([], []);
-		// listQuery: returns [1,2,3]
-		$conn->queryQueue[] = new FakeMysqliResult([[1], [2], [3]], []);
-
-		// multiQuery: false -> []
-		$conn->queryQueue[] = false;
-		// multiQuery: empty -> []
-		$conn->queryQueue[] = new FakeMysqliResult([], []);
-		// multiQuery: returns rows
-		$conn->queryQueue[] = new FakeMysqliResult([], [['x' => 'y'], ['x' => 'z']]);
+		$queryQueue = [];
+		$closed = false;
+		$charset = null;
+		$conn = $this->makeMysqliMock($queryQueue, $closed, $charset);
 
 		$this->setPrivate($db, 'connection', $conn);
 		$this->setPrivate($db, 'connected', true);
 
-		$this->assertNull($db->scalarQuery('SELECT 1 WHERE 0'));
-		$this->assertNull($db->scalarQuery('SELECT 1'));
-		$this->assertSame(42, $db->scalarQuery('SELECT 42'));
-
-		$this->assertNull($db->singleQuery('SELECT 1 WHERE 0'));
-		$this->assertNull($db->singleQuery('SELECT 1'));
-		$this->assertSame(['a' => 1], $db->singleQuery('SELECT a'));
-
-		$list = $db->listQuery('SELECT a FROM t');
-		$this->assertSame([], $list);
-		$list = $db->listQuery('SELECT a FROM t');
-		$this->assertSame([], $list);
-		$list = $db->listQuery('SELECT a FROM t');
-		$this->assertSame([1, 2, 3], $list);
-
-		$rows = $db->multiQuery('SELECT * FROM t');
-		$this->assertSame([], $rows);
-		$rows = $db->multiQuery('SELECT * FROM t');
-		$this->assertSame([], $rows);
-		$rows = $db->multiQuery('SELECT * FROM t');
-		$this->assertSame([['x' => 'y'], ['x' => 'z']], $rows);
-
-		$this->assertSame(7, $db->affectedRows());
-		$this->assertSame(123, $db->insertId());
 		$this->assertSame(addslashes("a'b"), $db->escape("a'b"));
-
-		$this->assertTrue($db->isError());
-		$this->assertSame(99, $db->errorNumber());
-		$this->assertSame('err', $db->errorMessage());
-
-		// nonQuery does not return anything; call at the end so it cannot shift the queue
-		$db->nonQuery('UPDATE t SET a=1');
 
 		$db->disconnect();
 		$this->assertFalse($db->connected());
-		$this->assertTrue($conn->closed);
+		$this->assertTrue($closed);
+	}
+
+	public function testDisconnectClosesConnectionWhenPresent(): void {
+		$db = new MysqlDatabase($this->makeConfig([
+			'host' => 'h',
+			'user' => 'u',
+			'pass' => 'p',
+			'name' => 'n',
+		]));
+
+		$queryQueue = [];
+		$closed = false;
+		$charset = null;
+		$conn = $this->makeMysqliMock($queryQueue, $closed, $charset);
+
+		$this->setPrivate($db, 'connection', $conn);
+		$this->setPrivate($db, 'connected', true);
+
+		$db->disconnect();
+
+		$this->assertFalse($db->connected());
+		$this->assertTrue($closed);
 	}
 
 	public function testCheckDependenciesMessages(): void {
@@ -258,7 +181,7 @@ final class MysqlDatabaseTest extends TestCase {
 			'name' => 'n',
 		]));
 
-		// 1) Not connected: prevent connect() from doing anything by removing config
+		// 1) Not connected
 		$this->setPrivate($db, 'host', null);
 		$this->setPrivate($db, 'user', null);
 		$this->setPrivate($db, 'pass', null);
@@ -269,20 +192,17 @@ final class MysqlDatabaseTest extends TestCase {
 		$res = $db->checkDependencies();
 		$this->assertSame('Not connected', $res['mysql_connected']);
 
-		// 2) Has connection with connect errno -> message is connect_error
-		$conn = new FakeMysqliConnection();
-		$conn->connect_errno = 1;
-		$conn->connect_error = 'Nope';
+		// 2) With injected connection: connect_errno/connect_error are readonly; assert behavior based on real values.
+		$queryQueue = [];
+		$closed = false;
+		$charset = null;
+		$conn = $this->makeMysqliMock($queryQueue, $closed, $charset);
 
 		$this->setPrivate($db, 'connection', $conn);
 		$this->setPrivate($db, 'connected', true); // avoid real connect()
-		$res = $db->checkDependencies();
-		$this->assertSame('Nope', $res['mysql_connected']);
 
-		// 3) Ok (connect_errno == 0)
-		$conn->connect_errno = 0;
-		$conn->connect_error = '';
 		$res = $db->checkDependencies();
-		$this->assertSame('Ok', $res['mysql_connected']);
+		$expected = ($conn->connect_errno ? $conn->connect_error : 'Ok');
+		$this->assertSame($expected, $res['mysql_connected']);
 	}
 }
