@@ -26,9 +26,10 @@ abstract class AbstractXrm implements IXrm {
 	// Implementation of IXrm
 
 	public function getFilteredEntries($filter) {
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getFilteredEntries", "filter" => $filter)), ['scope' => 'xrm']);
+		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getFilteredEntries", "filter" => $filter)), ['scope' => 'xrm']);
 		$entries = $this->getEntriesIntern($filter);
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getFilteredEntries", "num" => sizeof($entries))), ['scope' => 'xrm']);
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getFilteredEntries", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 
@@ -64,7 +65,8 @@ abstract class AbstractXrm implements IXrm {
 	 */
 	public function getEntriesIntern($filter, $idsonly = false) {
 
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntriesIntern", "filter" => $filter, "idsonly" => $idsonly)), ['scope' => 'xrm']);
+		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getEntriesIntern", "filter" => $filter, "idsonly" => $idsonly)), ['scope' => 'xrm']);
 		if (is_array($filter)) $filter = (object) $filter;
 		if (is_string($filter)) {
 			$f = $filter;
@@ -86,7 +88,7 @@ abstract class AbstractXrm implements IXrm {
 		}
 		if ($filtermodule != null) $entries = $filtermodule->getEntries($this, $filter, $idsonly);
 
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'], "fn" => "getEntriesIntern", "num" => sizeof($entries))), ['scope' => 'xrm']);
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getEntriesIntern", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 

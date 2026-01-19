@@ -46,7 +46,10 @@ class SingleSignOnAutoAuth extends AbstractAuth implements ICheck {
 			: (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 */
 
-		$ssocont = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+		$uri  = $_SERVER['REQUEST_URI'] ?? '/';
+		$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+		$ssocont = $scheme . '://' . $host . $uri;
 
 		$url = $this->loginpage->getUrl();
 		$url .= ( strpos($url, "?") === false ? "?" : "&" ) . "ssocheck&ssocont=" . urlencode((string) $ssocont);
