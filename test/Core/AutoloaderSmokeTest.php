@@ -25,12 +25,10 @@ class AutoloaderSmokeTest extends TestCase {
 			$testPath = realpath($pluginPath . '/test');
 
 			if ($srcPath !== false) {
-				echo "Plugin '$pluginName' hinzugefügt (src): $srcPath\n";
 				Autoloader::registerPlugin($pluginName . '\\', $srcPath . '/');
 			}
 
 			if ($testPath !== false) {
-				echo "Plugin '$pluginName' hinzugefügt (test): $testPath\n";
 				Autoloader::registerPlugin($pluginName . '\\Test\\', $testPath . '/');
 			}
 		}
@@ -40,5 +38,4 @@ class AutoloaderSmokeTest extends TestCase {
 		$dummy = new \Base3\Test\Dummy\DummyClass();
 		$this->assertSame('Hello from DummyClass!', $dummy->sayHello());
 	}
-
 }

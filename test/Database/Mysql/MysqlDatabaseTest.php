@@ -3,6 +3,7 @@
 namespace Base3Test\Database\Mysql;
 
 use Base3\Configuration\Api\IConfiguration;
+use Base3\Test\Configuration\ConfigurationStub;
 use Base3\Database\Mysql\MysqlDatabase;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\TestCase;
@@ -11,13 +12,7 @@ use PHPUnit\Framework\TestCase;
 final class MysqlDatabaseTest extends TestCase {
 
 	private function makeConfig(array $databaseCnf): IConfiguration {
-		return new class($databaseCnf) implements IConfiguration {
-			private array $cnf;
-			public function __construct(array $cnf) { $this->cnf = $cnf; }
-			public function get($configuration = "") { return $this->cnf; }
-			public function set($data, $configuration = "") {}
-			public function save() {}
-		};
+		return new ConfigurationStub();
 	}
 
 	private function setPrivate(object $obj, string $prop, $value): void {

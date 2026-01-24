@@ -1,118 +1,102 @@
 <?php declare(strict_types=1);
 
-namespace Base3\Route\Cli {
-	if (!function_exists(__NAMESPACE__ . '\\header')) {
-		function header(string $header, bool $replace = true, int $response_code = 0): void
-		{
-		}
+namespace Base3\Test\Route\Cli;
+
+use PHPUnit\Framework\TestCase;
+use Base3\Route\Cli\CliRoute;
+use Base3\Api\IRequest;
+use Base3\Api\IClassMap;
+use Base3\Api\IOutput;
+use Base3\Test\Core\ClassMapStub;
+use Base3\Test\Core\OutputStub;
+
+final class CliRouteTest extends TestCase {
+
+	private function makeRequest(array $values): IRequest {
+		return new class($values) implements IRequest {
+			public function __construct(private array $values) {}
+
+			public function get(string $key, $default = null) { return $this->values[$key] ?? $default; }
+			public function post(string $key, $default = null) { return $default; }
+			public function request(string $key, $default = null) { return $this->get($key, $default); }
+			public function allRequest(): array { return $this->values; }
+			public function cookie(string $key, $default = null) { return $default; }
+			public function session(string $key, $default = null) { return $default; }
+			public function server(string $key, $default = null) { return $default; }
+			public function files(string $key, $default = null) { return $default; }
+			public function allGet(): array { return $this->values; }
+			public function allPost(): array { return []; }
+			public function allCookie(): array { return []; }
+			public function allSession(): array { return []; }
+			public function allServer(): array { return []; }
+			public function allFiles(): array { return []; }
+			public function getJsonBody(): array { return []; }
+			public function isCli(): bool { return true; }
+			public function getContext(): string { return self::CONTEXT_TEST; }
+		};
 	}
-}
 
-namespace Base3\Test\Route\Cli {
+	private function makeClassMap(?IOutput $instance): IClassMap {
+		$cm = new ClassMapStub();
 
-	use PHPUnit\Framework\TestCase;
-	use Base3\Route\Cli\CliRoute;
-	use Base3\Api\IRequest;
-	use Base3\Api\IClassMap;
-
-	final class CliRouteTest extends TestCase
-	{
-		private function makeRequest(array $values): IRequest
-		{
-			return new class($values) implements IRequest {
-				public function __construct(private array $values) {}
-
-				public function get(string $key, $default = null) { return $this->values[$key] ?? $default; }
-				public function post(string $key, $default = null) { return $default; }
-				public function request(string $key, $default = null) { return $this->get($key, $default); }
-				public function allRequest(): array { return $this->values; }
-				public function cookie(string $key, $default = null) { return $default; }
-				public function session(string $key, $default = null) { return $default; }
-				public function server(string $key, $default = null) { return $default; }
-				public function files(string $key, $default = null) { return $default; }
-				public function allGet(): array { return $this->values; }
-				public function allPost(): array { return []; }
-				public function allCookie(): array { return []; }
-				public function allSession(): array { return []; }
-				public function allServer(): array { return []; }
-				public function allFiles(): array { return []; }
-				public function getJsonBody(): array { return []; }
-				public function isCli(): bool { return true; }
-				public function getContext(): string { return self::CONTEXT_TEST; }
-			};
+		if ($instance !== null) {
+			$cm->registerInterface(IOutput::class, get_class($instance));
+			$cm->registerName($instance->getRegisteredName(), get_class($instance));
+			$cm->registerInstance($instance, $instance->getRegisteredName(), [IOutput::class]);
 		}
 
-		private function makeClassMap(?object $instance): IClassMap
-		{
-			return new class($instance) implements IClassMap {
-				public function __construct(private ?object $instance) {}
+		return $cm;
+	}
 
-				public function instantiate(string $class) { return null; }
-				public function &getInstances(array $criteria = []) { $x = []; return $x; }
-				public function getPlugins() { return []; }
+	protected function setUp(): void {
+		$_GET = [];
+		$_REQUEST = [];
+	}
 
-				public function getInstanceByInterfaceName(string $iface, string $name) {
-					return $this->instance;
-				}
-			};
-		}
+	public function testMatchReturnsNullIfNoNameProvided(): void {
+		$request = $this->makeRequest(['name' => '']);
+		$route = new CliRoute($request, $this->makeClassMap(null));
 
-		protected function setUp(): void
-		{
-			$_GET = [];
-			$_REQUEST = [];
-		}
+		$this->assertNull($route->match('/anything'));
+	}
 
-		public function testMatchReturnsNullIfNoNameProvided(): void
-		{
-			$request = $this->makeRequest(['name' => '']);
-			$route = new CliRoute($request, $this->makeClassMap(null));
+	public function testMatchReturnsArrayWithDefaults(): void {
+		$request = $this->makeRequest(['name' => 'phpinfo']); // out/data default handling is in route
+		$route = new CliRoute($request, $this->makeClassMap(null));
 
-			$this->assertNull($route->match('/anything'));
-		}
+		$match = $route->match('/ignored');
 
-		public function testMatchReturnsArrayWithDefaults(): void
-		{
-			$request = $this->makeRequest(['name' => 'phpinfo']); // out/data default handling is in route
-			$route = new CliRoute($request, $this->makeClassMap(null));
+		$this->assertSame([
+			'name' => 'phpinfo',
+			'out'  => 'html',
+			'data' => '',
+		], $match);
+	}
 
-			$match = $route->match('/ignored');
+	public function testDispatchReturns404IfNoOutputFound(): void {
+		$request = $this->makeRequest([]);
+		$route = new CliRoute($request, $this->makeClassMap(null));
 
-			$this->assertSame([
-				'name' => 'phpinfo',
-				'out'  => 'html',
-				'data' => '',
-			], $match);
-		}
+		$out = $route->dispatch(['name' => 'missing', 'out' => 'html', 'data' => '']);
 
-		public function testDispatchReturns404IfNoOutputFound(): void
-		{
-			$request = $this->makeRequest([]);
-			$route = new CliRoute($request, $this->makeClassMap(null));
+		$this->assertSame("404 Not Found\n", $out);
+	}
 
-			$out = $route->dispatch(['name' => 'missing', 'out' => 'html', 'data' => '']);
+	public function testDispatchSetsGlobalsAndCallsOutput(): void {
+		$request = $this->makeRequest([]);
 
-			$this->assertSame("404 Not Found\n", $out);
-		}
+		$output = new OutputStub('dummy', function(string $out): string {
+			return 'OUT:' . $out;
+		});
 
-		public function testDispatchSetsGlobalsAndCallsOutput(): void
-		{
-			$request = $this->makeRequest([]);
+		$route = new CliRoute($request, $this->makeClassMap($output));
 
-			$output = new class {
-				public function getOutput($out = 'html') { return 'OUT:' . $out; }
-				public function getHelp() { return 'HELP'; }
-			};
+		$result = $route->dispatch(['name' => 'dummy', 'out' => 'json', 'data' => 'xx']);
 
-			$route = new CliRoute($request, $this->makeClassMap($output));
+		$this->assertSame('dummy', $_GET['name']);
+		$this->assertSame('xx', $_GET['data']);
+		$this->assertSame('json', $_GET['out']);
 
-			$result = $route->dispatch(['name' => 'dummy', 'out' => 'json', 'data' => 'xx']);
-
-			$this->assertSame('dummy', $_GET['name']);
-			$this->assertSame('xx', $_GET['data']);
-			$this->assertSame('json', $_GET['out']);
-
-			$this->assertSame('OUT:json', $result);
-		}
+		$this->assertSame('OUT:json', $result);
 	}
 }

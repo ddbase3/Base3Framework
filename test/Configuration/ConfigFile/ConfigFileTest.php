@@ -155,7 +155,8 @@ final class ConfigFileTest extends TestCase {
 			'directories' => ['data' => 'DATA'],
 		]);
 
-		self::assertTrue((bool)$cfg->save());
+		// save() is BC-void now (it calls trySave()), so assert via trySave()
+		self::assertTrue($cfg->trySave());
 		self::assertFileExists($file);
 		self::assertGreaterThan(0, filesize($file));
 

@@ -2,8 +2,8 @@
 
 namespace Base3\Core;
 
-use Base3\Api\IContainer;
 use PHPUnit\Framework\TestCase;
+use Base3\Test\Language\LanguageStub;
 
 final class MvcViewTest extends TestCase {
 
@@ -65,7 +65,7 @@ final class MvcViewTest extends TestCase {
 		$templateFile = $dir . DIRECTORY_SEPARATOR . 'tpl' . DIRECTORY_SEPARATOR . $templateName;
 		file_put_contents($templateFile, '<?php echo "OK";');
 
-		$view = new MvcView();
+		$view = new MvcView(new LanguageStub('en'));
 		$view->setPath($dir . DIRECTORY_SEPARATOR);
 
 		self::assertSame('OK', $view->loadTemplate());
@@ -81,7 +81,7 @@ final class MvcViewTest extends TestCase {
 		// include runs inside object context, so $this is available and can access private props
 		file_put_contents($templateFile, '<?php echo "Hello " . $this->_["name"];');
 
-		$view = new MvcView();
+		$view = new MvcView(new LanguageStub('en'));
 		$view->setPath($dir);
 		$view->assign('name', 'World');
 
@@ -95,7 +95,7 @@ final class MvcViewTest extends TestCase {
 		file_put_contents($dir . DIRECTORY_SEPARATOR . 'tpl' . DIRECTORY_SEPARATOR . 'one', 'ONE');
 		file_put_contents($dir . DIRECTORY_SEPARATOR . 'tpl' . DIRECTORY_SEPARATOR . 'two', 'TWO');
 
-		$view = new MvcView();
+		$view = new MvcView(new LanguageStub('en'));
 		$view->setPath($dir);
 
 		$view->setTemplate('one');
@@ -109,7 +109,7 @@ final class MvcViewTest extends TestCase {
 		$dir = $this->makeTmpDir();
 		@mkdir($dir . DIRECTORY_SEPARATOR . 'tpl', 0777, true);
 
-		$view = new MvcView();
+		$view = new MvcView(new LanguageStub('en'));
 		$view->setPath($dir);
 		$view->setTemplate('missing');
 
@@ -130,7 +130,7 @@ INI;
 
 		file_put_contents($dir . DIRECTORY_SEPARATOR . 'lang' . DIRECTORY_SEPARATOR . 'common' . DIRECTORY_SEPARATOR . 'en.ini', $ini);
 
-		$view = new MvcView();
+		$view = new MvcView(new LanguageStub('en'));
 		$view->setPath($dir);
 
 		$view->loadBricks('common', 'en');
@@ -150,7 +150,7 @@ INI;
 			"[set1]\na = \"A\"\n"
 		);
 
-		$view = new MvcView();
+		$view = new MvcView(new LanguageStub('en'));
 		$view->setPath($dir);
 
 		$existing = [
@@ -165,7 +165,7 @@ INI;
 	}
 
 	public function testGetBricksReturnsNullWhenNotLoadedOrSetMissing(): void {
-		$view = new MvcView();
+		$view = new MvcView(new LanguageStub('en'));
 
 		self::assertNull($view->getBricks('anything'));
 
@@ -177,7 +177,7 @@ INI;
 		self::assertSame(['k' => 'v'], $view->getBricks('known'));
 	}
 
-	public function testLoadBricksWithoutLanguageUsesServiceLocatorLanguageService(): void {
+	public function testLoadBricksWithoutLanguageUsesInjectedLanguageService(): void {
 		$dir = $this->makeTmpDir();
 		@mkdir($dir . DIRECTORY_SEPARATOR . 'lang' . DIRECTORY_SEPARATOR . 'ui', 0777, true);
 
@@ -186,33 +186,13 @@ INI;
 			"[ui]\nwelcome = \"Willkommen\"\n"
 		);
 
-		// Provide ServiceLocator external instance with a "language" service.
-		// Must be SHARED, otherwise ServiceLocator will try to instantiate it via new Class() without args.
-		$this->resetServiceLocatorSingletons();
-		$sl = new ServiceLocator();
-		$sl->set('language', new DummyLanguageService('de'), IContainer::SHARED);
-		ServiceLocator::useInstance($sl);
-
-		$view = new MvcView();
+		$view = new MvcView(new LanguageStub('de'));
 		$view->setPath($dir);
 
-		$view->loadBricks('ui'); // language omitted -> must come from service locator
+		$view->loadBricks('ui'); // language omitted -> must come from injected service
 
 		$bricks = $view->getBricks('ui');
 		self::assertIsArray($bricks);
 		self::assertSame('Willkommen', $bricks['welcome']);
-	}
-}
-
-final class DummyLanguageService {
-
-	private string $lang;
-
-	public function __construct(string $lang) {
-		$this->lang = $lang;
-	}
-
-	public function getLanguage(): string {
-		return $this->lang;
 	}
 }

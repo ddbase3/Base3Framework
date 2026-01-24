@@ -1,159 +1,134 @@
 <?php declare(strict_types=1);
 
-namespace Base3\Route\GenericOutput {
-	if (!function_exists(__NAMESPACE__ . '\\header')) {
-		function header(string $header, bool $replace = true, int $response_code = 0): void
-		{
+namespace Base3\Test\Route\GenericOutput;
+
+use PHPUnit\Framework\TestCase;
+use Base3\Route\GenericOutput\GenericOutputRoute;
+use Base3\Configuration\Api\IConfiguration;
+use Base3\Accesscontrol\Api\IAccesscontrol;
+use Base3\Api\IClassMap;
+use Base3\Api\IOutput;
+use Base3\Test\Core\ClassMapStub;
+use Base3\Test\Configuration\ConfigurationStub;
+use Base3\Test\Core\OutputStub;
+
+final class GenericOutputRouteTest extends TestCase {
+
+	private function makeConfig(array $baseConfig = []): IConfiguration {
+		$cnf = new ConfigurationStub();
+
+		if (!empty($baseConfig)) {
+			$cnf->setGroup('base', $baseConfig, true);
 		}
+
+		return $cnf;
 	}
-}
 
-namespace Base3\Test\Route\GenericOutput {
+	private function makeAccesscontrol(string $userId = ''): IAccesscontrol {
+		return new class($userId) implements IAccesscontrol {
+			public function __construct(private string $userId) {}
+			public function getUserId() { return $this->userId; }
+			public function authenticate(): void {}
+		};
+	}
 
-	use PHPUnit\Framework\TestCase;
-	use Base3\Route\GenericOutput\GenericOutputRoute;
-	use Base3\Configuration\Api\IConfiguration;
-	use Base3\Accesscontrol\Api\IAccesscontrol;
-	use Base3\Api\IClassMap;
+	private function makeClassMap(IOutput $output): IClassMap {
+		$cm = new ClassMapStub();
 
-	final class GenericOutputRouteTest extends TestCase
-	{
-		private function makeConfig(array $baseConfig = []): IConfiguration
-		{
-			return new class($baseConfig) implements IConfiguration {
-				public function __construct(private array $baseConfig) {}
-				public function get($configuration = "") {
-					if ($configuration === 'base') return $this->baseConfig;
-					return [];
-				}
-				public function set($data, $configuration = "") {}
-				public function save() {}
-			};
-		}
+		// IMPORTANT: bind the *instance* so constructor callbacks are preserved.
+		$cm->registerInstance($output, $output->getRegisteredName(), [IOutput::class]);
 
-		private function makeAccesscontrol(string $userId = ''): IAccesscontrol
-		{
-			return new class($userId) implements IAccesscontrol {
-				public function __construct(private string $userId) {}
-				public function getUserId() { return $this->userId; }
-				public function authenticate(): void {}
-			};
-		}
+		return $cm;
+	}
 
-		private function makeClassMap(object $output): IClassMap
-		{
-			return new class($output) implements IClassMap {
-				public function __construct(private object $output) {}
+	private function makeRouteWithOutput(IOutput $output, array $baseConfig = [], ?object $language = null): GenericOutputRoute {
+		return new GenericOutputRoute(
+			$this->makeClassMap($output),
+			$this->makeConfig($baseConfig),
+			$this->makeAccesscontrol(''), // avoid redirect+exit path
+			$language
+		);
+	}
 
-				public function instantiate(string $class) { return null; }
-				public function &getInstances(array $criteria = []) { $x = []; return $x; }
-				public function getPlugins() { return []; }
+	protected function setUp(): void {
+		$_GET = [];
+		$_REQUEST = [];
+		putenv('DEBUG=1');
+	}
 
-				public function getInstanceByInterfaceName(string $iface, string $name) {
-					return ($name === 'index' || $name === 'foo') ? $this->output : null;
-				}
-			};
-		}
+	public function testMatchRootMapsToIndexPhp(): void {
+		$output = new OutputStub('index', function(string $out): string {
+			return 'INDEX';
+		});
 
-		private function makeRouteWithOutput(object $output, array $baseConfig = [], ?object $language = null): GenericOutputRoute
-		{
-			return new GenericOutputRoute(
-				$this->makeClassMap($output),
-				$this->makeConfig($baseConfig),
-				$this->makeAccesscontrol(''), // avoid redirect+exit path
-				$language
-			);
-		}
+		$route = $this->makeRouteWithOutput($output);
 
-		protected function setUp(): void
-		{
-			$_GET = [];
-			$_REQUEST = [];
-			putenv('DEBUG=1');
-		}
+		$match = $route->match('/');
+		$this->assertSame(['data' => '', 'name' => 'index', 'out' => 'php'], $match);
+	}
 
-		public function testMatchRootMapsToIndexPhp(): void
-		{
-			$output = new class {
-				public function getOutput($out = 'html') { return 'INDEX'; }
-				public function getHelp() { return 'HELP'; }
-			};
+	public function testMatchNameOutWithoutLanguage(): void {
+		$output = new OutputStub('foo', function(string $out): string {
+			return 'FOO';
+		});
 
-			$route = $this->makeRouteWithOutput($output);
+		$route = $this->makeRouteWithOutput($output);
 
-			$match = $route->match('/');
-			$this->assertSame(['data' => '', 'name' => 'index', 'out' => 'php'], $match);
-		}
+		$match = $route->match('/foo.json');
+		$this->assertSame(['data' => '', 'name' => 'foo', 'out' => 'json'], $match);
+	}
 
-		public function testMatchNameOutWithoutLanguage(): void
-		{
-			$output = new class {
-				public function getOutput($out = 'html') { return 'FOO'; }
-				public function getHelp() { return 'HELP'; }
-			};
+	public function testMatchLanguageNameOut(): void {
+		$output = new OutputStub('foo', function(string $out): string {
+			return 'FOO';
+		});
 
-			$route = $this->makeRouteWithOutput($output);
+		$route = $this->makeRouteWithOutput($output);
 
-			$match = $route->match('/foo.json');
-			$this->assertSame(['data' => '', 'name' => 'foo', 'out' => 'json'], $match);
-		}
+		$match = $route->match('/de/foo.html');
+		$this->assertSame(['data' => 'de', 'name' => 'foo', 'out' => 'html'], $match);
+	}
 
-		public function testMatchLanguageNameOut(): void
-		{
-			$output = new class {
-				public function getOutput($out = 'html') { return 'FOO'; }
-				public function getHelp() { return 'HELP'; }
-			};
+	public function testDispatchMapsPhpToHtmlAndCallsOutput(): void {
+		$output = new OutputStub('index', function(string $out): string {
+			return 'OUT:' . $out;
+		});
 
-			$route = $this->makeRouteWithOutput($output);
+		$route = $this->makeRouteWithOutput($output);
 
-			$match = $route->match('/de/foo.html');
-			$this->assertSame(['data' => 'de', 'name' => 'foo', 'out' => 'html'], $match);
-		}
+		$result = $route->dispatch(['data' => '', 'name' => 'index', 'out' => 'php']);
 
-		public function testDispatchMapsPhpToHtmlAndCallsOutput(): void
-		{
-			$output = new class {
-				public function getOutput($out = 'html') { return 'OUT:' . $out; }
-				public function getHelp() { return 'HELP'; }
-			};
+		$this->assertSame('index', $_GET['name']);
+		$this->assertSame('OUT:html', $result);
+	}
 
-			$route = $this->makeRouteWithOutput($output);
+	public function testDispatchHelpReturnsHelpWhenDebugEnabled(): void {
+		$output = new OutputStub('foo', function(string $out): string {
+			return 'OUT:' . $out;
+		}, function(): string {
+			return 'THE HELP';
+		});
 
-			$result = $route->dispatch(['data' => '', 'name' => 'index', 'out' => 'php']);
+		$route = $this->makeRouteWithOutput($output);
 
-			$this->assertSame('index', $_GET['name']);
-			$this->assertSame('OUT:html', $result);
-		}
+		$result = $route->dispatch(['data' => '', 'name' => 'foo', 'out' => 'help']);
 
-		public function testDispatchHelpReturnsHelpWhenDebugEnabled(): void
-		{
-			$output = new class {
-				public function getOutput($out = 'html') { return 'OUT:' . $out; }
-				public function getHelp() { return 'THE HELP'; }
-			};
+		$this->assertSame('THE HELP', $result);
+	}
 
-			$route = $this->makeRouteWithOutput($output);
+	public function testDispatchHelpReturnsEmptyWhenDebugDisabled(): void {
+		putenv('DEBUG=');
 
-			$result = $route->dispatch(['data' => '', 'name' => 'foo', 'out' => 'help']);
+		$output = new OutputStub('foo', function(string $out): string {
+			return 'OUT:' . $out;
+		}, function(): string {
+			return 'THE HELP';
+		});
 
-			$this->assertSame('THE HELP', $result);
-		}
+		$route = $this->makeRouteWithOutput($output);
 
-		public function testDispatchHelpReturnsEmptyWhenDebugDisabled(): void
-		{
-			putenv('DEBUG=');
+		$result = $route->dispatch(['data' => '', 'name' => 'foo', 'out' => 'help']);
 
-			$output = new class {
-				public function getOutput($out = 'html') { return 'OUT:' . $out; }
-				public function getHelp() { return 'THE HELP'; }
-			};
-
-			$route = $this->makeRouteWithOutput($output);
-
-			$result = $route->dispatch(['data' => '', 'name' => 'foo', 'out' => 'help']);
-
-			$this->assertSame('', $result);
-		}
+		$this->assertSame('', $result);
 	}
 }

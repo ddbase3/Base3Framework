@@ -2,6 +2,7 @@
 
 namespace Base3\Database\Mysql;
 
+use Base3\Configuration\ArrayConfiguration;
 use Base3\Core\ServiceLocator;
 use Base3\Database\Api\IDatabase;
 use Base3\Api\ICheck;
@@ -36,13 +37,14 @@ class MysqlDatabase implements IDatabase, ICheck {
 			}
 		}
 
-		return new self(new class($cnf) implements IConfiguration {
-			private $cnf;
-			public function __construct($cnf) { $this->cnf = $cnf; }
-			public function get($configuration = "") { return $this->cnf; }
-			public function set($data, $configuration = "") {}
-			public function save() {}
-		});
+		$data = [];
+		if (is_array($cnf)) {
+			$data = isset($cnf['database']) && is_array($cnf['database'])
+				? $cnf
+				: ['database' => $cnf];
+		}
+
+		return new self(new ArrayConfiguration($data));
 	}
 
 	public function connect(): void {

@@ -4,15 +4,17 @@ namespace Base3\Test\Core;
 
 use Base3\Api\IClassMap;
 
-/**
- * Class ClassMapStub
- *
- * Simple, DI-free in-memory stub for IClassMap.
- * Useful for unit tests across plugins.
- */
 class ClassMapStub implements IClassMap {
 
+	/**
+	 * Call log for assertions in unit tests.
+	 *
+	 * @var array<int,array<string,mixed>>
+	 */
+	public array $calls = [];
+
 	private array $apps = [];
+	private array $instancesByClass = [];
 
 	public function __construct() {
 		$this->apps['default'] = [
@@ -67,11 +69,51 @@ class ClassMapStub implements IClassMap {
 		return $this;
 	}
 
+	/**
+	 * Register a concrete instance and optionally bind it to:
+	 * - a logical name (for getInstanceBy*Name lookups)
+	 * - one or more interfaces
+	 *
+	 * This is crucial when tests expect identity (assertSame) and when
+	 * anonymous classes are used.
+	 */
+	public function registerInstance(object $instance, ?string $name = null, array $interfaces = [], string $app = 'default'): self {
+		if (!isset($this->apps[$app])) {
+			$this->apps[$app] = ['interface' => [], 'name' => []];
+		}
+
+		$class = get_class($instance);
+		$this->instancesByClass[$class] = $instance;
+
+		if ($name !== null && strlen($name)) {
+			$this->apps[$app]['name'][$name] = $class;
+		}
+
+		if (empty($interfaces)) {
+			$interfaces = class_implements($class) ?: [];
+		}
+
+		foreach ($interfaces as $iface) {
+			$this->apps[$app]['interface'][$iface][] = $class;
+		}
+
+		return $this;
+	}
+
 	// ---------------------------------------------------------------------
 	// IClassMap
 	// ---------------------------------------------------------------------
 
 	public function instantiate(string $class) {
+		$this->calls[] = [
+			'method' => 'instantiate',
+			'class' => $class
+		];
+
+		if (isset($this->instancesByClass[$class])) {
+			return $this->instancesByClass[$class];
+		}
+
 		if (!class_exists($class)) return null;
 
 		try {
@@ -111,54 +153,59 @@ class ClassMapStub implements IClassMap {
 	}
 
 	public function getApps() {
+		$this->calls[] = [
+			'method' => 'getApps'
+		];
 		return array_keys($this->apps);
 	}
 
 	public function getPlugins() {
+		$this->calls[] = [
+			'method' => 'getPlugins'
+		];
 		return [];
 	}
 
 	public function &getInstances(array $criteria = []) {
+		$this->calls[] = [
+			'method' => 'getInstances',
+			'criteria' => $criteria
+		];
+
 		$instances = [];
 
 		$app = $criteria['app'] ?? null;
 		$interface = $criteria['interface'] ?? null;
 		$name = $criteria['name'] ?? null;
 
-		// app + interface + name
 		if ($app && $interface && $name) {
 			$inst = $this->getInstanceByAppInterfaceName($app, $interface, $name);
 			if ($inst) $instances[] = $inst;
 			return $instances;
 		}
 
-		// app + interface
 		if ($app && $interface) {
 			$instances = $this->getInstancesByAppInterface($app, $interface);
 			return $instances;
 		}
 
-		// app + name
 		if ($app && $name) {
 			$inst = $this->getInstanceByAppName($app, $name);
 			if ($inst) $instances[] = $inst;
 			return $instances;
 		}
 
-		// interface + name
 		if ($interface && $name) {
 			$inst = $this->getInstanceByInterfaceName($interface, $name);
 			if ($inst) $instances[] = $inst;
 			return $instances;
 		}
 
-		// interface
 		if ($interface) {
 			$instances = $this->getInstancesByInterface($interface);
 			return $instances;
 		}
 
-		// name
 		if ($name) {
 			foreach ($this->apps as $appName => $data) {
 				if (!isset($data['name'][$name])) continue;
@@ -169,7 +216,6 @@ class ClassMapStub implements IClassMap {
 			return $instances;
 		}
 
-		// no criteria: all instances by name registry
 		foreach ($this->apps as $data) {
 			if (!isset($data['name'])) continue;
 			foreach ($data['name'] as $c) {
@@ -182,6 +228,11 @@ class ClassMapStub implements IClassMap {
 	}
 
 	public function &getInstancesByInterface($interface) {
+		$this->calls[] = [
+			'method' => 'getInstancesByInterface',
+			'interface' => $interface
+		];
+
 		$instances = [];
 		foreach ($this->apps as $app => $data) {
 			$is = $this->getInstancesByAppInterface($app, $interface);
@@ -191,6 +242,13 @@ class ClassMapStub implements IClassMap {
 	}
 
 	public function &getInstancesByAppInterface($app, $interface, $retry = false) {
+		$this->calls[] = [
+			'method' => 'getInstancesByAppInterface',
+			'app' => $app,
+			'interface' => $interface,
+			'retry' => $retry
+		];
+
 		$instances = [];
 
 		if (!isset($this->apps[$app]['interface'][$interface])) return $instances;
@@ -204,6 +262,13 @@ class ClassMapStub implements IClassMap {
 	}
 
 	public function &getInstanceByAppName($app, $name, $retry = false) {
+		$this->calls[] = [
+			'method' => 'getInstanceByAppName',
+			'app' => $app,
+			'name' => $name,
+			'retry' => $retry
+		];
+
 		$instance = null;
 
 		if (!isset($this->apps[$app]['name'][$name])) return $instance;
@@ -215,16 +280,23 @@ class ClassMapStub implements IClassMap {
 	}
 
 	public function &getInstanceByInterfaceName($interface, $name, $retry = false) {
+		$this->calls[] = [
+			'method' => 'getInstanceByInterfaceName',
+			'interface' => $interface,
+			'name' => $name,
+			'retry' => $retry
+		];
+
 		$instance = null;
 
-		foreach ($this->apps as $data) {
+		foreach ($this->apps as $app => $data) {
 			if (!isset($data['name'][$name])) continue;
+			if (!isset($data['interface'][$interface])) continue;
 
 			$c = $data['name'][$name];
-			if (!class_exists($c)) continue;
 
-			$ifaces = class_implements($c) ?: [];
-			if (!in_array($interface, $ifaces)) continue;
+			// Registry-first: ensure class is part of the interface mapping for this app
+			if (!in_array($c, $data['interface'][$interface], true)) continue;
 
 			$instance = $this->instantiate($c);
 			return $instance;
@@ -234,6 +306,14 @@ class ClassMapStub implements IClassMap {
 	}
 
 	public function &getInstanceByAppInterfaceName($app, $interface, $name, $retry = false) {
+		$this->calls[] = [
+			'method' => 'getInstanceByAppInterfaceName',
+			'app' => $app,
+			'interface' => $interface,
+			'name' => $name,
+			'retry' => $retry
+		];
+
 		if (!strlen((string)$app)) return $this->getInstanceByInterfaceName($interface, $name);
 
 		$instance = null;

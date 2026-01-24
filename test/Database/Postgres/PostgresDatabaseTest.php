@@ -84,18 +84,13 @@ use Base3\Configuration\Api\IConfiguration;
 use Base3\Core\ServiceLocator;
 use Base3\Database\Postgres\PgStubState;
 use Base3\Database\Postgres\PostgresDatabase;
+use Base3\Test\Configuration\ConfigurationStub;
 use PHPUnit\Framework\TestCase;
 
 final class PostgresDatabaseTest extends TestCase {
 
 	private function makeConfig(array $databaseCnf): IConfiguration {
-		return new class($databaseCnf) implements IConfiguration {
-			private array $cnf;
-			public function __construct(array $cnf) { $this->cnf = $cnf; }
-			public function get($configuration = "") { return $this->cnf; }
-			public function set($data, $configuration = "") {}
-			public function save() {}
-		};
+		return new ConfigurationStub();
 	}
 
 	protected function setUp(): void {
