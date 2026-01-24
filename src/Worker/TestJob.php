@@ -2,22 +2,17 @@
 
 namespace Base3\Worker;
 
+use Base3\Api\IClassMap;
 use Base3\Api\IOutput;
 use Base3\Api\IRequest;
-use Base3\Core\ServiceLocator;
 use Base3\Worker\Api\IJob;
 
 class TestJob implements IOutput {
 
-	private $servicelocator;
-	private $classmap;
-	private $request;
-
-	public function __construct() {
-		$this->servicelocator = ServiceLocator::getInstance();
-		$this->classmap = $this->servicelocator->get('classmap');
-		$this->request = $this->servicelocator->get(IRequest::class);
-	}
+	public function __construct(
+		private readonly IClassMap $classmap,
+		private readonly IRequest $request
+	) {}
 
 	// Implementation of IBase
 
@@ -31,13 +26,13 @@ class TestJob implements IOutput {
 
 		$jobName = $this->request->get('job');
 		if ($jobName == null) {
-			return '<p>Bitte einen Job über den Parameter &quot;job&quot; angeben.</p>';
+			return "\nPlease select a job by using the &quot;job&quot; param.\n\n";
 		}
 
 		$job = $this->classmap->getInstanceByInterfaceName(IJob::class, $jobName);
 		$res = $job->go();
 
-		return '<p>' . $res . '</p>';
+		return "\n" . $res . "\n\n";
 	}
 
 	public function getHelp() {

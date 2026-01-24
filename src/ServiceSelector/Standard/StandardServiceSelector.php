@@ -3,7 +3,6 @@
 namespace Base3\ServiceSelector\Standard;
 
 use Base3\Api\IContainer;
-use Base3\Core\ServiceLocator;
 use Base3\ServiceSelector\AbstractServiceSelector;
 
 /**
