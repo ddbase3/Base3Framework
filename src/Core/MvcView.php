@@ -3,7 +3,7 @@
 namespace Base3\Core;
 
 use Base3\Api\IMvcView;
-use Base3\Core\ServiceLocator;
+use Base3\Language\Api\ILanguage;
 
 class MvcView implements IMvcView {
 
@@ -16,6 +16,10 @@ class MvcView implements IMvcView {
 	 * Enthält die Variablen, die in das Template eingebetet werden sollen.
 	 */
 	private $_ = array();
+
+	public function __construct(
+		private readonly ILanguage $language
+	) {}
 
 	public function setPath(string $path = '.') {
 		$this->path = rtrim($path, DIRECTORY_SEPARATOR);
@@ -73,8 +77,7 @@ class MvcView implements IMvcView {
 
 	public function loadBricks(string $set, string $language = '') {
 		if (!strlen($language)) {
-			$servicelocator = ServiceLocator::getInstance();
-			$language = $servicelocator->get('language')->getLanguage();
+			$language = $this->language->getLanguage();
 		}
 		$filename = $this->path . DIRECTORY_SEPARATOR . 'lang' . DIRECTORY_SEPARATOR . $set . DIRECTORY_SEPARATOR . $language . ".ini";
 		$bricks = parse_ini_file($filename, true);
