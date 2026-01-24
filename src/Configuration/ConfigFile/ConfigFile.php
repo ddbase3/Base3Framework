@@ -3,46 +3,29 @@
 namespace Base3\Configuration\ConfigFile;
 
 use Base3\Api\ICheck;
-use Base3\Configuration\Api\IConfiguration;
+use Base3\Configuration\AbstractConfiguration;
 
 /**
+ * Class ConfigFile
+ *
  * Reads and optionally writes configuration data from a .ini file.
- * 
- * Uses lazy loading – config is read from file only on first access.
+ *
+ * - Lazy loading (first access triggers load)
+ * - Supports include files via [include] files[] entries
+ * - Uses AbstractConfiguration for all convenience methods + dirty tracking
  */
-class ConfigFile implements IConfiguration, ICheck {
+class ConfigFile extends AbstractConfiguration implements ICheck {
 
 	private string $filename;
-	private ?array $cnf = null;
 
 	public function __construct() {
 		$this->filename = DIR_CNF . "config.ini";
 		if ($env = getenv("CONFIG_FILE")) $this->filename = $env;
 	}
 
-	// Implementation of IConfiguration
-
-	public function get($configuration = "") {
-		$this->ensureLoaded();
-		if (!strlen($configuration)) return $this->cnf;
-		return $this->cnf[$configuration] ?? null;
-	}
-
-	public function set($data, $configuration = "") {
-		$this->ensureLoaded();
-		if (strlen($configuration)) {
-			$this->cnf[$configuration] = $data;
-		} else {
-			$this->cnf = $data;
-		}
-	}
-
-	public function save(): bool {
-		$this->ensureLoaded();
-		return $this->write_ini_file($this->filename, $this->cnf);
-	}
-
-	// Implementation of ICheck
+	// ---------------------------------------------------------------------
+	// ICheck
+	// ---------------------------------------------------------------------
 
 	public function checkDependencies(): array {
 		$this->ensureLoaded();
@@ -52,33 +35,48 @@ class ConfigFile implements IConfiguration, ICheck {
 		];
 	}
 
-	// Lazy loader
+	// ---------------------------------------------------------------------
+	// AbstractConfiguration
+	// ---------------------------------------------------------------------
 
-	private function ensureLoaded(): void {
-		if ($this->cnf !== null) return;
-		$this->cnf = [];
-		$this->read_ini_file($this->filename);
+	protected function load(): array {
+		$cnf = [];
+
+		if (file_exists($this->filename)) {
+			$this->read_ini_file($this->filename, $cnf);
+		}
+
+		return $cnf;
 	}
 
-	// Private methods
+	protected function saveData(array $data): bool {
+		return $this->write_ini_file($this->filename, $data);
+	}
 
-	private function read_ini_file(string $file): void {
+	// ---------------------------------------------------------------------
+	// INI helpers (supports recursive includes)
+	// ---------------------------------------------------------------------
+
+	private function read_ini_file(string $file, array &$cnf): void {
 		if (!file_exists($file)) return;
-		$cnf = parse_ini_file($file, true);
-		$this->cnf = array_merge($this->cnf, $cnf);
 
-		if (!isset($this->cnf["include"]["files"])) return;
+		$parsed = parse_ini_file($file, true);
+		if (is_array($parsed)) {
+			$cnf = array_replace_recursive($cnf, $parsed);
+		}
 
-		$datadir = $this->cnf['directories']['data'] ?? '';
-		$files = $this->cnf["include"]["files"];
-		unset($this->cnf["include"]);
+		if (!isset($cnf["include"]["files"])) return;
+
+		$datadir = $cnf['directories']['data'] ?? '';
+		$files = $cnf["include"]["files"];
+		unset($cnf["include"]);
 
 		foreach ($files as $f) {
 			$subfile = $datadir
 				? $datadir . DIRECTORY_SEPARATOR . $f
 				: dirname($file) . DIRECTORY_SEPARATOR . $f;
 
-			$this->read_ini_file($subfile);
+			$this->read_ini_file($subfile, $cnf);
 		}
 	}
 
@@ -124,4 +122,3 @@ class ConfigFile implements IConfiguration, ICheck {
 		return '"' . str_replace('"', '\"', (string)$value) . '"';
 	}
 }
-
