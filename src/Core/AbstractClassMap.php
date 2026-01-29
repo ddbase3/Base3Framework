@@ -2,6 +2,7 @@
 
 namespace Base3\Core;
 
+use Base3\Api\IBase;
 use Base3\Api\ICheck;
 use Base3\Api\IClassMap;
 use Base3\Api\IContainer;
@@ -299,7 +300,12 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 				}
 
 				if ($type instanceof \ReflectionNamedType) {
-					if ($type->allowsNull() && $param->isDefaultValueAvailable()) {
+					// FIX: nullable + default must use the default (not always null).
+					if ($type->allowsNull()) {
+						if ($param->isDefaultValueAvailable()) {
+							$params[] = $param->getDefaultValue();
+							continue;
+						}
 						$params[] = null;
 						continue;
 					}
@@ -374,7 +380,7 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 				$this->map[$app]['interface'][$interface][] = $c['class'];
 			}
 
-			if (!in_array(\Base3\Api\IBase::class, $c['interfaces'])) continue;
+			if (!in_array(IBase::class, $c['interfaces'])) continue;
 			if (!is_callable([$c['class'], 'getName'])) continue;
 
 			try {
@@ -393,4 +399,3 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		file_put_contents($this->filename, $str);
 	}
 }
-
