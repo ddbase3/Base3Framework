@@ -20,12 +20,12 @@ final class AbstractOutputTest extends TestCase {
 final class DummyOutput extends AbstractOutput {
 
 	/**
-	 * Signature must match Base3\Api\IOutput::getOutput($out = "html")
+	 * Signature must match Base3\Api\IOutput::getOutput(string $out = 'html', bool $final = false): string
 	 *
 	 * @param mixed $out
 	 * @return mixed
 	 */
-	public function getOutput($out = 'html') {
-		return 'ok:' . (string)$out;
+	public function getOutput(string $out = 'html', bool $final = false): string {
+		return 'ok:' . $out;
 	}
 }

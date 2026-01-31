@@ -163,7 +163,8 @@ PHP);
 
 			public function __construct(IContainer $container) {
 				parent::__construct($container);
-				$this->filename = DIR_TMP . 'composerclassmap_' . uniqid('', true) . '.php';
+				$this->classMapFile = DIR_TMP . 'composerclassmap_' . uniqid('', true) . '.php';
+				$this->ctorCacheFile = DIR_TMP . 'composerctorcache_' . uniqid('', true) . '.php';
 			}
 
 			public function exposeMap(): array {
@@ -172,7 +173,7 @@ PHP);
 			}
 
 			public function getFile(): string {
-				return $this->filename;
+				return $this->classMapFile;
 			}
 		};
 

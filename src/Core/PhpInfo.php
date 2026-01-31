@@ -21,7 +21,7 @@ class PhpInfo implements IOutput {
 
                 if (!getenv('DEBUG')) return '';
 
-		return phpinfo();
+		return (string)phpinfo();
 	}
 
 	public function getHelp(): string {

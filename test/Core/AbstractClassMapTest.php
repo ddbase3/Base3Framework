@@ -112,7 +112,8 @@ PHP);
 			public function __construct(IContainer $container, string $basedir) {
 				parent::__construct($container);
 				$this->basedir = $basedir;
-				$this->filename = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
 			}
 
 			protected function getScanTargets(): array {
@@ -152,7 +153,8 @@ PHP);
 
 			public function __construct(IContainer $container) {
 				parent::__construct($container);
-				$this->filename = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
 			}
 
 			protected function getScanTargets(): array {
@@ -161,11 +163,11 @@ PHP);
 			}
 
 			public function writeDummy(): void {
-				file_put_contents($this->filename, "<?php return ['x' => 1];\n");
+				file_put_contents($this->classMapFile, "<?php return ['x' => 1];\n");
 			}
 
 			public function getFile(): string {
-				return $this->filename;
+				return $this->classMapFile;
 			}
 		};
 
@@ -183,7 +185,8 @@ PHP);
 
 			public function __construct(IContainer $container) {
 				parent::__construct($container);
-				$this->filename = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
 			}
 
 			protected function getScanTargets(): array {
@@ -241,7 +244,8 @@ PHP);
 			public function __construct(IContainer $container, string $basedir) {
 				parent::__construct($container);
 				$this->basedir = $basedir;
-				$this->filename = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
 			}
 
 			protected function getScanTargets(): array {
@@ -392,7 +396,8 @@ PHP);
 
 			public function __construct(IContainer $container) {
 				parent::__construct($container);
-				$this->filename = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
 			}
 
 			protected function getScanTargets(): array {
@@ -449,7 +454,8 @@ PHP);
 			public function __construct(IContainer $container, string $basedir) {
 				parent::__construct($container);
 				$this->basedir = $basedir;
-				$this->filename = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
+				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
 			}
 
 			protected function getScanTargets(): array {
