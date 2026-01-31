@@ -17,7 +17,7 @@ interface IOutput extends IBase {
 	 * @param string $out Desired output format (default is "html")
 	 * @return mixed Output data in the specified format
 	 */
-	public function getOutput($out = "html");
+	public function getOutput(string $out = "html");
 
 	/**
 	 * Returns syntax help and debug information.
@@ -28,6 +28,4 @@ interface IOutput extends IBase {
 	 * @return mixed Help and debug information
 	 */
 	public function getHelp();
-
 }
-
