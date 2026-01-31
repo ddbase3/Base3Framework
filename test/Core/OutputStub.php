@@ -30,12 +30,12 @@ class OutputStub implements IOutput {
 		return 'outputstub';
 	}
 
-	public function getOutput($out = "html") {
+	public function getOutput(string $out = 'html', bool $final = false): string {
 		$cb = $this->outputCallback;
 		return $cb((string)$out);
 	}
 
-	public function getHelp() {
+	public function getHelp(): string {
 		$cb = $this->helpCallback;
 		return $cb();
 	}

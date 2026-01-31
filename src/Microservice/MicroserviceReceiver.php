@@ -36,8 +36,7 @@ class MicroserviceReceiver extends AbstractMicroservice implements IMicroservice
 
 	// Implementation of IOutput
 
-	public function getHelp() {
+	public function getHelp(): string {
 		return 'Help for MicroserviceReceiver';
 	}
-
 }
