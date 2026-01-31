@@ -22,7 +22,7 @@ class TestJob implements IOutput {
 
 	// Implementation of IOutput
 
-	public function getOutput($out = "html") {
+	public function getOutput(string $out = 'html', bool $final = false): string {
 
 		$jobName = $this->request->get('job');
 		if ($jobName == null) {
@@ -35,7 +35,7 @@ class TestJob implements IOutput {
 		return "\n" . $res . "\n\n";
 	}
 
-	public function getHelp() {
+	public function getHelp(): string {
 		return 'Help of TestJob' . "\n";
 	}
 }

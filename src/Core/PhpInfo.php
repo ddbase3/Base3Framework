@@ -17,15 +17,14 @@ class PhpInfo implements IOutput {
 
 	// Implementation of IOutput
 
-	public function getOutput($out = "html") {
+	public function getOutput(string $out = 'html', bool $final = false): string {
 
                 if (!getenv('DEBUG')) return '';
 
 		return phpinfo();
 	}
 
-	public function getHelp() {
+	public function getHelp(): string {
 		return 'Shows output of phpinfo();' . "\n";
 	}
-
 }

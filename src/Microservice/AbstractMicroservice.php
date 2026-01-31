@@ -16,7 +16,7 @@ abstract class AbstractMicroservice implements IMicroservice {
 
 	// Implementation of IOutput
 
-	public function getOutput($out = "html") {
+	public function getOutput(string $out = 'html', bool $final = false): string {
 		if ($out != "json" || !isset($_REQUEST["call"])) return null;
 
 		$binarystream = isset($_REQUEST["binarystream"]) ? !!$_REQUEST["binarystream"] : false;
@@ -37,7 +37,7 @@ abstract class AbstractMicroservice implements IMicroservice {
 		return json_encode($result);
 	}
 
-	public function getHelp() {
+	public function getHelp(): string {
 		$out = '';
 		$out .= '<p><b>' . static::class . '</b></p>';
 		$out .= '<p>' . $this->getName() . '</p>';

@@ -14,13 +14,11 @@ interface IOutput extends IBase {
 	 *
 	 * Common formats include "html", "json", "xml", "csv", "page", etc.
 	 *
-	 * IMPORTANT: Use new signature for future implementations:
-	 * public function getOutput(string $out = 'html', bool $final = false): string;
-	 *
 	 * @param string $out Desired output format (default is "html")
-	 * @return mixed Output data in the specified format
+	 * @param bool $final Output is called directly like an endpoint (true), or output gets embedded (false)
+	 * @return string Output data in the specified format
 	 */
-	public function getOutput(string $out = "html");
+	public function getOutput(string $out = 'html', bool $final = false): string;
 
 	/**
 	 * Returns syntax help and debug information.
@@ -28,10 +26,7 @@ interface IOutput extends IBase {
 	 * Usually returns expected GET/POST parameters and optionally debug-related info.
 	 * Only used or displayed if the system is in debug mode.
 	 *
-	 * IMPORTANT: Use new signature for future implementations:
-	 * public function getHelp(): string;
-	 *
 	 * @return mixed Help and debug information
 	 */
-	public function getHelp();
+	public function getHelp() : string;
 }

@@ -25,7 +25,7 @@ class MasterWorker implements IOutput {
 
 	// Implementation of IOutput
 
-	public function getOutput($out = "html") {
+	public function getOutput(string $out = 'html', bool $final = false): string {
 
 		$tm0 = microtime(true);
 
@@ -113,8 +113,7 @@ class MasterWorker implements IOutput {
 
 	}
 
-	public function getHelp() {
+	public function getHelp(): string {
 		return 'Help of MasterWorker' . "\n";
 	}
-
 }

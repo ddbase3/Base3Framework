@@ -20,7 +20,7 @@ class ChronosTest implements IPage {
 
 	// Implementation of IOutput
 
-	public function getOutput($out = "html") {
+	public function getOutput(string $out = 'html', bool $final = false): string {
 		$str = '';//'<h1>ChronosTest</h1>';
 
 		$tl = date("Y-m-d H:i:s");
@@ -30,7 +30,7 @@ class ChronosTest implements IPage {
 		return $str;
 	}
 
-	public function getHelp() {
+	public function getHelp(): string {
 		return 'Help of ChronosTest' . "\n";
 	}
 

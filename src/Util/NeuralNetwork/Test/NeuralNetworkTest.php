@@ -20,7 +20,7 @@ class NeuralNetworkTest implements IPage {
 
 	// Implementation of IOutput
 
-	public function getOutput($out = "html") {
+	public function getOutput(string $out = 'html', bool $final = false): string {
 
 		$str = '';
 //		$str .= '<h1>NN Test</h1>';
@@ -70,8 +70,7 @@ class NeuralNetworkTest implements IPage {
 		return $str;
 	}
 
-	public function getHelp() {
+	public function getHelp(): string {
 		return 'Help of NeuralNetworkTest' . "\n";
 	}
-
 }

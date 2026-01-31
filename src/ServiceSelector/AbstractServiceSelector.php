@@ -133,7 +133,7 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 
 			default:
 				if ($out === "json") header('Content-Type: application/json');
-				return (string) $instance->getOutput($out);
+				return $instance->getOutput($out);
 		}
 	}
 

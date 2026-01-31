@@ -22,7 +22,7 @@ class Microservice implements IOutput {
 
 	// Implementation of IOutput
 
-	public function getOutput($out = "html") {
+	public function getOutput(string $out = 'html', bool $final = false): string {
 		if ($out != "json" || !isset($_REQUEST["call"])) return null;
 
 		if ($_REQUEST["call"] == "connect") {
@@ -33,8 +33,7 @@ class Microservice implements IOutput {
 		return null;
 	}
 
-	public function getHelp() {
+	public function getHelp(): string {
 		return "Help on Microservice";
 	}
-
 }

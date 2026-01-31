@@ -21,7 +21,7 @@ class Check implements IOutput, ICheck {
 
 	// Implementation of IOutput
 
-	public function getOutput($out = "html"): string {
+	public function getOutput(string $out = 'html', bool $final = false): string {
 
 		if (!getenv('DEBUG')) return '';
 

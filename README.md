@@ -183,7 +183,7 @@ Manage structured configuration data using `IConfiguration`.
 use Base3\Page\Api\IPage;
 
 class HelloController implements IPage {
-    public function getOutput($out = 'html') {
+    public function getOutput(string $out = 'html', bool $final = false): string {
         return '<h1>Hello, World!</h1>';
     }
 
