@@ -7,10 +7,12 @@ use Base3\Api\IClassMap;
 use Base3\Api\IContainer;
 use Base3\Api\IPlugin;
 use Base3\Api\IRequest;
+use Base3\Api\ISystemService;
 use Base3\Accesscontrol\Api\IAccesscontrol;
 use Base3\Accesscontrol\No\NoAccesscontrol;
 use Base3\Core\Request;
 use Base3\Core\ServiceLocator;
+use Base3\Core\SystemService;
 use Base3\Configuration\ConfigFile\ConfigFile;
 use Base3\Configuration\Api\IConfiguration;
 use Base3\Core\PluginClassMap;
@@ -29,6 +31,7 @@ class Bootstrap implements IBootstrap {
 		ServiceLocator::useInstance($container);
 		$container
 			->set('servicelocator', $container, IContainer::SHARED)
+			->set(ISystemService::class, fn() => new SystemService(), IContainer::SHARED)
 			->set(IRequest::class, fn() => Request::fromGlobals(), IContainer::SHARED)
 			->set(IContainer::class, 'servicelocator', IContainer::ALIAS)
 			->set(IHookManager::class, fn() => new HookManager(), IContainer::SHARED)
