@@ -18,6 +18,4 @@ interface IBase {
 	 * @return string Unique technical name of the class
 	 */
 	public static function getName(): string;
-
 }
-

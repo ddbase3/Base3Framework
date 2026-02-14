@@ -28,5 +28,5 @@ interface IOutput extends IBase {
 	 *
 	 * @return mixed Help and debug information
 	 */
-	public function getHelp() : string;
+	public function getHelp(): string;
 }
