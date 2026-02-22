@@ -111,6 +111,7 @@ class MasterWorker implements IOutput {
 		echo $str . "\n";
 		$this->logger->info($str, ['scope' => 'masterworker']);
 
+		return $str;
 	}
 
 	public function getHelp(): string {
