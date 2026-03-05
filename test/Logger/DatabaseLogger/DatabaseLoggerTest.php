@@ -119,11 +119,15 @@ class DatabaseLoggerTest extends TestCase {
 	/**
 	 * Creates a lightweight IDatabase spy:
 	 * - connect(): void
+	 * - beginTransaction(): void
+	 * - commit(): void
+	 * - rollback(): void
 	 * - nonQuery(): void
 	 * - singleQuery(): ?array (unused here)
 	 * - multiQuery(): array
 	 * - listQuery(): &array (unused)
 	 * - affectedRows(): int (unused)
+	 * - insertId(): int|string (unused)
 	 * - escape(): string (identity)
 	 */
 	private function makeDbSpy(array &$calls, array $multiQueryMap = []): IDatabase {
@@ -146,6 +150,18 @@ class DatabaseLoggerTest extends TestCase {
 			}
 
 			public function disconnect(): void {
+			}
+
+			public function beginTransaction(): void {
+				$this->calls[] = ['m' => 'beginTransaction'];
+			}
+
+			public function commit(): void {
+				$this->calls[] = ['m' => 'commit'];
+			}
+
+			public function rollback(): void {
+				$this->calls[] = ['m' => 'rollback'];
 			}
 
 			public function nonQuery(string $query): void {

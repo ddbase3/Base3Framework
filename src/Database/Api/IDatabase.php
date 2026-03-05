@@ -30,16 +30,13 @@ interface IDatabase {
 	 * - Implementations MUST implement this as a lazy connect.
 	 * - Calling this method when already connected MUST be a no-op.
 	 * - Calling this method multiple times MUST be safe.
-	 *
-	 * @return void
 	 */
 	public function connect(): void;
 
 	/**
 	 * Indicates whether a database connection is currently active.
 	 *
-	 * @return bool
-	 *         True if a connection is currently established.
+	 * @return bool True if a connection is currently established.
 	 */
 	public function connected(): bool;
 
@@ -49,18 +46,30 @@ interface IDatabase {
 	 * Semantics:
 	 * - After disconnect(), connected() MUST return false.
 	 * - A subsequent call to connect() MUST re-establish the connection.
-	 *
-	 * @return void
 	 */
 	public function disconnect(): void;
 
 	/**
+	 * Begins a database transaction.
+	 *
+	 * Semantics:
+	 * - Implementations SHOULD throw if no connection exists (or auto-connect).
+	 * - Nested transactions are implementation-defined (no requirement here).
+	 */
+	public function beginTransaction(): void;
+
+	/**
+	 * Commits the current transaction.
+	 */
+	public function commit(): void;
+
+	/**
+	 * Rolls back the current transaction.
+	 */
+	public function rollback(): void;
+
+	/**
 	 * Executes a query that modifies data (INSERT, UPDATE, DELETE).
-	 *
-	 * @param string $query
-	 *        SQL statement to execute.
-	 *
-	 * @return void
 	 */
 	public function nonQuery(string $query): void;
 
@@ -71,11 +80,7 @@ interface IDatabase {
 	 * - If the query yields no rows, NULL SHOULD be returned.
 	 * - If multiple rows are returned, the first value is used.
 	 *
-	 * @param string $query
-	 *        SQL statement expected to return one value.
-	 *
-	 * @return mixed
-	 *         Scalar value (string|int|float|bool|null depending on backend) or NULL.
+	 * @return mixed Scalar value or NULL.
 	 */
 	public function scalarQuery(string $query): mixed;
 
@@ -86,48 +91,26 @@ interface IDatabase {
 	 * - If no row is found, NULL MUST be returned.
 	 * - If multiple rows are found, only the first row is returned.
 	 *
-	 * @param string $query
-	 *        SQL statement expected to return a single row.
-	 *
-	 * @return array|null
-	 *         Associative array representing the row, or NULL.
+	 * @return array|null Row or NULL.
 	 */
 	public function singleQuery(string $query): ?array;
 
 	/**
 	 * Executes a query that returns a list of scalar values (single column).
 	 *
-	 * Semantics:
-	 * - The returned array MUST contain scalar values only.
-	 * - If no rows are found, an empty array MUST be returned.
-	 *
-	 * @param string $query
-	 *        SQL statement returning one column.
-	 *
-	 * @return array
-	 *         List of scalar values.
+	 * @return array List of scalar values.
 	 */
 	public function &listQuery(string $query): array;
 
 	/**
 	 * Executes a query that returns multiple rows as associative arrays.
 	 *
-	 * Semantics:
-	 * - If no rows are found, an empty array MUST be returned.
-	 *
-	 * @param string $query
-	 *        SQL statement returning multiple rows.
-	 *
-	 * @return array
-	 *         List of associative rows.
+	 * @return array List of associative rows.
 	 */
 	public function &multiQuery(string $query): array;
 
 	/**
 	 * Returns the number of rows affected by the last data-modifying query.
-	 *
-	 * @return int
-	 *         Number of affected rows.
 	 */
 	public function affectedRows(): int;
 
@@ -136,8 +119,6 @@ interface IDatabase {
 	 *
 	 * Note:
 	 * - Backends may return int (auto-increment) or string (UUID).
-	 *
-	 * @return int|string
 	 */
 	public function insertId(): int|string;
 
@@ -147,23 +128,11 @@ interface IDatabase {
 	 * Semantics:
 	 * - This method MUST return a quoted-safe string fragment.
 	 * - Consumers MUST still handle surrounding quotes themselves.
-	 *
-	 * Example:
-	 *     $db->escape("foo'bar") → foo\'bar
-	 *
-	 * @param string $str
-	 *        Raw input string.
-	 *
-	 * @return string
-	 *         Escaped string.
 	 */
 	public function escape(string $str): string;
 
 	/**
 	 * Indicates whether the last executed query resulted in an error.
-	 *
-	 * @return bool
-	 *         True if an error occurred.
 	 */
 	public function isError(): bool;
 
@@ -172,9 +141,6 @@ interface IDatabase {
 	 *
 	 * Note (matches current MysqlDatabase behavior):
 	 * - Returns 0 if no error occurred.
-	 *
-	 * @return int
-	 *         Error code (0 = no error).
 	 */
 	public function errorNumber(): int;
 
@@ -183,9 +149,6 @@ interface IDatabase {
 	 *
 	 * Note (matches current MysqlDatabase behavior):
 	 * - Returns an empty string if no error occurred.
-	 *
-	 * @return string
-	 *         Error message ('' = no error).
 	 */
 	public function errorMessage(): string;
 }

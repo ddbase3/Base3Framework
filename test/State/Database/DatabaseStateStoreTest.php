@@ -40,6 +40,18 @@ class DatabaseStateStoreTest extends TestCase {
 				$this->queries[] = 'disconnect';
 			}
 
+			public function beginTransaction(): void {
+				$this->queries[] = 'beginTransaction';
+			}
+
+			public function commit(): void {
+				$this->queries[] = 'commit';
+			}
+
+			public function rollback(): void {
+				$this->queries[] = 'rollback';
+			}
+
 			public function nonQuery(string $query): void {
 				$this->queries[] = $query;
 			}

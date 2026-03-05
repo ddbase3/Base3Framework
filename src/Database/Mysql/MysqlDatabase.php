@@ -50,8 +50,10 @@ class MysqlDatabase implements IDatabase, ICheck {
 	public function connect(): void {
 		if ($this->connected) return;
 		if (empty($this->host) || empty($this->user) || empty($this->pass) || empty($this->name)) return;
+
 		$this->connection = new \mysqli($this->host, $this->user, $this->pass, $this->name);
 		if ($this->connection->connect_errno) return;
+
 		$this->connection->set_charset('utf8mb4');
 		$this->connected = true;
 	}
@@ -63,6 +65,34 @@ class MysqlDatabase implements IDatabase, ICheck {
 	public function disconnect(): void {
 		$this->connected = false;
 		if ($this->connection) $this->connection->close();
+	}
+
+	public function beginTransaction(): void {
+		$this->connect();
+		if (!$this->connection) throw new \RuntimeException("MySQL connection not available.");
+
+		// mysqli will disable autocommit for the transaction scope internally.
+		if (!$this->connection->begin_transaction()) {
+			throw new \RuntimeException("Failed to begin transaction: " . $this->connection->error);
+		}
+	}
+
+	public function commit(): void {
+		$this->connect();
+		if (!$this->connection) throw new \RuntimeException("MySQL connection not available.");
+
+		if (!$this->connection->commit()) {
+			throw new \RuntimeException("Failed to commit transaction: " . $this->connection->error);
+		}
+	}
+
+	public function rollback(): void {
+		$this->connect();
+		if (!$this->connection) throw new \RuntimeException("MySQL connection not available.");
+
+		if (!$this->connection->rollback()) {
+			throw new \RuntimeException("Failed to rollback transaction: " . $this->connection->error);
+		}
 	}
 
 	public function nonQuery(string $query): void {
