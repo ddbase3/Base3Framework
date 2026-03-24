@@ -11,7 +11,8 @@ public/
 .well-known/
 .phpdoc/
 .docs/
-docs/
+docs/coverage/
+docs/phpdoc/
 vendor/
 
 # Ignored Files (root-level only)
