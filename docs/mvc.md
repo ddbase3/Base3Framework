@@ -427,14 +427,14 @@ It shows the exact access pattern used by the BASE3 view implementation:
 
 ```mermaid
 flowchart TD
-	A[MvcView::assign('title', 'Developer Navigation')] --> B[$this->_['title']]
-	C[MvcView::assign('items', [...])] --> D[$this->_['items']]
-	E[MvcView::assign('getLink', closure)] --> F[$this->_['getLink']]
-	G[MvcView::loadBricks('navigation')] --> H[$this->_['bricks']['navigation']]
+	A[Assign title] --> B[Title available in view data]
+	C[Assign items] --> D[Items available in view data]
+	E[Assign link helper] --> F[Link helper available in view data]
+	G[Load navigation bricks] --> H[Navigation bricks available in view data]
 	B --> I[Template renders title]
-	D --> J[Template loops items]
+	D --> J[Template loops over items]
 	F --> K[Template builds URLs]
-	H --> L[Template renders labels]
+	H --> L[Template renders translated labels]
 ```
 
 ---
@@ -757,14 +757,14 @@ Your original example already demonstrates the essential BASE3 pattern.
 
 ```mermaid
 flowchart TD
-	A[Navigation::getOutput()] --> B[setPath(DIR_PLUGIN . 'ContourzTestWebsite')]
-	B --> C[setTemplate('Content/Navigation.php')]
-	C --> D[assign authenticated]
-	D --> E[assign getlink closure]
-	E --> F[assign role]
-	F --> G[loadTemplate()]
-	G --> H[tpl/Content/Navigation.php]
-	H --> I[HTML output]
+	A[Navigation output starts rendering] --> B[Set plugin path]
+	B --> C[Select navigation template]
+	C --> D[Assign authentication flag]
+	D --> E[Assign link helper]
+	E --> F[Assign role]
+	F --> G[Render template]
+	G --> H[Load template file from tpl directory]
+	H --> I[Return HTML output]
 ```
 
 ### What the example teaches
@@ -1084,10 +1084,10 @@ class HelloWorld implements IOutput {
 
 ```mermaid
 flowchart LR
-	A[Inject IMvcView] --> B[setPath()]
-	B --> C[setTemplate()]
-	C --> D[assign()]
-	D --> E[loadTemplate()]
+	A[Inject view service] --> B[Set plugin path]
+	B --> C[Select template]
+	C --> D[Assign data]
+	D --> E[Render template]
 	E --> F[Return HTML]
 ```
 
