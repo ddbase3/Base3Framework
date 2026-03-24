@@ -134,16 +134,16 @@ The **semantic target** stays the same. Only the external URL form changes.
 
 ```mermaid
 flowchart TD
-	A[HTTP request or CLI call] --> B[ServiceSelector]
-	B --> C{Which selector is active?}
-	C -->|Standard / LangBased| D[Read request parameters directly]
-	C -->|RoutingServiceSelector| E[Normalize path and iterate routes]
-	D --> F[Resolve output by technical name]
-	E --> G[Selected route dispatches request]
+	A["HTTP request or CLI call"] --> B["ServiceSelector"]
+	B --> C{"Which selector is active?"}
+	C -->|"Standard / LangBased"| D["Read request parameters directly"]
+	C -->|"RoutingServiceSelector"| E["Normalize path and iterate routes"]
+	D --> F["Resolve output by technical name"]
+	E --> G["Selected route dispatches request"]
 	G --> F
-	F --> H[IOutput instance]
-	H --> I[getOutput or getHelp]
-	I --> J[Response body]
+	F --> H["IOutput instance"]
+	H --> I["getOutput or getHelp"]
+	I --> J["Response body"]
 ```
 
 ---
@@ -174,21 +174,21 @@ It reads the request directly from the query parameters and resolves an output i
 
 ```mermaid
 flowchart TD
-	A[Request] --> B[AbstractServiceSelector::process]
-	B --> C[Read out, data, app, name]
-	C --> D{Authenticated user and intern redirect?}
-	D -->|Yes| E[Redirect]
-	D -->|No| F[handleLanguage(data)]
-	F --> G{app empty?}
-	G -->|Yes| H[getInstanceByInterfaceName IOutput + name]
-	G -->|No| I[getInstanceByAppInterfaceName app + IOutput + name]
-	H --> J{Instance found?}
+	A["Request"] --> B["AbstractServiceSelector::process"]
+	B --> C["Read out, data, app, name"]
+	C --> D{"Authenticated user and intern redirect?"}
+	D -->|"Yes"| E["Redirect"]
+	D -->|"No"| F["handleLanguage(data)"]
+	F --> G{"app empty?"}
+	G -->|"Yes"| H["getInstanceByInterfaceName: IOutput + name"]
+	G -->|"No"| I["getInstanceByAppInterfaceName: app + IOutput + name"]
+	H --> J{"Instance found?"}
 	I --> J
-	J -->|No| K[404]
-	J -->|Yes| L[Use instance]
-	L --> M{out == help?}
-	M -->|Yes| N[getHelp]
-	M -->|No| O[getOutput out, final=true]
+	J -->|"No"| K["404"]
+	J -->|"Yes"| L["Use instance"]
+	L --> M{"out == help?"}
+	M -->|"Yes"| N["getHelp"]
+	M -->|"No"| O["getOutput(out, final=true)"]
 ```
 
 ### Important characteristic
@@ -211,9 +211,9 @@ If `data` is a two-letter value such as `de` or `en`, it sets the language accor
 
 ```mermaid
 flowchart LR
-	A[data parameter] --> B{length == 2?}
-	B -->|Yes| C[language.setLanguage(data)]
-	B -->|No| D[Do nothing]
+	A["data parameter"] --> B{"length == 2?"}
+	B -->|"Yes"| C["language.setLanguage(data)"]
+	B -->|"No"| D["Do nothing"]
 ```
 
 This means language is not a completely separate routing layer. In this selector family it is simply an interpreted routing parameter.
@@ -252,11 +252,11 @@ RewriteRule ^(.+)\.(.+) index.php?name=$1&out=$2 [L,QSA]
 
 ```mermaid
 flowchart TD
-	A[Browser requests navigation.html] --> B[Apache mod_rewrite]
-	B --> C[index.php?name=navigation&out=html]
-	C --> D[ServiceSelector reads query parameters]
-	D --> E[Resolve IOutput by getName navigation]
-	E --> F[getOutput html]
+	A["Browser requests navigation.html"] --> B["Apache mod_rewrite"]
+	B --> C["index.php?name=navigation&out=html"]
+	C --> D["ServiceSelector reads query parameters"]
+	D --> E["Resolve IOutput by getName: navigation"]
+	E --> F["getOutput html"]
 ```
 
 ### Important point
@@ -346,10 +346,10 @@ This is intended to be rewritten by Apache back into the standard internal form.
 
 ```mermaid
 flowchart LR
-	A[Target data: name, out] --> B{LinkTargetService implementation}
-	B -->|StandardLinkTargetService| C[?name=imprint&out=html&a=1]
-	B -->|PrettyNameLinkTargetService| D[imprint.html?a=1]
-	D --> E[Apache rewrite]
+	A["Target data: name, out"] --> B{"LinkTargetService implementation"}
+	B -->|"StandardLinkTargetService"| C["?name=imprint&out=html&a=1"]
+	B -->|"PrettyNameLinkTargetService"| D["imprint.html?a=1"]
+	D --> E["Apache rewrite"]
 	E --> C
 ```
 
@@ -386,16 +386,16 @@ It does not hardcode one URL style. It delegates path interpretation to route cl
 
 ```mermaid
 flowchart TD
-	A[Incoming request] --> B[RoutingServiceSelector::process]
-	B --> C[Normalize REQUEST_URI path]
-	C --> D[Load routes from container]
-	D --> E[Iterate routes in order]
-	E --> F{route.match(path) returns match data?}
-	F -->|No| E
-	F -->|Yes| G[Optional handleLanguage from match]
-	G --> H[route.dispatch(match)]
-	H --> I[Response]
-	E -->|No route matched| J[parent::process fallback]
+	A["Incoming request"] --> B["RoutingServiceSelector::process"]
+	B --> C["Normalize REQUEST_URI path"]
+	C --> D["Load routes from container"]
+	D --> E["Iterate routes in order"]
+	E --> F{"route.match(path) returned match data?"}
+	F -->|"No"| E
+	F -->|"Yes"| G["Optional handleLanguage from match"]
+	G --> H["route.dispatch(match)"]
+	H --> I["Response"]
+	E -->|"No route matched"| J["parent::process fallback"]
 ```
 
 ### Important rule
@@ -424,13 +424,13 @@ It then delegates execution back to `AbstractServiceSelector`.
 
 ```mermaid
 flowchart TD
-	A[Request] --> B[QueryLegacyRoute::match]
-	B --> C{GET has name or out or app?}
-	C -->|No| D[No match]
-	C -->|Yes| E[Match legacy=true]
-	E --> F[dispatch]
-	F --> G[Create temporary AbstractServiceSelector]
-	G --> H[selector.process]
+	A["Request"] --> B["QueryLegacyRoute::match"]
+	B --> C{"GET has name or out or app?"}
+	C -->|"No"| D["No match"]
+	C -->|"Yes"| E["Match legacy=true"]
+	E --> F["dispatch"]
+	F --> G["Create temporary AbstractServiceSelector"]
+	G --> H["selector.process"]
 ```
 
 ### Why this is useful
@@ -509,16 +509,16 @@ So external URL style may use `.php`, while the `IOutput` receives the normalize
 
 ```mermaid
 flowchart TD
-	A[Path: navigation.html] --> B[GenericOutputRoute::match]
-	B --> C[Extract name=navigation, out=html]
-	C --> D[Check classmap for IOutput named navigation]
-	D --> E{Instance exists?}
-	E -->|No| F[No match]
-	E -->|Yes| G[dispatch]
-	G --> H[Set request globals]
-	H --> I[Resolve IOutput instance again]
-	I --> J[getOutput html]
-	J --> K[Response]
+	A["Path: navigation.html"] --> B["GenericOutputRoute::match"]
+	B --> C["Extract name=navigation, out=html"]
+	C --> D["Check classmap for IOutput named navigation"]
+	D --> E{"Instance exists?"}
+	E -->|"No"| F["No match"]
+	E -->|"Yes"| G["dispatch"]
+	G --> H["Set request globals"]
+	H --> I["Resolve IOutput instance again"]
+	I --> J["getOutput html"]
+	J --> K["Response"]
 ```
 
 ### Why this route matters
@@ -555,14 +555,14 @@ It then resolves the output by name and runs it directly.
 
 ```mermaid
 flowchart TD
-	A[CLI execution] --> B[CliRoute::match]
-	B --> C{PHP_SAPI == cli and name present?}
-	C -->|No| D[No match]
-	C -->|Yes| E[Match name/out/data]
-	E --> F[dispatch]
-	F --> G[Resolve IOutput by name]
-	G --> H[getOutput out]
-	H --> I[Console output]
+	A["CLI execution"] --> B["CliRoute::match"]
+	B --> C{"PHP_SAPI == cli and name present?"}
+	C -->|"No"| D["No match"]
+	C -->|"Yes"| E["Match name/out/data"]
+	E --> F["dispatch"]
+	F --> G["Resolve IOutput by name"]
+	G --> H["getOutput out"]
+	H --> I["Console output"]
 ```
 
 This proves that BASE3 routing is not limited to browser URLs. The same output resolution model can be reused in CLI mode.
@@ -609,10 +609,10 @@ Instead, it asks the class map for:
 
 ```mermaid
 flowchart LR
-	A[Requested technical name: navigation] --> B[ClassMap]
-	B --> C[Find IOutput implementation with getName() = navigation]
-	C --> D[Instantiate class]
-	D --> E[getOutput html/json/help/...]
+	A["Requested technical name: navigation"] --> B["ClassMap"]
+	B --> C["Find IOutput implementation with getName() = navigation"]
+	C --> D["Instantiate class"]
+	D --> E["getOutput html/json/help/etc."]
 ```
 
 ### Why this is powerful
@@ -801,15 +801,15 @@ For example, a project might support at the same time:
 
 ```mermaid
 flowchart TD
-	A[Request enters RoutingServiceSelector] --> B[Try CliRoute]
-	B -->|No match| C[Try custom special route]
-	C -->|No match| D[Try GenericOutputRoute]
-	D -->|No match| E[Try QueryLegacyRoute]
-	E -->|No match| F[parent::process fallback]
-	B -->|Match| G[Dispatch]
-	C -->|Match| G
-	D -->|Match| G
-	E -->|Match| G
+	A["Request enters RoutingServiceSelector"] --> B["Try CliRoute"]
+	B -->|"No match"| C["Try custom special route"]
+	C -->|"No match"| D["Try GenericOutputRoute"]
+	D -->|"No match"| E["Try QueryLegacyRoute"]
+	E -->|"No match"| F["parent::process fallback"]
+	B -->|"Match"| G["Dispatch"]
+	C -->|"Match"| G
+	D -->|"Match"| G
+	E -->|"Match"| G
 ```
 
 ### Result
@@ -853,10 +853,10 @@ For example, a custom route could:
 
 ```mermaid
 flowchart LR
-	A[Path] --> B[Custom IRoute]
-	B --> C{Custom match logic}
-	C -->|Matched| D[Custom dispatch]
-	D --> E[Response]
+	A["Path"] --> B["Custom IRoute"]
+	B --> C{"Custom match logic"}
+	C -->|"Matched"| D["Custom dispatch"]
+	D --> E["Response"]
 ```
 
 This is what makes `RoutingServiceSelector` the flexible integration point for parallel routing systems.
@@ -884,14 +884,14 @@ There are two possible pretty-name stories in BASE3.
 
 ```mermaid
 flowchart TD
-	A[navigation.html] --> B{Routing strategy}
-	B -->|Apache rewrite| C[index.php?name=navigation&out=html]
-	C --> D[AbstractServiceSelector]
-	B -->|Route matching| E[GenericOutputRoute match]
-	E --> F[dispatch]
-	D --> G[Resolve IOutput by getName]
+	A["navigation.html"] --> B{"Routing strategy"}
+	B -->|"Apache rewrite"| C["index.php?name=navigation&out=html"]
+	C --> D["AbstractServiceSelector"]
+	B -->|"Route matching"| E["GenericOutputRoute match"]
+	E --> F["dispatch"]
+	D --> G["Resolve IOutput by getName"]
 	F --> G
-	G --> H[getOutput]
+	G --> H["getOutput"]
 ```
 
 ### Meaning
@@ -938,11 +938,11 @@ Usually:
 
 ```mermaid
 flowchart TD
-	A[External URL or CLI syntax] --> B[Selector or route layer]
-	B --> C[Technical output name]
-	C --> D[ClassMap lookup]
-	D --> E[IOutput instance]
-	E --> F[getOutput]
+	A["External URL or CLI syntax"] --> B["Selector or route layer"]
+	B --> C["Technical output name"]
+	C --> D["ClassMap lookup"]
+	D --> E["IOutput instance"]
+	E --> F["getOutput"]
 ```
 
 This is why `getName()` is the most important routing anchor in the framework.
