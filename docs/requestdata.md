@@ -1303,27 +1303,27 @@ A good way to think about BASE3 request handling is this:
 mindmap
   root((BASE3 Request Data))
     Read values
-      get()
-      post()
-      request()
-      cookie()
-      session()
-      server()
-      files()
+      m1["get()"]
+      m2["post()"]
+      m3["request()"]
+      m4["cookie()"]
+      m5["session()"]
+      m6["server()"]
+      m7["files()"]
     Read collections
-      allGet()
-      allPost()
-      allRequest()
-      allFiles()
+      c1["allGet()"]
+      c2["allPost()"]
+      c3["allRequest()"]
+      c4["allFiles()"]
     Special sources
-      getJsonBody()
-      CLI argv mapped into GET
+      s1["getJsonBody()"]
+      s2["CLI argv mapped into GET"]
     Environment
-      isCli()
-      getContext()
+      e1["isCli()"]
+      e2["getContext()"]
     Plugin style
-      Inject IRequest
-      Avoid direct superglobals
+      p1["Inject IRequest"]
+      p2["Avoid direct superglobals"]
 ```
 
 ---
