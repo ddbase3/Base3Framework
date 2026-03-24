@@ -251,15 +251,15 @@ This is the effective flow:
 
 ```mermaid
 flowchart TD
-    A[connect()] --> B{already connected?}
+    A["connect()"] --> B{"already connected?"}
     B -- yes --> C[return]
-    B -- no --> D{config complete?}
+    B -- no --> D{"config complete?"}
     D -- no --> C
     D -- yes --> E[create mysqli]
-    E --> F{connect_errno?}
+    E --> F{"connect_errno?"}
     F -- yes --> C
     F -- no --> G[set charset utf8mb4]
-    G --> H[connected = true]
+    G --> H["connected = true"]
     H --> C
 ```
 
