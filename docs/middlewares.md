@@ -158,7 +158,7 @@ Return flow is the reverse direction.
 
 ```mermaid
 flowchart TD
-	A[Container entry "middlewares"] --> B[SessionMiddleware]
+	A[Container entry middlewares] --> B[SessionMiddleware]
 	B --> C[AccesscontrolMiddleware]
 	C --> D[ServiceSelector]
 	D --> E[Resolved IOutput class]
