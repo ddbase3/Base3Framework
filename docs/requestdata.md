@@ -369,8 +369,8 @@ Internally the logic is roughly:
 
 ```mermaid
 flowchart TD
-	A["Input key: \"options[pagination][page]\""] --> B["Check direct key match"]
-	B -->|"not found"| C["Split into parts: \"options\", \"pagination\", \"page\""]
+	A["Input key: options[pagination][page]"] --> B["Check direct key match"]
+	B -->|"not found"| C["Split into parts: options, pagination, page"]
 	C --> D["Traverse nested array"]
 	D --> E{"Part exists?"}
 	E -->|"yes"| F["Move deeper"]
@@ -826,21 +826,21 @@ That is not a bug in this documentation. It is the actual behavior of the provid
 flowchart TD
 	A["getContext()"] --> B{"isCli()"}
 
-	B -->|"yes"| C{"SERVER contains \"REQUEST_METHOD\""}
+	B -->|"yes"| C{"SERVER contains REQUEST_METHOD"}
 	C -->|"yes"| D["CONTEXT_BUILTIN_SERVER"]
-	C -->|"no"| E{"Env \"CRON_JOB\" or \"IS_CRON\""}
+	C -->|"no"| E{"Env CRON_JOB or IS_CRON"}
 	E -->|"yes"| F["CONTEXT_CRON"]
-	E -->|"no"| G{"PHPUnit marker or \"TEST_ENV\""}
+	E -->|"no"| G{"PHPUnit marker or TEST_ENV"}
 	G -->|"yes"| H["CONTEXT_TEST"]
 	G -->|"no"| I["CONTEXT_CLI"]
 
-	B -->|"no"| J{"REQUEST_METHOD == \"POST\""}
+	B -->|"no"| J{"REQUEST_METHOD == POST"}
 	J -->|"yes"| K{"FILES not empty"}
 	K -->|"yes"| L["CONTEXT_WEB_UPLOAD"]
 	K -->|"no"| M["CONTEXT_WEB_POST"]
-	J -->|"no"| N{"Header \"X-Requested-With\" == \"xmlhttprequest\""}
+	J -->|"no"| N{"Header X-Requested-With == xmlhttprequest"}
 	N -->|"yes"| O["CONTEXT_WEB_AJAX"]
-	N -->|"no"| P{"Accept contains \"application/json\""}
+	N -->|"no"| P{"Accept contains application/json"}
 	P -->|"yes"| Q["CONTEXT_WEB_API"]
 	P -->|"no"| R["CONTEXT_WEB_GET"]
 ```
@@ -1301,29 +1301,29 @@ A good way to think about BASE3 request handling is this:
 
 ```mermaid
 mindmap
-	root(("BASE3 Request Data"))
-		"Read values"
-			"get()"
-			"post()"
-			"request()"
-			"cookie()"
-			"session()"
-			"server()"
-			"files()"
-		"Read collections"
-			"allGet()"
-			"allPost()"
-			"allRequest()"
-			"allFiles()"
-		"Special sources"
-			"getJsonBody()"
-			"CLI argv mapped into GET"
-		"Environment"
-			"isCli()"
-			"getContext()"
-		"Plugin style"
-			"Inject IRequest"
-			"Avoid direct superglobals"
+  root((BASE3 Request Data))
+    Read values
+      get()
+      post()
+      request()
+      cookie()
+      session()
+      server()
+      files()
+    Read collections
+      allGet()
+      allPost()
+      allRequest()
+      allFiles()
+    Special sources
+      getJsonBody()
+      CLI argv mapped into GET
+    Environment
+      isCli()
+      getContext()
+    Plugin style
+      Inject IRequest
+      Avoid direct superglobals
 ```
 
 ---
