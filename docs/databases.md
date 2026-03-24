@@ -44,11 +44,11 @@ That gives you:
 
 ```mermaid
 flowchart TD
-	A[Plugin / Service / Controller] --> B[IDatabase]
-	B --> C[MysqlDatabase]
-	B --> D[Future PostgresDatabase]
-	C --> E[(MySQL / MariaDB)]
-	D --> F[(PostgreSQL)]
+    A[Plugin / Service / Controller] --> B[IDatabase]
+    B --> C[MysqlDatabase]
+    B --> D[Future PostgresDatabase]
+    C --> E[(MySQL / MariaDB)]
+    D --> F[(PostgreSQL)]
 ```
 
 ---
@@ -71,37 +71,37 @@ Its design is intentionally simple. It covers the operations most framework and 
 
 ```mermaid
 classDiagram
-	class IDatabase {
-		<<interface>>
-		+connect() void
-		+connected() bool
-		+disconnect() void
-		+beginTransaction() void
-		+commit() void
-		+rollback() void
-		+nonQuery(query: string) void
-		+scalarQuery(query: string) mixed
-		+singleQuery(query: string) array|null
-		+listQuery(query: string) array
-		+multiQuery(query: string) array
-		+affectedRows() int
-		+insertId() int|string
-		+escape(str: string) string
-		+isError() bool
-		+errorNumber() int
-		+errorMessage() string
-	}
+    class IDatabase {
+        <<interface>>
+        +connect() void
+        +connected() bool
+        +disconnect() void
+        +beginTransaction() void
+        +commit() void
+        +rollback() void
+        +nonQuery(query: string) void
+        +scalarQuery(query: string) mixed
+        +singleQuery(query: string) array|null
+        +listQuery(query: string) array
+        +multiQuery(query: string) array
+        +affectedRows() int
+        +insertId() int|string
+        +escape(str: string) string
+        +isError() bool
+        +errorNumber() int
+        +errorMessage() string
+    }
 
-	class MysqlDatabase {
-		-connection: mysqli|null
-		-connected: bool
-		-host: string|null
-		-user: string|null
-		-pass: string|null
-		-name: string|null
-	}
+    class MysqlDatabase {
+        -connection: mysqli|null
+        -connected: bool
+        -host: string|null
+        -user: string|null
+        -pass: string|null
+        -name: string|null
+    }
 
-	IDatabase <|.. MysqlDatabase
+    IDatabase <|.. MysqlDatabase
 ```
 
 ### Key design decision: explicit lazy connection
@@ -139,14 +139,14 @@ The intended developer mindset is:
 
 ```mermaid
 stateDiagram-v2
-	[*] --> Disconnected
-	Disconnected --> Connected: connect()
-	Connected --> Connected: connect() again
-	Connected --> InTransaction: beginTransaction()
-	InTransaction --> Connected: commit()
-	InTransaction --> Connected: rollback()
-	Connected --> Disconnected: disconnect()
-	InTransaction --> Disconnected: disconnect()
+    [*] --> Disconnected
+    Disconnected --> Connected: connect()
+    Connected --> Connected: connect() again
+    Connected --> InTransaction: beginTransaction()
+    InTransaction --> Connected: commit()
+    InTransaction --> Connected: rollback()
+    Connected --> Disconnected: disconnect()
+    InTransaction --> Disconnected: disconnect()
 ```
 
 ### Important semantic rule
@@ -251,16 +251,16 @@ This is the effective flow:
 
 ```mermaid
 flowchart TD
-	A[connect()] --> B{already connected?}
-	B -- yes --> C[return]
-	B -- no --> D{config complete?}
-	D -- no --> C
-	D -- yes --> E[create mysqli]
-	E --> F{connect_errno?}
-	F -- yes --> C
-	F -- no --> G[set charset utf8mb4]
-	G --> H[connected = true]
-	H --> C
+    A[connect()] --> B{already connected?}
+    B -- yes --> C[return]
+    B -- no --> D{config complete?}
+    D -- no --> C
+    D -- yes --> E[create mysqli]
+    E --> F{connect_errno?}
+    F -- yes --> C
+    F -- no --> G[set charset utf8mb4]
+    G --> H[connected = true]
+    H --> C
 ```
 
 ### Practical consequence
@@ -546,15 +546,15 @@ Returned shape:
 
 ```mermaid
 flowchart TD
-	A[Need to run SQL] --> B{Does it modify data?}
-	B -- yes --> C[nonQuery]
-	B -- no --> D{Need one scalar value?}
-	D -- yes --> E[scalarQuery]
-	D -- no --> F{Need one row?}
-	F -- yes --> G[singleQuery]
-	F -- no --> H{Need one column only?}
-	H -- yes --> I[listQuery]
-	H -- no --> J[multiQuery]
+    A[Need to run SQL] --> B{Does it modify data?}
+    B -- yes --> C[nonQuery]
+    B -- no --> D{Need one scalar value?}
+    D -- yes --> E[scalarQuery]
+    D -- no --> F{Need one row?}
+    F -- yes --> G[singleQuery]
+    F -- no --> H{Need one column only?}
+    H -- yes --> I[listQuery]
+    H -- no --> J[multiQuery]
 ```
 
 ---
@@ -579,26 +579,26 @@ That makes transaction boundaries stricter than plain query methods.
 
 ```mermaid
 sequenceDiagram
-	participant S as Service
-	participant D as IDatabase
-	participant M as MysqlDatabase
-	participant DB as MySQL
+    participant S as Service
+    participant D as IDatabase
+    participant M as MysqlDatabase
+    participant DB as MySQL
 
-	S->>D: beginTransaction()
-	D->>M: beginTransaction()
-	M->>M: connect()
-	M->>DB: BEGIN
-	DB-->>M: ok
+    S->>D: beginTransaction()
+    D->>M: beginTransaction()
+    M->>M: connect()
+    M->>DB: BEGIN
+    DB-->>M: ok
 
-	S->>D: nonQuery(...)
-	D->>M: nonQuery(...)
-	M->>DB: INSERT / UPDATE / DELETE
-	DB-->>M: ok
+    S->>D: nonQuery(...)
+    D->>M: nonQuery(...)
+    M->>DB: INSERT / UPDATE / DELETE
+    DB-->>M: ok
 
-	S->>D: commit()
-	D->>M: commit()
-	M->>DB: COMMIT
-	DB-->>M: ok
+    S->>D: commit()
+    D->>M: commit()
+    M->>DB: COMMIT
+    DB-->>M: ok
 ```
 
 ### Recommended pattern
@@ -841,10 +841,10 @@ A good BASE3 plugin structure is usually:
 
 ```mermaid
 flowchart LR
-	A[Output / Controller] --> B[Application Service]
-	B --> C[Repository]
-	C --> D[IDatabase]
-	D --> E[(Database)]
+    A[Output / Controller] --> B[Application Service]
+    B --> C[Repository]
+    C --> D[IDatabase]
+    D --> E[(Database)]
 ```
 
 ### Example repository + service
