@@ -1,5 +1,21 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Core;
 
 use ReflectionClass;
@@ -10,254 +26,261 @@ use ReflectionUnionType;
 use ReflectionType;
 
 class DynamicMockFactory {
-    private static int $counter = 0;
 
-    public static function createMock(string $classOrInterface): object {
-        $builtinMocks = [
-            \DateTimeZone::class => fn() => new \DateTimeZone('UTC'),
-            \DateTimeImmutable::class => fn() => new \DateTimeImmutable('now'),
-            \DateTime::class => fn() => new \DateTime('now'),
-            \FilesystemIterator::class => fn() => new \FilesystemIterator(__DIR__),
-            \DirectoryIterator::class => fn() => new \DirectoryIterator(__DIR__),
-            \SplFileObject::class => fn() => new \SplFileObject('/tmp/mock.txt', 'w+'),
-            \SimpleXMLElement::class => fn() => new \SimpleXMLElement('<root/>'),
-            \DOMDocument::class => fn() => (function () {
-                $doc = new \DOMDocument();
-                $doc->loadXML('<root/>');
-                return $doc;
-            })(),
-            \PDO::class => fn() => throw new \RuntimeException("Cannot auto-mock PDO – please register it in the container."),
-        ];
+	private static int $counter = 0;
 
-        if (isset($builtinMocks[$classOrInterface])) {
-            $mock = $builtinMocks[$classOrInterface];
-            return \is_callable($mock) ? $mock() : $mock;
-        }
+	public static function createMock(string $classOrInterface): object {
+		$builtinMocks = [
+			\DateTimeZone::class => fn() => new \DateTimeZone('UTC'),
+			\DateTimeImmutable::class => fn() => new \DateTimeImmutable('now'),
+			\DateTime::class => fn() => new \DateTime('now'),
+			\FilesystemIterator::class => fn() => new \FilesystemIterator(__DIR__),
+			\DirectoryIterator::class => fn() => new \DirectoryIterator(__DIR__),
+			\SplFileObject::class => fn() => new \SplFileObject('/tmp/mock.txt', 'w+'),
+			\SimpleXMLElement::class => fn() => new \SimpleXMLElement('<root/>'),
+			\DOMDocument::class => fn() => (function () {
+				$doc = new \DOMDocument();
+				$doc->loadXML('<root/>');
+				return $doc;
+			})(),
+			\PDO::class => fn() => throw new \RuntimeException("Cannot auto-mock PDO – please register it in the container."),
+		];
 
-        if (!interface_exists($classOrInterface) && !class_exists($classOrInterface)) {
-            throw new \InvalidArgumentException("Class or interface $classOrInterface does not exist.");
-        }
+		if (isset($builtinMocks[$classOrInterface])) {
+			$mock = $builtinMocks[$classOrInterface];
+			return \is_callable($mock) ? $mock() : $mock;
+		}
 
-        if (class_exists($classOrInterface) && !interface_exists($classOrInterface)) {
-            $ref = new ReflectionClass($classOrInterface);
+		if (!interface_exists($classOrInterface) && !class_exists($classOrInterface)) {
+			throw new \InvalidArgumentException("Class or interface $classOrInterface does not exist.");
+		}
 
-            if ($ref->isAbstract()) {
-                return self::createAbstractClassMock($classOrInterface);
-            }
+		if (class_exists($classOrInterface) && !interface_exists($classOrInterface)) {
+			$ref = new ReflectionClass($classOrInterface);
 
-            $ctor = $ref->getConstructor();
-            if (!$ctor) return new $classOrInterface();
+			if ($ref->isAbstract()) {
+				return self::createAbstractClassMock($classOrInterface);
+			}
 
-            $args = array_map(fn($param) => self::createParameterValue($param), $ctor->getParameters());
-            return $ref->newInstanceArgs($args);
-        }
+			$ctor = $ref->getConstructor();
+			if (!$ctor) {
+				return new $classOrInterface();
+			}
 
-        return self::createInterfaceMock($classOrInterface);
-    }
+			$args = array_map(fn($param) => self::createParameterValue($param), $ctor->getParameters());
+			return $ref->newInstanceArgs($args);
+		}
 
-    private static function createAbstractClassMock(string $abstractClass): object {
-        $reflection = new ReflectionClass($abstractClass);
-        $methodsCode = '';
+		return self::createInterfaceMock($classOrInterface);
+	}
 
-        foreach ($reflection->getMethods() as $method) {
-            if ($method->isAbstract()) {
-                $methodsCode .= self::generateMethodStub($method) . "\n";
-            }
-        }
+	private static function createAbstractClassMock(string $abstractClass): object {
+		$reflection = new ReflectionClass($abstractClass);
+		$methodsCode = '';
 
-        // Konstruktor vorbereiten
-        $constructor = '';
-        if ($reflection->hasMethod('__construct')) {
-            $ctor = $reflection->getConstructor();
-            $args = [];
+		foreach ($reflection->getMethods() as $method) {
+			if ($method->isAbstract()) {
+				$methodsCode .= self::generateMethodStub($method) . "\n";
+			}
+		}
 
-            foreach ($ctor->getParameters() as $param) {
-                $type = $param->getType();
-                $arg = 'null';
-                if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
-                    $mock = self::createMock($type->getName());
-                    $arg = var_export($mock, true);
-                }
-                $args[] = $arg;
-            }
+		// Konstruktor vorbereiten
+		$constructor = '';
+		if ($reflection->hasMethod('__construct')) {
+			$ctor = $reflection->getConstructor();
+			$args = [];
 
-            $argList = implode(', ', $args);
-            $constructor = <<<PHP
-                public function __construct() {
-                    parent::__construct($argList);
-                }
-            PHP;
-        }
+			foreach ($ctor->getParameters() as $param) {
+				$type = $param->getType();
+				$arg = 'null';
+				if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+					$mock = self::createMock($type->getName());
+					$arg = var_export($mock, true);
+				}
+				$args[] = $arg;
+			}
 
-        $className = 'Mock_' . $reflection->getShortName() . '_' . self::$counter++;
-        $code = <<<PHP
-            return new class extends \\$abstractClass {
-                $constructor
-                $methodsCode
-            };
-        PHP;
+			$argList = implode(', ', $args);
+			$constructor = <<<PHP
+				public function __construct() {
+					parent::__construct($argList);
+				}
+			PHP;
+		}
 
-        return eval($code);
-   }
+		$className = 'Mock_' . $reflection->getShortName() . '_' . self::$counter++;
+		$code = <<<PHP
+			return new class extends \\$abstractClass {
+				$constructor
+				$methodsCode
+			};
+		PHP;
 
+		return eval($code);
+	}
 
-    private static function createInterfaceMock(string $interface): object {
-        $reflection = new ReflectionClass($interface);
-        $methodsCode = '';
+	private static function createInterfaceMock(string $interface): object {
+		$reflection = new ReflectionClass($interface);
+		$methodsCode = '';
 
-        foreach ($reflection->getMethods() as $method) {
-            $methodsCode .= self::generateMethodStub($method) . "\n";
-        }
+		foreach ($reflection->getMethods() as $method) {
+			$methodsCode .= self::generateMethodStub($method) . "\n";
+		}
 
-        $className = 'Mock_' . $reflection->getShortName() . '_' . self::$counter++;
-        $code = <<<PHP
-            return new class implements \\$interface {
-                $methodsCode
-            };
-        PHP;
+		$className = 'Mock_' . $reflection->getShortName() . '_' . self::$counter++;
+		$code = <<<PHP
+			return new class implements \\$interface {
+				$methodsCode
+			};
+		PHP;
 
-        return eval($code);
-    }
+		return eval($code);
+	}
 
-    private static function generateMethodStub(ReflectionMethod $method): string {
-        $params = [];
+	private static function generateMethodStub(ReflectionMethod $method): string {
+		$params = [];
 
-        foreach ($method->getParameters() as $param) {
-            $params[] = self::generateParameterCode($param);
-        }
+		foreach ($method->getParameters() as $param) {
+			$params[] = self::generateParameterCode($param);
+		}
 
-        $paramList = implode(', ', $params);
+		$paramList = implode(', ', $params);
 
-        $returnByReference = $method->returnsReference() ? '&' : '';
-        $static = $method->isStatic() ? 'static ' : '';
-        $name = $method->getName();
+		$returnByReference = $method->returnsReference() ? '&' : '';
+		$static = $method->isStatic() ? 'static ' : '';
+		$name = $method->getName();
 
-        $returnType = $method->getReturnType();
-        $typeHint = $returnType ? ': ' . self::getTypeHint($returnType) : '';
+		$returnType = $method->getReturnType();
+		$typeHint = $returnType ? ': ' . self::getTypeHint($returnType) : '';
 
-        $returnCode = self::generateReturnValueCode($returnType);
+		$returnCode = self::generateReturnValueCode($returnType);
 
-        return <<<PHP
-            public {$static}function {$returnByReference}{$name}($paramList)$typeHint {
-                $returnCode
-            }
-        PHP;
-    }
+		return <<<PHP
+			public {$static}function {$returnByReference}{$name}($paramList)$typeHint {
+				$returnCode
+			}
+		PHP;
+	}
 
-    private static function generateParameterCode(ReflectionParameter $param): string {
-        $code = '';
+	private static function generateParameterCode(ReflectionParameter $param): string {
+		$code = '';
 
-        // Typ
-        if ($param->hasType()) {
-            $type = $param->getType();
-            $code .= self::getTypeHint($type) . ' ';
-        }
+		// Typ
+		if ($param->hasType()) {
+			$type = $param->getType();
+			$code .= self::getTypeHint($type) . ' ';
+		}
 
-        // Referenz
-        if ($param->isPassedByReference()) {
-            $code .= '&';
-        }
+		// Referenz
+		if ($param->isPassedByReference()) {
+			$code .= '&';
+		}
 
-        // Variadisch
-        if ($param->isVariadic()) {
-            $code .= '...';
-        }
+		// Variadisch
+		if ($param->isVariadic()) {
+			$code .= '...';
+		}
 
-        $code .= '$' . $param->getName();
+		$code .= '$' . $param->getName();
 
-        // Defaultwert
-        if ($param->isOptional() && !$param->isVariadic()) {
-            if ($param->isDefaultValueAvailable()) {
-                $code .= ' = ' . var_export($param->getDefaultValue(), true);
-            } elseif ($param->isDefaultValueConstant()) {
-                $code .= ' = ' . $param->getDefaultValueConstantName();
-            }
-        }
+		// Defaultwert
+		if ($param->isOptional() && !$param->isVariadic()) {
+			if ($param->isDefaultValueAvailable()) {
+				$code .= ' = ' . var_export($param->getDefaultValue(), true);
+			} elseif ($param->isDefaultValueConstant()) {
+				$code .= ' = ' . $param->getDefaultValueConstantName();
+			}
+		}
 
-        return $code;
-    }
+		return $code;
+	}
 
-    private static function getTypeHint(?ReflectionType $type): string {
-        if (!$type) return '';
+	private static function getTypeHint(?ReflectionType $type): string {
+		if (!$type) {
+			return '';
+		}
 
-	$nullable = ($type->allowsNull() && $type->getName() !== 'mixed') ? '?' : '';
+		$nullable = ($type->allowsNull() && $type->getName() !== 'mixed') ? '?' : '';
 
-        if ($type instanceof ReflectionNamedType) {
-            $name = $type->getName();
-            if (!in_array($name, ['int', 'float', 'string', 'bool', 'array', 'object', 'callable', 'iterable', 'mixed', 'void', 'never'])) {
-                $name = '\\' . ltrim($name, '\\');
-            }
-            return $nullable . $name;
-        }
+		if ($type instanceof ReflectionNamedType) {
+			$name = $type->getName();
+			if (!in_array($name, ['int', 'float', 'string', 'bool', 'array', 'object', 'callable', 'iterable', 'mixed', 'void', 'never'])) {
+				$name = '\\' . ltrim($name, '\\');
+			}
+			return $nullable . $name;
+		}
 
-        if ($type instanceof ReflectionUnionType) {
-            return implode('|', array_map(
-                fn(ReflectionNamedType $t) => ($t->allowsNull() && $t->getName() !== 'mixed' ? '?' : '') .
-                    (in_array($t->getName(), ['int','float','string','bool','array','object','callable','iterable','mixed','void','never'])
-                        ? $t->getName()
-                        : '\\' . ltrim($t->getName(), '\\')),
-                $type->getTypes()
-            ));
-        }
+		if ($type instanceof ReflectionUnionType) {
+			return implode('|', array_map(
+				fn(ReflectionNamedType $t) => ($t->allowsNull() && $t->getName() !== 'mixed' ? '?' : '') .
+					(in_array($t->getName(), ['int', 'float', 'string', 'bool', 'array', 'object', 'callable', 'iterable', 'mixed', 'void', 'never'])
+						? $t->getName()
+						: '\\' . ltrim($t->getName(), '\\')),
+				$type->getTypes()
+			));
+		}
 
-        return ''; // fallback
-    }
+		return ''; // fallback
+	}
 
-    private static function generateReturnValueCode(?ReflectionType $type): string {
-        if (!$type) return 'return null;';
+	private static function generateReturnValueCode(?ReflectionType $type): string {
+		if (!$type) {
+			return 'return null;';
+		}
 
-        if ($type instanceof ReflectionUnionType) {
-            // Nimm den ersten gültigen Typ zur Generierung des Rückgabewerts
-            foreach ($type->getTypes() as $subtype) {
-                if ($subtype instanceof ReflectionNamedType) return self::generateReturnValueCode($subtype);
-            }
-            return 'return null;';
-        }
+		if ($type instanceof ReflectionUnionType) {
+			// Nimm den ersten gültigen Typ zur Generierung des Rückgabewerts
+			foreach ($type->getTypes() as $subtype) {
+				if ($subtype instanceof ReflectionNamedType) {
+					return self::generateReturnValueCode($subtype);
+				}
+			}
+			return 'return null;';
+		}
 
-        if ($type instanceof ReflectionNamedType) {
-            $name = $type->getName();
+		if ($type instanceof ReflectionNamedType) {
+			$name = $type->getName();
 
-            if ($type->isBuiltin()) {
-                return match ($name) {
-                    'int' => 'return 0;',
-                    'float' => 'return 0.0;',
-                    'string' => 'return "' . addslashes(uniqid('mock_', true)) . '";',
-                    'bool' => 'return false;',
-                    'array' => 'return [];',
-                    'void', 'never' => '',
-                    'mixed', 'object', 'callable', 'iterable' => 'return null;',
-                    default => 'return null;',
-                };
-            } else {
-                // Objekt-Mock rekursiv erzeugen
-                $fqcn = '\\' . ltrim($name, '\\');
-                return "return \\Base3\\Core\\DynamicMockFactory::createMock('$fqcn');";
-            }
-        }
+			if ($type->isBuiltin()) {
+				return match ($name) {
+					'int' => 'return 0;',
+					'float' => 'return 0.0;',
+					'string' => 'return "' . addslashes(uniqid('mock_', true)) . '";',
+					'bool' => 'return false;',
+					'array' => 'return [];',
+					'void', 'never' => '',
+					'mixed', 'object', 'callable', 'iterable' => 'return null;',
+					default => 'return null;',
+				};
+			} else {
+				// Objekt-Mock rekursiv erzeugen
+				$fqcn = '\\' . ltrim($name, '\\');
+				return "return \\Base3\\Core\\DynamicMockFactory::createMock('$fqcn');";
+			}
+		}
 
-        return 'return null;';
-    }
+		return 'return null;';
+	}
 
-    private static function createParameterValue(ReflectionParameter $param): mixed {
-        $type = $param->getType();
-        if ($type instanceof ReflectionNamedType) {
-            if (!$type->isBuiltin()) {
-                return self::createMock($type->getName());
-            }
-            return self::defaultValueFor($type->getName());
-        }
-        return null;
-    }
+	private static function createParameterValue(ReflectionParameter $param): mixed {
+		$type = $param->getType();
+		if ($type instanceof ReflectionNamedType) {
+			if (!$type->isBuiltin()) {
+				return self::createMock($type->getName());
+			}
+			return self::defaultValueFor($type->getName());
+		}
+		return null;
+	}
 
-    private static function defaultValueFor(?string $type): mixed {
-        return match ($type) {
-            'int' => 0,
-            'float' => 0.0,
-            'string' => '',
-            'bool' => false,
-            'array' => [],
-            default => null,
-        };
-    }
+	private static function defaultValueFor(?string $type): mixed {
+		return match ($type) {
+			'int' => 0,
+			'float' => 0.0,
+			'string' => '',
+			'bool' => false,
+			'array' => [],
+			default => null,
+		};
+	}
 }
-
