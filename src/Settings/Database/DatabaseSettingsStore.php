@@ -30,13 +30,13 @@ use RuntimeException;
  * - base3_settingsstore
  *
  * Storage model:
- * - group   => logical settings group
- * - name    => dataset name within the group
+ * - group    => logical settings group
+ * - name     => dataset name within the group
  * - settings => JSON-encoded settings array
  *
  * This implementation is write-through:
- * - setSettings() persists immediately
- * - removeSettings() persists immediately
+ * - set() persists immediately
+ * - remove() persists immediately
  * - save() is therefore a no-op
  */
 class DatabaseSettingsStore implements ISettingsStore {
@@ -55,7 +55,7 @@ class DatabaseSettingsStore implements ISettingsStore {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function getSettings(string $group, string $name, array $default = []): array {
+	public function get(string $group, string $name, array $default = []): array {
 		$this->ensureTableExists();
 		$this->assertValidKey($group, 'group');
 		$this->assertValidKey($name, 'name');
@@ -101,7 +101,7 @@ class DatabaseSettingsStore implements ISettingsStore {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setSettings(string $group, string $name, array $settings): void {
+	public function set(string $group, string $name, array $settings): void {
 		$this->ensureTableExists();
 		$this->assertValidKey($group, 'group');
 		$this->assertValidKey($name, 'name');
@@ -134,7 +134,7 @@ class DatabaseSettingsStore implements ISettingsStore {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function hasSettings(string $group, string $name): bool {
+	public function has(string $group, string $name): bool {
 		$this->ensureTableExists();
 		$this->assertValidKey($group, 'group');
 		$this->assertValidKey($name, 'name');
@@ -159,7 +159,7 @@ class DatabaseSettingsStore implements ISettingsStore {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function removeSettings(string $group, string $name): void {
+	public function remove(string $group, string $name): void {
 		$this->ensureTableExists();
 		$this->assertValidKey($group, 'group');
 		$this->assertValidKey($name, 'name');
@@ -180,7 +180,66 @@ class DatabaseSettingsStore implements ISettingsStore {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function save() {
+	public function getGroup(string $group): array {
+		$this->ensureTableExists();
+		$this->assertValidKey($group, 'group');
+
+		$groupEscaped = $this->database->escape($group);
+
+		$query = "
+			SELECT `name`, `settings`
+			FROM `" . self::TABLE_NAME . "`
+			WHERE `group` = '" . $groupEscaped . "'
+			ORDER BY `name` ASC
+		";
+
+		$rows = $this->database->multiQuery($query);
+		$this->assertNoError('Failed to load settings group.');
+
+		if(!is_array($rows) || $rows === []) {
+			return [];
+		}
+
+		$result = [];
+
+		foreach($rows as $row) {
+			if(!is_array($row) || !isset($row['name']) || !array_key_exists('settings', $row)) {
+				throw new RuntimeException('Invalid database row while loading settings group "' . $group . '".');
+			}
+
+			$name = (string) $row['name'];
+
+			if($name === '') {
+				throw new RuntimeException('Invalid settings name while loading group "' . $group . '".');
+			}
+
+			try {
+				$settings = json_decode((string) $row['settings'], true, 512, JSON_THROW_ON_ERROR);
+			}
+			catch(JsonException $e) {
+				throw new RuntimeException(
+					'Failed to decode settings dataset "' . $group . '/' . $name . '": ' . $e->getMessage(),
+					0,
+					$e
+				);
+			}
+
+			if(!is_array($settings)) {
+				throw new RuntimeException(
+					'Settings dataset "' . $group . '/' . $name . '" must decode to an array.'
+				);
+			}
+
+			$result[$name] = $settings;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function save(): void {
 		/*
 		 * This implementation writes changes immediately.
 		 * There is no deferred in-memory state to flush here.
