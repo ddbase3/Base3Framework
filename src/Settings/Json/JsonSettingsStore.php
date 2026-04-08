@@ -53,8 +53,8 @@ class JsonSettingsStore implements ISettingsStore {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function getSettings(string $group, string $name, array $default = []): array {
-		if(!$this->hasSettings($group, $name)) {
+	public function get(string $group, string $name, array $default = []): array {
+		if(!$this->has($group, $name)) {
 			return $default;
 		}
 
@@ -64,14 +64,9 @@ class JsonSettingsStore implements ISettingsStore {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setSettings(string $group, string $name, array $settings): void {
-		if($group === '') {
-			throw new RuntimeException('Settings group must not be empty.');
-		}
-
-		if($name === '') {
-			throw new RuntimeException('Settings name must not be empty.');
-		}
+	public function set(string $group, string $name, array $settings): void {
+		$this->assertValidKey($group, 'group');
+		$this->assertValidKey($name, 'name');
 
 		if(
 			isset($this->data[$group][$name]) &&
@@ -91,15 +86,15 @@ class JsonSettingsStore implements ISettingsStore {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function hasSettings(string $group, string $name): bool {
+	public function has(string $group, string $name): bool {
 		return isset($this->data[$group][$name]) && is_array($this->data[$group][$name]);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function removeSettings(string $group, string $name): void {
-		if(!$this->hasSettings($group, $name)) {
+	public function remove(string $group, string $name): void {
+		if(!$this->has($group, $name)) {
 			return;
 		}
 
@@ -115,7 +110,20 @@ class JsonSettingsStore implements ISettingsStore {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function save() {
+	public function getGroup(string $group): array {
+		$this->assertValidKey($group, 'group');
+
+		if(!isset($this->data[$group]) || !is_array($this->data[$group])) {
+			return [];
+		}
+
+		return $this->data[$group];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function save(): void {
 		$directory = dirname($this->filePath);
 
 		if(!is_dir($directory)) {
@@ -200,6 +208,19 @@ class JsonSettingsStore implements ISettingsStore {
 		}
 
 		return rtrim($dataDirectory, '/\\') . '/cnf/settings.json';
+	}
+
+	/**
+	 * Validates a group or name key.
+	 *
+	 * @param string $value
+	 * @param string $label
+	 * @return void
+	 */
+	private function assertValidKey(string $value, string $label): void {
+		if($value === '') {
+			throw new RuntimeException('Settings ' . $label . ' must not be empty.');
+		}
 	}
 
 	/**

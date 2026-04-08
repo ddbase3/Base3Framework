@@ -44,7 +44,7 @@ interface ISettingsStore {
 	 * @param array $default
 	 * @return array
 	 */
-	public function getSettings(string $group, string $name, array $default = []): array;
+	public function get(string $group, string $name, array $default = []): array;
 
 	/**
 	 * Replaces one settings dataset completely.
@@ -54,7 +54,7 @@ interface ISettingsStore {
 	 * @param array $settings
 	 * @return void
 	 */
-	public function setSettings(string $group, string $name, array $settings): void;
+	public function set(string $group, string $name, array $settings): void;
 
 	/**
 	 * Checks whether a settings dataset exists.
@@ -63,7 +63,7 @@ interface ISettingsStore {
 	 * @param string $name
 	 * @return bool
 	 */
-	public function hasSettings(string $group, string $name): bool;
+	public function has(string $group, string $name): bool;
 
 	/**
 	 * Removes one settings dataset.
@@ -72,14 +72,32 @@ interface ISettingsStore {
 	 * @param string $name
 	 * @return void
 	 */
-	public function removeSettings(string $group, string $name): void;
+	public function remove(string $group, string $name): void;
+
+	/**
+	 * Returns all settings datasets of one group.
+	 *
+	 * The returned array is keyed by dataset name.
+	 *
+	 * Example:
+	 * [
+	 *     'openai' => [ 'label' => 'OpenAI', ... ],
+	 *     'mistral' => [ 'label' => 'Mistral', ... ]
+	 * ]
+	 *
+	 * If the group does not exist, an empty array is returned.
+	 *
+	 * @param string $group
+	 * @return array
+	 */
+	public function getGroup(string $group): array;
 
 	/**
 	 * Saves the current state.
 	 *
 	 * @return void
 	 */
-	public function save();
+	public function save(): void;
 
 	/**
 	 * Reloads the underlying storage.
