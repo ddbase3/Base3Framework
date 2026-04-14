@@ -18,9 +18,12 @@
 
 namespace Base3\Worker;
 
-use Base3\Core\ServiceLocator;
-use Base3\Worker\Api\IWorker;
 use Base3\Api\ICheck;
+use Base3\Core\ServiceLocator;
+use Base3\Util\Chronos\Chronos;
+use Base3\Worker\Api\ICron;
+use Base3\Worker\Api\IJob;
+use Base3\Worker\Api\IWorker;
 
 class DelegateWorker implements IWorker, ICheck {
 
@@ -68,7 +71,7 @@ class DelegateWorker implements IWorker, ICheck {
 
 	public function getJobs() {
 		$joblist = array();
-		$jobs = $this->classmap->getInstancesByInterface(\Base3\Worker\Api\IJob::class);
+		$jobs = $this->classmap->getInstancesByInterface(IJob::class);
 		foreach ($jobs as $job) {
 			$name = $job->getName();
 			$priority = $job->getPriority();
@@ -78,9 +81,9 @@ class DelegateWorker implements IWorker, ICheck {
 	}
 
 	public function doJob($job) {
-		$job = $this->classmap->getInstanceByInterfaceName(\Base3\Worker\Api\IJob::class, $job);
+		$job = $this->classmap->getInstanceByInterfaceName(IJob::class, $job);
 		if ($job == null) return null;
-		if (($job instanceof \Worker\Api\ICron) && !$this->checkCron($job)) return null;
+		if (($job instanceof ICron) && !$this->checkCron($job)) return null;
 		return $job->go();
 	}
 
@@ -121,7 +124,7 @@ class DelegateWorker implements IWorker, ICheck {
 		$tx = str_replace([" ", ":"], "-", $tl);
 		$td = array_map("intval", explode("-", $tx));
 
-		$d = \Util\Chronos\Chronos::create($td[0], $td[1], $td[2], $td[3], $td[4], $td[5]);
+		$d = Chronos::create($td[0], $td[1], $td[2], $td[3], $td[4], $td[5]);
 
 		// seconds
 		if ($d->getSecond() != 0) {

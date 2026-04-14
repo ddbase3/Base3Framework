@@ -3,6 +3,7 @@
 namespace Base3\Util\Chronos\Test;
 
 use Base3\Page\Api\IPage;
+use Base3\Util\Chronos\Chronos;
 
 class ChronosTest implements IPage {
 
@@ -40,7 +41,7 @@ class ChronosTest implements IPage {
 		$tx = str_replace([" ", ":"], "-", $tl);
 		$td = array_map("intval", explode("-", $tx));
 
-		$d = \Base3\Util\Chronos\Chronos::create($td[0], $td[1], $td[2], $td[3], $td[4], $td[5]);
+		$d = Chronos::create($td[0], $td[1], $td[2], $td[3], $td[4], $td[5]);
 
 		// seconds
 		if ($d->getSecond() != 0) {
