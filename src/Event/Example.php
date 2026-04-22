@@ -19,4 +19,3 @@ $em->once("Base3\\Event\\*", function (object $event) {
 
 $em->fire(new UserDeletedEvent(42));
  */
-

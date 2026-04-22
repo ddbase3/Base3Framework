@@ -16,7 +16,7 @@
  * https://github.com/ddbase3/Base3Framework
  **********************************************************************/
 
-namespace Base3\Event;
+namespace Base3\Event\Api;
 
 /**
  * Interface IStoppableEvent
@@ -40,6 +40,4 @@ interface IStoppableEvent {
 	 * @return bool True if propagation is stopped, false otherwise
 	 */
 	public function isPropagationStopped(): bool;
-
 }
-

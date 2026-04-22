@@ -18,7 +18,11 @@
 
 namespace Base3\Hook;
 
+use Base3\Hook\Api\IHookListener;
+use Base3\Hook\Api\IHookManager;
+
 class HookManager implements IHookManager {
+
 	/** @var array<string, array<int, IHookListener[]>> */
 	protected array $listeners = [];
 

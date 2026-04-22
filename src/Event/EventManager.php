@@ -18,6 +18,8 @@
 
 namespace Base3\Event;
 
+use Base3\Event\Api\IEventManager;
+
 class EventManager implements IEventManager {
 	/** @var array<string, array<int, array<callable>>> */
 	protected array $listeners = [];
