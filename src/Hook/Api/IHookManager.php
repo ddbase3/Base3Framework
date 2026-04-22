@@ -16,7 +16,7 @@
  * https://github.com/ddbase3/Base3Framework
  **********************************************************************/
 
-namespace Base3\Hook;
+namespace Base3\Hook\Api;
 
 /**
  * Interface IHookManager
@@ -41,6 +41,4 @@ interface IHookManager {
 	 * @return void
 	 */
 	public function addHookListener(IHookListener $listener): void;
-
 }
-

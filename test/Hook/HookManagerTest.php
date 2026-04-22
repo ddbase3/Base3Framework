@@ -22,7 +22,7 @@ namespace Base3\Test\Hook {
 
 	use PHPUnit\Framework\TestCase;
 	use Base3\Hook\HookManager;
-	use Base3\Hook\IHookListener;
+	use Base3\Hook\Api\IHookListener;
 
 	class HookManagerTest extends TestCase
 	{

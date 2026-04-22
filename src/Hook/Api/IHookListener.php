@@ -16,7 +16,7 @@
  * https://github.com/ddbase3/Base3Framework
  **********************************************************************/
 
-namespace Base3\Hook;
+namespace Base3\Hook\Api;
 
 /**
  * Interface IHookListener
@@ -57,6 +57,4 @@ interface IHookListener {
 	 * @return array<string, int> Associative array of hook names and their priority
 	 */
 	public static function getSubscribedHooks(): array;
-
 }
-

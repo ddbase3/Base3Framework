@@ -18,8 +18,10 @@
 
 namespace Base3\Hook;
 
-class BootstrapLoggingHookListener implements IHookListener
-{
+use Base3\Hook\Api\IHookListener;
+
+class BootstrapLoggingHookListener implements IHookListener {
+
 	public function isActive(): bool {
 		return false;
 	}
@@ -39,4 +41,3 @@ class BootstrapLoggingHookListener implements IHookListener
 		return true;
 	}
 }
-
