@@ -19,8 +19,9 @@
 namespace Base3\Core;
 
 use Base3\Api\IOutput;
+use Base3\Api\IHelp;
 
-class PhpInfo implements IOutput {
+class PhpInfo implements IOutput, IHelp {
 
 	public function __construct() {
 	}

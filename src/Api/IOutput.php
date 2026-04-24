@@ -21,28 +21,48 @@ namespace Base3\Api;
 /**
  * Interface IOutput
  *
- * Defines an output component that can return data in various formats and provide usage help.
+ * Defines a routable output component that can render or return data in
+ * one or more output formats.
+ *
+ * Implementations of this interface represent endpoint-like components
+ * that are resolved by the framework routing and invoked to produce the
+ * final response body or embedded content.
+ *
+ * Typical output formats include:
+ * - html
+ * - json
+ * - xml
+ * - csv
+ * - txt
+ * - page
+ *
+ * The exact set of supported formats depends on the implementing class.
+ *
+ * Important design note:
+ * This interface only defines rendering/output behavior. Optional help,
+ * debug information, or self-description are intentionally not part of
+ * IOutput anymore and should be provided separately through IHelp.
  */
 interface IOutput extends IBase {
 
 	/**
-	 * Returns the output in the desired format.
+	 * Returns the output in the requested format.
 	 *
-	 * Common formats include "html", "json", "xml", "csv", "page", etc.
+	 * The $out parameter selects the desired output format. Implementations
+	 * may support one or many formats and are responsible for handling
+	 * unsupported values in a framework-appropriate way.
 	 *
-	 * @param string $out Desired output format (default is "html")
-	 * @param bool $final Output is called directly like an endpoint (true), or output gets embedded (false)
-	 * @return string Output data in the specified format
+	 * The $final flag indicates whether the output is called directly as a
+	 * routed endpoint or whether it is rendered as a nested/embedded part
+	 * inside another output component.
+	 *
+	 * Example use cases:
+	 * - final=true  -> direct endpoint call via router
+	 * - final=false -> embedded rendering inside a page or layout
+	 *
+	 * @param string $out Desired output format, for example "html" or "json"
+	 * @param bool $final True if called as final routed output, false if embedded
+	 * @return string Rendered output content
 	 */
 	public function getOutput(string $out = 'html', bool $final = false): string;
-
-	/**
-	 * Returns syntax help and debug information.
-	 *
-	 * Usually returns expected GET/POST parameters and optionally debug-related info.
-	 * Only used or displayed if the system is in debug mode.
-	 *
-	 * @return mixed Help and debug information
-	 */
-	public function getHelp(): string;
 }

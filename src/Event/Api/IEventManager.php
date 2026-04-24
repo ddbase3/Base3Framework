@@ -16,7 +16,7 @@
  * https://github.com/ddbase3/Base3Framework
  **********************************************************************/
 
-namespace Base3\Event;
+namespace Base3\Event\Api;
 
 /**
  * Interface IEventManager
@@ -64,6 +64,4 @@ interface IEventManager {
 	 * @return array<int, mixed> Return values from all listeners
 	 */
 	public function fire(object|string $event, ...$args): array;
-
 }
-

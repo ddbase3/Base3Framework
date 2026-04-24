@@ -18,7 +18,11 @@
 
 namespace Base3\Event;
 
+use Base3\Event\Api\IEventManager;
+use Base3\Event\Api\IStoppableEvent;
+
 class EventManager implements IEventManager {
+
 	/** @var array<string, array<int, array<callable>>> */
 	protected array $listeners = [];
 
@@ -66,7 +70,7 @@ class EventManager implements IEventManager {
 		foreach ($listeners as $listener) {
 			$results[] = $listener($event, ...$args);
 
-			if (\is_object($event) && $event instanceof StoppableEvent && $event->isPropagationStopped()) {
+			if (\is_object($event) && $event instanceof IStoppableEvent && $event->isPropagationStopped()) {
 				break;
 			}
 		}
@@ -78,7 +82,10 @@ class EventManager implements IEventManager {
 		$matchedListeners = [];
 
 		foreach ($this->listeners as $pattern => $priorityMap) {
-			if (!\fnmatch($pattern, $eventName)) {
+			if (
+				$pattern !== $eventName
+				&& !\fnmatch($pattern, $eventName, \FNM_NOESCAPE)
+			) {
 				continue;
 			}
 

@@ -18,9 +18,9 @@
 
 namespace Base3\ServiceSelector;
 
-use Base3\Api\ICheck;
 use Base3\Api\IClassMap;
 use Base3\Api\IContainer;
+use Base3\Api\IHelp;
 use Base3\Api\IOutput;
 use Base3\Api\IRequest;
 use Base3\Accesscontrol\Api\IAccesscontrol;
@@ -32,8 +32,29 @@ use Base3\ServiceSelector\Api\IServiceSelector;
 /**
  * Abstract base class for service selectors with middleware support.
  *
- * Handles common logic like middleware chaining, output routing, and basic request handling.
- * Subclasses can override language handling via handleLanguage().
+ * This class contains the common routing logic for resolving output
+ * components, executing middleware chains, handling optional language
+ * processing, and dispatching the final response.
+ *
+ * Request parameters used by the selector:
+ * - out  : requested output format, default "html"
+ * - data : optional data segment, often used for language or path context
+ * - app  : optional application namespace or application identifier
+ * - name : output/service name, default "index"
+ *
+ * Resolution strategy:
+ * 1. Resolve an IOutput instance by name, optionally scoped by app
+ * 2. If not found, try the first available IPageCatchall implementation
+ * 3. Return 404 if no matching output could be resolved
+ *
+ * Special handling:
+ * - "help" output is only returned in debug mode
+ * - help is optional and only available if the resolved instance also
+ *   implements IHelp
+ * - "json" output automatically sets the JSON content type header
+ *
+ * Subclasses may override handleLanguage() to apply custom logic based on
+ * the "data" request parameter.
  *
  * Example .htaccess supporting these ServiceSelectors:
  *
@@ -70,12 +91,20 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 
 	/**
 	 * Constructor.
-	 * Initializes core services from the container.
+	 *
+	 * The selector lazily resolves its required services from the
+	 * container during request processing.
+	 *
+	 * @param IContainer $container Dependency injection container
 	 */
 	public function __construct(protected IContainer $container) {}
 
 	/**
-	 * Starts the application by processing middleware and output routing.
+	 * Starts the application by executing the configured middleware chain
+	 * and eventually dispatching the routed output.
+	 *
+	 * If no middleware is configured, processing continues immediately with
+	 * the selector itself.
 	 *
 	 * @return string Final rendered output
 	 */
@@ -95,9 +124,12 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 	}
 
 	/**
-	 * Middleware chaining hook (no-op).
+	 * Middleware chaining hook.
 	 *
-	 * @param IMiddleware $next Next middleware in chain
+	 * The service selector is always the terminal element of the middleware
+	 * chain and therefore does not forward execution to a next middleware.
+	 *
+	 * @param IMiddleware $next Next middleware in the chain
 	 */
 	public final function setNext($next): void {
 		// no-op
@@ -105,7 +137,22 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 
 	/**
 	 * Main request processing logic.
-	 * Routes request based on "out", "app", "name", and possibly "data" (language).
+	 *
+	 * This method resolves framework core services from the container,
+	 * reads the relevant routing parameters from the request, performs
+	 * optional redirect handling for authenticated users, applies language
+	 * logic, resolves the target output instance, and returns the final
+	 * response body.
+	 *
+	 * Routing behavior:
+	 * - resolves by app/name when app is set
+	 * - resolves by name only when app is empty
+	 * - falls back to IPageCatchall if no explicit output was found
+	 *
+	 * Output behavior:
+	 * - returns 404 if no output instance could be resolved
+	 * - returns help only in debug mode and only if the instance supports IHelp
+	 * - sets JSON content type header for out=json
 	 *
 	 * @return string Rendered output
 	 */
@@ -145,6 +192,7 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 
 			case $out === "help":
 				if (!getenv('DEBUG')) return '';
+				if (!$instance instanceof IHelp) return '';
 				return $instance->getHelp();
 
 			default:
@@ -154,9 +202,15 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 	}
 
 	/**
-	 * Optional hook for subclasses to apply language selection logic.
+	 * Optional extension hook for subclasses.
 	 *
-	 * @param string $data The "data" parameter from the request
+	 * Subclasses may override this method to apply language selection or
+	 * other context-specific processing based on the "data" request
+	 * parameter before output resolution happens.
+	 *
+	 * The default implementation intentionally does nothing.
+	 *
+	 * @param string $data The "data" request parameter
 	 */
 	protected function handleLanguage(string $data): void {
 		// default: do nothing

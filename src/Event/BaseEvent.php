@@ -18,6 +18,8 @@
 
 namespace Base3\Event;
 
+use Base3\Event\Api\IStoppableEvent;
+
 class BaseEvent implements IStoppableEvent {
 
 	protected bool $stopped = false;
@@ -30,4 +32,3 @@ class BaseEvent implements IStoppableEvent {
 		return $this->stopped;
 	}
 }
-
