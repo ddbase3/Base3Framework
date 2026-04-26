@@ -31,20 +31,20 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$this->database->connect();
 
-		$sql = "SELECT e.`id`, t.`dbtable`, t.`primary`, e.`dellock`
+		$sql = "SELECT e.`id`, e.`data_id`, t.`dbtable`, t.`primary`, e.`dellock`
 			FROM `base3system_sysentry` e
 			INNER JOIN `base3system_systype` t ON t.`id` = e.`type_id`
-			WHERE e.`uuid` = 0x" . $id;
+			WHERE e.`uuid` = 0x" . $this->database->escape($id);
 		$sysentry = $this->database->singleQuery($sql);
 		if ($sysentry == null) return false;
 
-		// check delete lock
+		// Check delete lock
 		if ($sysentry["dellock"] > 0) return false;
 
 		if ($sysentry["dbtable"] == "base3system_entryfile") {
-			// erst Datei löschen
+			// Delete file first
 
-			$sql = "SELECT `tmpname` FROM `" . $sysentry["dbtable"] . "` WHERE `" . $sysentry["primary"] . "` = " . $sysentry["data_id"];
+			$sql = "SELECT `tmpname` FROM `" . $sysentry["dbtable"] . "` WHERE `" . $sysentry["primary"] . "` = " . intval($sysentry["data_id"]);
 			$file = $this->database->scalarQuery($sql);
 
 			if (strlen($file)) {
@@ -165,15 +165,15 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 		if ($entry->name != null) $newEntry->name = $entry->name;
 		if ($entry->type != null) $newEntry->type = $entry->type;
 		if ($entry->data != null) $newEntry->data = $entry->data;
-		if ($entry->archive != null) $newEntry->archive = $entry->archive ? 1 : 0;
+		if ($entry->archive != null) $newEntry->archive = $entry->archive ? 1 : 0;
 		$newEntry->etag = $entry->etag == null ? $this->uuid() : $entry->etag;
 		$newEntry->changed = $entry->changed == null ? $dt : $entry->changed;
 
-		// TODO alten Eintrag holen und allocs, tags, apps vergleichen. Bei Änderungen auch in den Verbundenen ändern (also ggfs. hinzufügen/löschen)!
+		// TODO get old entry and compare allocs, tags and apps. If changed, also update connected entries.
 
 		$removeAllocs = array_diff($newEntry->alloc == null ? array() : $newEntry->alloc, $entry->alloc == null ? array() : $entry->alloc);
 		$addAllocs = array_diff($entry->alloc == null ? array() : $entry->alloc, $newEntry->alloc == null ? array() : $newEntry->alloc);
-		if ($entry->alloc !== null) $newEntry->alloc = $entry->alloc;  // !== wichtig, da empty array == null
+		if ($entry->alloc !== null) $newEntry->alloc = $entry->alloc;
 		if ($entry->xrmnames != null) $newEntry->xrmnames = $entry->xrmnames;
 
 		$newEntry->access = $entry->access == null ? array() : $entry->access;
@@ -194,12 +194,11 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 			$newEntry->log[] = $log;
 		}
 
-
-		// save to db
+		// Save to database
 
 		$this->database->connect();
 
-		// TODO neue Datentypen ggfs. automatisch anlegen
+		// TODO automatically create new data types if necessary
 		$sql = "SELECT `id`, `dbtable`, `primary` FROM `base3system_systype` WHERE `alias` = '" . $this->database->escape($newEntry->type) . "'";
 		$systype = $this->database->singleQuery($sql);
 		if ($systype == null) return false;
@@ -213,8 +212,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 		}
 
 		if ($entryexists) {
-
-			$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $newEntry->id;
+			$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $this->database->escape($newEntry->id);
 			$sysentry = $this->database->singleQuery($sql);
 			$entryid = $sysentry["id"];
 
@@ -224,11 +222,11 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 					`archive` = " . $archive . ",
 					`etag` = 0x" . $this->database->escape($newEntry->etag) . ",
 					`changed` = '" . $newEntry->changed . "'
-				WHERE `uuid` = 0x" . $newEntry->id;
+				WHERE `uuid` = 0x" . $this->database->escape($newEntry->id);
 			$this->database->nonQuery($sql);
 
-			// corresponding data table
-			// TODO ggfs überschüssige Daten in sysmetadata speichern (vorher Tabellen-Signatur holen)
+			// Corresponding data table
+			// TODO store extra data in sysmetadata if necessary after reading table signature
 			$sql = "UPDATE `" . $systype["dbtable"] . "` SET ";
 			foreach ($entry->data as $n => $v) $sql .= "`" . $n . "` = '" . $this->database->escape($v) . "', ";
 			$sql = substr($sql, 0, -2);
@@ -236,7 +234,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 			$this->database->nonQuery($sql);
 
 			// syslog
-			// TODO ggfs neuen User ohne Passwort anlegen (kann sich schließlich per SSO anmelden)
+			// TODO create new user without password if necessary
 			$log = $newEntry->log[sizeof($newEntry->log) - 1];
 			if ($log) {
 				$log = (object) $log;
@@ -250,12 +248,10 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 				$this->database->nonQuery($sql);
 			}
 
-			// TODO Update: useraccess/groupaccess
-
+			// TODO update useraccess/groupaccess
 		} else {
-
 			// sysentry
-			// TODO nur varbinary(16)-IDs können aktuell gespeichert werden ... PRÜFEN/LÖSEN !!!
+			// TODO currently only varbinary(16) ids can be saved
 			// TODO check if already exists
 			$sql = "INSERT INTO `base3system_sysentry` SET
 					`uuid` = 0x" . $this->database->escape($newEntry->id) . ",
@@ -268,8 +264,8 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 			$this->database->nonQuery($sql);
 			$entryid = $this->database->insertId();
 
-			// corresponding data table
-			// TODO ggfs überschüssige Daten in sysmetadata speichern (vorher Tabellen-Signatur holen)
+			// Corresponding data table
+			// TODO store extra data in sysmetadata if necessary after reading table signature
 			$sql = "INSERT INTO `" . $systype["dbtable"] . "` SET ";
 			$sql = "`" . $systype["primary"] . "` = " . $entryid . ", ";
 			foreach ($entry->data as $n => $v) $sql .= "`" . $n . "` = '" . $this->database->escape($v) . "', ";
@@ -277,7 +273,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 			$this->database->nonQuery($sql);
 
 			// syslog
-			// TODO ggfs neuen User ohne Passwort anlegen (kann sich schließlich per SSO anmelden)
+			// TODO create new user without password if necessary
 			foreach ($newEntry->log as $log) {
 				$log = (object) $log;
 				$action = "";
@@ -291,7 +287,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 			}
 
 			// sysuseraccess, sysgroupaccess
-			// TODO ggfs neuen User ohne Passwort/neue Gruppe anlegen (kann sich schließlich per SSO anmelden)
+			// TODO create new user/group without password if necessary
 			foreach ($newEntry->access as $access) {
 				$access = (object) $access;
 				$sql = $access->usergroup == "user"
@@ -307,7 +303,6 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 			}
 
 			$newEntry->xrmnames[] = $this->xrmname;
-
 		}
 
 		// sysname
@@ -365,7 +360,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 	}
 
 	public function getEntry($id) {
-		$host = $_SERVER['HTTP_HOST'] ?? 'localhost'; 
+		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getEntry", "id" => $id)), ['scope' => 'xrm']);
 		$entries = $this->getEntries(array($id));
 		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getEntry", "num" => sizeof($entries) ? 1 : 0)), ['scope' => 'xrm']);
@@ -396,7 +391,13 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 		$selids = array();
 		foreach ($ids as $id) {
 			if (substr($id, 0, 2) == "xx") continue;
-			$selids[] = $id;
+			if (!preg_match('/^[a-f0-9]{32}$/i', $id)) continue;
+			$selids[] = strtolower($id);
+		}
+
+		if (!sizeof($selids)) {
+			if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getEntries", "num" => 0)), ['scope' => 'xrm']);
+			return array();
 		}
 
 		$this->database->connect();
@@ -438,7 +439,6 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 					FROM `" . $entrytype["dbtable"] . "` d
 					LEFT JOIN `base3system_systype` t ON d.`type_id` = t.`id`
 					WHERE d.`" . $entrytype["primary"] . "` IN (" . implode(", ", $entrytype["data_ids"]) . ")";
-
 			} else {
 				$sql = "SELECT * FROM `" . $entrytype["dbtable"] . "` WHERE `" . $entrytype["primary"] . "` IN (" . implode(", ", $entrytype["data_ids"]) . ")";
 			}
@@ -447,7 +447,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 			foreach ($datas as $data) {
 				$id = $entryback[$type][$data[$entrytype["primary"]]];
 				$entries[$id]->data = $data;
-				unset($entry->data[$entrytype["primary"]]);
+				unset($entries[$id]->data[$entrytype["primary"]]);
 			}
 		}
 
@@ -525,9 +525,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 	}
 
 	public function getAllocIds($id) {
-
-		// no access check on allocs, because only ids
-		// NOW: access check
+		// Access is checked by getEntriesIntern.
 
 		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getAllocIds", "id" => $id)), ['scope' => 'xrm']);
@@ -537,38 +535,31 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 		$entries = array();
 
 		if (substr($id, 0, 4) == "xxta") {
-
 			$sql = "SELECT LOWER(HEX(e.`uuid`)) AS `uuid`
 				FROM `base3system_systag` t
 				INNER JOIN `base3system_sysentry` e ON t.`entry_id` = e.`id`
-				WHERE LOWER(t.`tag`) = '" . substr($id, 4) . "'";
+				WHERE LOWER(t.`tag`) = '" . $this->database->escape(substr($id, 4)) . "'";
 			$sysentries = $this->database->multiQuery($sql);
 			foreach ($sysentries as $sysentry) $entries[] = $sysentry["uuid"];
-
 		} else if (substr($id, 0, 4) == "xxap") {
-
 			$sql = "SELECT LOWER(HEX(e.`uuid`)) AS `uuid`
 				FROM `base3system_sysapp` a
 				INNER JOIN `base3system_sysentry` e ON a.`entry_id` = e.`id`
-				WHERE LOWER(a.`app`) = '" . substr($id, 4) . "'";
+				WHERE LOWER(a.`app`) = '" . $this->database->escape(substr($id, 4)) . "'";
 			$sysentries = $this->database->multiQuery($sql);
 			foreach ($sysentries as $sysentry) $entries[] = $sysentry["uuid"];
-
 		} else if (substr($id, 0, 4) == "xxty") {
-
 			$sql = "SELECT LOWER(HEX(e.`uuid`)) AS `uuid`
 				FROM `base3system_systype` t
 				INNER JOIN `base3system_sysentry` e ON t.`id` = e.`type_id`
-				WHERE t.`alias` = '" . substr($id, 4) . "'";
+				WHERE t.`alias` = '" . $this->database->escape(substr($id, 4)) . "'";
 			$sysentries = $this->database->multiQuery($sql);
 			foreach ($sysentries as $sysentry) $entries[] = $sysentry["uuid"];
-
 		} else {
-
 			$sql = "SELECT e.`id`, t.`alias` as `type`
 				FROM `base3system_sysentry` e
 				INNER JOIN `base3system_systype` t ON e.`type_id` = t.`id`
-				WHERE e.`uuid` = 0x" . $id;
+				WHERE e.`uuid` = 0x" . $this->database->escape($id);
 			$entry = $this->database->singleQuery($sql);
 			if ($entry == null) {
 				if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getAllocIds", "num" => 0)), ['scope' => 'xrm']);
@@ -597,17 +588,9 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 				WHERE t.`entry_id` = " . $entryid;
 			$sysentries = $this->database->multiQuery($sql);
 			foreach ($sysentries as $sysentry) $entries[] = $sysentry["uuid"];
-
 		}
 
-/*
-// ALT: so können keine Einträge von anderen XRMs geholt werden!!!
-		$es = array();
-		$all = $this->getAllEntryIds();
-		foreach ($entries as $entry) if (substr($entry, 0, 2) == "xx" || in_array($entry, $all)) $es[] = $entry;
-*/
-
-		// probieren, alle Allocs zu holen (dabei wird Berechtigung geprüft)
+		// Try to fetch all allocs. Permissions are checked there.
 		$filter = new \Base3\Xrm\XrmFilter("ids", "in", $entries);
 		$es = $this->xrmglobal->getEntriesIntern($filter, true);
 
@@ -616,9 +599,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 	}
 
 	public function getAllEntryIds() {
-
-		// no access check on allocs, because only ids
-		// NOW: access check
+		// Access is checked here.
 
 		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getAllEntryIds")), ['scope' => 'xrm']);
@@ -661,7 +642,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 	}
 
 	public function getXrmEntryIds($xrmname, $invert = false) {
-		// no access check on allocs, because only ids
+		// No access check on allocs, because only ids.
 		if ((!$invert && $xrmname != $this->xrmname) || ($invert && $xrmname == $this->xrmname)) return array();
 		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getXrmEntryIds", "xrmname" => $xrmname)), ['scope' => 'xrm']);
@@ -676,7 +657,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$this->database->connect();
 
-		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `type_id` != 1 AND `uuid` = 0x" . $id;
+		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `type_id` != 1 AND `uuid` = 0x" . $this->database->escape($id);
 		$entryid = $this->database->scalarQuery($sql);
 		if ($entryid == null) return true;
 
@@ -694,7 +675,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$this->database->connect();
 
-		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `type_id` != 1 AND `uuid` = 0x" . $id;
+		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `type_id` != 1 AND `uuid` = 0x" . $this->database->escape($id);
 		$entryid = $this->database->scalarQuery($sql);
 		if ($entryid == null) return true;
 
@@ -712,7 +693,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$this->database->connect();
 
-		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `type_id` != 1 AND `uuid` = 0x" . $id;
+		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `type_id` != 1 AND `uuid` = 0x" . $this->database->escape($id);
 		$entryid = $this->database->scalarQuery($sql);
 		if ($entryid == null) return true;
 
@@ -730,7 +711,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$this->database->connect();
 
-		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `type_id` != 1 AND `uuid` = 0x" . $id;
+		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `type_id` != 1 AND `uuid` = 0x" . $this->database->escape($id);
 		$entryid = $this->database->scalarQuery($sql);
 		if ($entryid == null) return true;
 
@@ -743,26 +724,26 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 	}
 
 	public function addAlloc($id1, $id2) {
-		// only check access for id1, id2 is possible not reachable from this xrm
+		// Only check access for id1, id2 may not be reachable from this xrm.
 
 		$entry = $this->getEntry($id1);
 		if (!$entry || $this->getAccess($entry) != "write") return false;
 
 		$this->database->connect();
 
-		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $id1;
+		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $this->database->escape($id1);
 		$entryid1 = $this->database->scalarQuery($sql);
 		if ($entryid1 == null) return true;
 
-		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $id2;
+		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $this->database->escape($id2);
 		$entryid2 = $this->database->scalarQuery($sql);
 		if ($entryid2 == null) {
-			$sql = "INSERT INTO `base3system_sysentry` SET `uuid` = 0x" . $id2 . ", `type_id` = 1, `data_id` = 0";
+			$sql = "INSERT INTO `base3system_sysentry` SET `uuid` = 0x" . $this->database->escape($id2) . ", `type_id` = 1, `data_id` = 0";
 			$this->database->nonQuery($sql);
 			$entryid2 = $this->database->insertId();
 		}
 
-		// only create one alloc
+		// Only create one alloc.
 		if ($id2 < $id1) {
 			$tmp = $entryid1;
 			$entryid1 = $entryid2;
@@ -772,24 +753,24 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 		$sql = "INSERT INTO `base3system_sysalloc` SET `entry_id_1` = " . $entryid1 . ", `entry_id_2` = " . $entryid2;
 		$this->database->nonQuery($sql);
 
-		$this->setEntryChanged($id);
+		$this->setEntryChanged($id1);
 
 		return true;
 	}
 
 	public function removeAlloc($id1, $id2) {
-		// only check access for id1, id2 is possible not reachable from this xrm
+		// Only check access for id1, id2 may not be reachable from this xrm.
 
 		$entry = $this->getEntry($id1);
 		if (!$entry || $this->getAccess($entry) != "write") return false;
 
 		$this->database->connect();
 
-		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $id1;
+		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $this->database->escape($id1);
 		$entryid1 = $this->database->scalarQuery($sql);
 		if ($entryid1 == null) return true;
 
-		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $id2;
+		$sql = "SELECT `id` FROM `base3system_sysentry` WHERE `uuid` = 0x" . $this->database->escape($id2);
 		$entryid2 = $this->database->scalarQuery($sql);
 		if ($entryid2 == null) return true;
 
@@ -798,10 +779,12 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$sql = "SELECT COUNT(`id`) AS `cnt` FROM `base3system_sysalloc` WHERE `entry_id_1` = " . $entryid2 . " OR `entry_id_2` = " . $entryid2;
 		$cnt = $this->database->scalarQuery($sql);
-		$sql = "DELETE FROM `base3system_sysentry` WHERE `id` = " . $entryid2 . " AND `type_id` = 1";
-		$this->database->nonQuery($sql);
+		if (!$cnt) {
+			$sql = "DELETE FROM `base3system_sysentry` WHERE `id` = " . $entryid2 . " AND `type_id` = 1";
+			$this->database->nonQuery($sql);
+		}
 
-		$this->setEntryChanged($id);
+		$this->setEntryChanged($id1);
 
 		return true;
 	}
@@ -814,8 +797,8 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 
 		$sql = "SELECT
 				LOWER(HEX(e.`uuid`)) AS `uuid`
-			FROM `base3system_sysconfig` c 
-				INNER JOIN `base3system_sysconfigdataint` cdi ON cdi.`config_id` = c.`id` AND cdi.`user_id` = (SELECT `id` FROM `base3system_sysuser` WHERE `name` = '" . $user->id . "')
+			FROM `base3system_sysconfig` c
+				INNER JOIN `base3system_sysconfigdataint` cdi ON cdi.`config_id` = c.`id` AND cdi.`user_id` = (SELECT `id` FROM `base3system_sysuser` WHERE `name` = '" . $this->database->escape($user->id) . "')
 				INNER JOIN `base3system_sysentry` e ON cdi.`data` = e.`id`
 			WHERE
 				c.`name` = 'xrm_user_entry'
@@ -839,9 +822,9 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 		$etag = $this->uuid();
 		$changed = date("Y-m-d H:i:s");
 		$sql = "UPDATE `base3system_sysentry` SET
-			`etag` = 0x" . $this->database->escape($etag) . ",
-			`changed` = '" . $changed . "'
-			WHERE `uuid` = 0x" . $id;
+				`etag` = 0x" . $this->database->escape($etag) . ",
+				`changed` = '" . $changed . "'
+			WHERE `uuid` = 0x" . $this->database->escape($id);
 		$this->database->nonQuery($sql);
 	}
 
