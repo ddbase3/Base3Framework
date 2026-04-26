@@ -142,7 +142,6 @@ abstract class AbstractXrm implements IXrm {
 	// Protected and helper methods
 
 	protected function uuid() {
-		return md5(microtime(true));
+		return md5((string) microtime(true) . random_int(0, PHP_INT_MAX));
 	}
-
 }
