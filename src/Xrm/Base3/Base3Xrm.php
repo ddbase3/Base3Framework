@@ -839,7 +839,7 @@ class Base3Xrm extends AbstractXrm implements ICheck {
 		$etag = $this->uuid();
 		$changed = date("Y-m-d H:i:s");
 		$sql = "UPDATE `base3system_sysentry` SET
-			`etag` = 0x" . $this->database->escape(etag) . ",
+			`etag` = 0x" . $this->database->escape($etag) . ",
 			`changed` = '" . $changed . "'
 			WHERE `uuid` = 0x" . $id;
 		$this->database->nonQuery($sql);
