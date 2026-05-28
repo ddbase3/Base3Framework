@@ -23,7 +23,37 @@ use Base3\Api\IAssetResolver;
 class BaseAssetResolver implements IAssetResolver {
 
 	public function resolve(string $path): string {
-		return $path;
-	}
-}
+		$path = trim($path);
 
+		if($path === '') {
+			return '';
+		}
+
+		if($this->isAbsoluteOrSpecialUrl($path)) {
+			return $path;
+		}
+
+		if($this->startsWith($path, './') || $this->startsWith($path, '../')) {
+			return $path;
+		}
+
+		return './' . ltrim($path, '/');
+	}
+
+	private function isAbsoluteOrSpecialUrl(string $path): bool {
+		if($this->startsWith($path, '/') || $this->startsWith($path, '#')) {
+			return true;
+		}
+
+		if($this->startsWith($path, '//')) {
+			return true;
+		}
+
+		return preg_match('/^[a-z][a-z0-9+\-.]*:/i', $path) === 1;
+	}
+
+	private function startsWith(string $value, string $prefix): bool {
+		return substr($value, 0, strlen($prefix)) === $prefix;
+	}
+
+}
