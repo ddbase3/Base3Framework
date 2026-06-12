@@ -24,6 +24,8 @@ use Base3\Configuration\Api\IConfiguration;
 use Base3\Util\Chronos\Chronos;
 use Base3\Worker\Api\ICron;
 use Base3\Worker\Api\IJob;
+use Base3\Worker\Api\IJobExecutionPolicy;
+use Base3\Worker\Api\IPolicyControlledJob;
 use Base3\Worker\Api\IWorker;
 
 class DelegateWorker implements IWorker, ICheck {
@@ -79,6 +81,21 @@ class DelegateWorker implements IWorker, ICheck {
 		$job = $this->classmap->getInstanceByInterfaceName(IJob::class, $job);
 		if ($job == null) return null;
 		if (($job instanceof ICron) && !$this->checkCron($job)) return null;
+
+		if ($job instanceof IPolicyControlledJob) {
+			$policy = $this->createPolicy($job->getPolicyDefinition());
+
+			if ($policy == null) {
+				return 'Skip (invalid job policy)';
+			}
+
+			$job->setExecutionPolicy($policy);
+
+			if (!$policy->shouldRun($job->getName())) {
+				return $policy->getReason();
+			}
+		}
+
 		return $job->go();
 	}
 
@@ -94,6 +111,27 @@ class DelegateWorker implements IWorker, ICheck {
 	}
 
 	// Private methods
+
+	private function createPolicy(array $definition): ?IJobExecutionPolicy {
+		$name = $definition['policy'] ?? null;
+		if (!is_scalar($name) || trim((string)$name) === '') {
+			return null;
+		}
+
+		$policy = $this->classmap->getInstanceByInterfaceName(
+			IJobExecutionPolicy::class,
+			(string)$name
+		);
+
+		if (!$policy instanceof IJobExecutionPolicy) {
+			return null;
+		}
+
+		$data = $definition['data'] ?? array();
+		$policy->setData(is_array($data) ? $data : array());
+
+		return $policy;
+	}
 
 	private function checkCron($job) {
 		$t = date("Y-m-d H:i:s");
