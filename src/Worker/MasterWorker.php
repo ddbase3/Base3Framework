@@ -51,7 +51,7 @@ class MasterWorker implements IOutput {
 			$tm0 = microtime(true);
 
 			if (false) {
-				echo "Pause.\n";
+				echo "Paused.\n";
 				sleep(10);
 				return '';
 			}
@@ -81,7 +81,7 @@ class MasterWorker implements IOutput {
 				$res = $job["worker"]->doJob($job["job"]);
 
 				$tj1 = microtime(true) - $tj0;
-				$str = $job["workername"] . " | " . $job["job"] . " | Laufzeit: " . number_format($tj1, 3, ",", ".") . " Sek. | " . $res;
+				$str = $job["workername"] . " | " . $job["job"] . " | Runtime: " . number_format($tj1, 3, ",", ".") . " sec. | " . $res;
 				echo $str . "\n";
 				$this->logger->info($str, ['scope' => 'masterworker']);
 
@@ -89,7 +89,7 @@ class MasterWorker implements IOutput {
 			}
 
 			$tm1 = microtime(true) - $tm0;
-			$str = "Laufzeit: " . number_format($tm1, 3, ",", ".") . " Sek.";
+			$str = "Runtime: " . number_format($tm1, 3, ",", ".") . " sec.";
 			echo $str . "\n";
 			$this->logger->info($str, ['scope' => 'masterworker']);
 
@@ -97,10 +97,6 @@ class MasterWorker implements IOutput {
 		} finally {
 			$this->releaseLock();
 		}
-	}
-
-	public function getHelp(): string {
-		return 'Help of MasterWorker' . "\n";
 	}
 
 	// Private methods
