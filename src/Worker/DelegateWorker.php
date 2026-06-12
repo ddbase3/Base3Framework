@@ -19,7 +19,8 @@
 namespace Base3\Worker;
 
 use Base3\Api\ICheck;
-use Base3\Core\ServiceLocator;
+use Base3\Api\IClassMap;
+use Base3\Configuration\Api\IConfiguration;
 use Base3\Util\Chronos\Chronos;
 use Base3\Worker\Api\ICron;
 use Base3\Worker\Api\IJob;
@@ -27,30 +28,17 @@ use Base3\Worker\Api\IWorker;
 
 class DelegateWorker implements IWorker, ICheck {
 
-	private $servicelocator;
-	private $classmap;
-	private $configuration;
+	private bool $active = true;
+	private int $priority = 1;
 
-	private $active;
-	private $priority;
+	public function __construct(
+		private readonly IClassMap $classmap,
+		private readonly IConfiguration $configuration
+	) {
+		$this->active = $this->configuration->getBool('worker', 'active', true);
 
-	public function __construct() {
-
-		// ehemals Parameter, TODO check ob noch notwendig, z.B. wenn Worker via CLI oder Cron aufgerufen wird
-		$cnf = null;
-
-		$this->servicelocator = ServiceLocator::getInstance();
-		$this->classmap = $this->servicelocator->get('classmap');
-		$this->configuration = $this->servicelocator->get('configuration');
-
-		$this->active = true;
-		$this->priority = 1;
-
-		if ($cnf == null && $this->configuration != null) $cnf = $this->configuration->get('worker');
-		if ($cnf != null) {
-			if (isset($cnf["active"])) $this->active = !!$cnf["active"];
-			if (isset($cnf["priority"])) $this->priority = intval($cnf["priority"]);
-		}
+		$priority = $this->configuration->getInt('worker', 'priority', 1);
+		if ($priority > 0) $this->priority = $priority;
 	}
 
 	// Implementation of IBase
@@ -72,11 +60,18 @@ class DelegateWorker implements IWorker, ICheck {
 	public function getJobs() {
 		$joblist = array();
 		$jobs = $this->classmap->getInstancesByInterface(IJob::class);
+
 		foreach ($jobs as $job) {
 			$name = $job->getName();
 			$priority = $job->getPriority();
-			$joblist[] = array("name" => $name, "active" => $job->isActive(), "priority" => $priority);
+
+			$joblist[] = array(
+				"name" => $name,
+				"active" => $job->isActive(),
+				"priority" => $priority
+			);
 		}
+
 		return $joblist;
 	}
 
@@ -92,6 +87,8 @@ class DelegateWorker implements IWorker, ICheck {
 	public function checkDependencies() {
 		return array(
 			'depending_services' => $this->classmap == null ? 'Fail' : 'Ok',
+			'worker_active_' . ($this->active ? 'true' : 'false') => 'Ok',
+			'worker_priority_' . $this->priority => 'Ok',
 			'num_of_jobs_' . sizeof($this->getJobs()) => 'Ok'
 		);
 	}
@@ -112,11 +109,13 @@ class DelegateWorker implements IWorker, ICheck {
 		$tl = file_get_contents($file);
 		$tc = $job->getTimeCode();
 		$tn = $this->getNextExecution($tl, $tc);
+
 		if ($tn > $t) return false;
 
 		$fp = fopen($file, "w");
 		fwrite($fp, $t);
 		fclose($fp);
+
 		return true;
 	}
 
@@ -126,38 +125,38 @@ class DelegateWorker implements IWorker, ICheck {
 
 		$d = Chronos::create($td[0], $td[1], $td[2], $td[3], $td[4], $td[5]);
 
-		// seconds
+		// Seconds
 		if ($d->getSecond() != 0) {
 			$d->addMinutes(1);
 			$d->setSecond(0);
-		}		
+		}
 
-		// minutes
-		if (is_int($tc[0])) {  // ganzzahlig
+		// Minutes
+		if (is_int($tc[0])) {
 			if ($d->getMinute() > $tc[0]) $d->addHours(1);
 			$d->setMinute($tc[0]);
 		}
 
-		// hours
-		if (is_int($tc[1])) {  // ganzzahlig
+		// Hours
+		if (is_int($tc[1])) {
 			if ($d->getHour() > $tc[1]) $d->addDays(1);
 			$d->setHour($tc[1]);
 		}
 
-		// days
-		if (is_int($tc[2])) {  // ganzzahlig
+		// Days
+		if (is_int($tc[2])) {
 			if ($d->getDay() > $tc[2]) $d->addMonth(1);
 			$d->setDay($tc[2]);
 		}
 
-		// months
-		if (is_int($tc[3])) {  // ganzzahlig
+		// Months
+		if (is_int($tc[3])) {
 			if ($d->getMonth() > $tc[3]) $d->addYear(1);
 			$d->setMonth($tc[3]);
 		}
 
-		// TODO Wochentage
-		// TODO Aufzählungen, Bruch-Angaben
+		// TODO Weekdays
+		// TODO Lists and interval expressions
 
 		return $d->format("Y-m-d H:i:s");
 	}
