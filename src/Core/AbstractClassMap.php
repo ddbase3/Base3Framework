@@ -1,7 +1,24 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Core;
 
+use Base3\Api\IBase;
 use Base3\Api\ICheck;
 use Base3\Api\IClassMap;
 use Base3\Api\IContainer;
@@ -9,28 +26,46 @@ use Base3\Api\IContainer;
 abstract class AbstractClassMap implements IClassMap, ICheck {
 
 	protected IContainer $container;
-	protected string $filename;
+
+	protected string $classMapFile;
 	protected ?array $map = null;
+
+	protected string $ctorCacheFile;
+	protected ?array $ctorCache = null;
 
 	public function __construct(IContainer $container) {
 		$this->container = $container;
-		$this->filename = DIR_TMP . 'classmap.php';
+		$this->classMapFile = DIR_TMP . 'classmap.php';
+		$this->ctorCacheFile = DIR_TMP . 'ctorcache.php';
 	}
 
 	abstract protected function getScanTargets(): array;
 
 	protected function &getMap(): array {
 		if (!isset($this->map)) {
-			if (!file_exists($this->filename) || filesize($this->filename) === 0) {
+			if (!file_exists($this->classMapFile) || filesize($this->classMapFile) === 0) {
 				$this->generate(true);
 			}
-			$this->map = require $this->filename;
+			$this->map = require $this->classMapFile;
 		}
 		return $this->map;
 	}
 
+	protected function &getCtorCache(): array {
+		if (isset($this->ctorCache)) return $this->ctorCache;
+
+		if (!file_exists($this->ctorCacheFile) || filesize($this->ctorCacheFile) === 0) {
+			$this->ctorCache = [];
+			return $this->ctorCache;
+		}
+
+		$cache = require $this->ctorCacheFile;
+		$this->ctorCache = is_array($cache) ? $cache : [];
+		return $this->ctorCache;
+	}
+
 	public function generate($regenerate = false): void {
-		if (!$regenerate && file_exists($this->filename) && filesize($this->filename) > 0) return;
+		if (!$regenerate && file_exists($this->classMapFile) && filesize($this->classMapFile) > 0) return;
 
 		if (!is_writable(DIR_TMP)) die('Directory /tmp has to be writable.');
 
@@ -39,6 +74,7 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		if (method_exists($this, 'generateFromComposerClassMap')) {
 			$this->generateFromComposerClassMap();
 			$this->writeClassMap();
+			$this->generateConstructorCache();
 			return;
 		}
 
@@ -63,6 +99,7 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		}
 
 		$this->writeClassMap();
+		$this->generateConstructorCache();
 	}
 
 	protected function scanClasses(&$classes, $basedir, $app, $subdir = "", $subns = "", $path = ""): void {
@@ -265,83 +302,23 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 
 	public function instantiate(string $class) {
 		try {
-			$refClass = new \ReflectionClass($class);
-			if ($refClass->isAbstract()) return null;
+			static $mem = [];
 
-			$constructor = $refClass->getConstructor();
-			if (!$constructor) return new $class();
-
-			$params = [];
-
-			foreach ($constructor->getParameters() as $param) {
-				$type = $param->getType();
-				$paramName = $param->getName();
-
-				if ($type instanceof \ReflectionUnionType) {
-					$resolved = false;
-					foreach ($type->getTypes() as $unionType) {
-						if (!$unionType instanceof \ReflectionNamedType) continue;
-						$dep = $unionType->getName();
-
-						if ($this->container->has($dep)) {
-							$value = $this->container->get($dep);
-							if ($value instanceof \Closure) $value = $value();
-							$params[] = $value;
-							$resolved = true;
-							break;
-						}
-					}
-					if (!$resolved) {
-						if ($param->isDefaultValueAvailable()) $params[] = $param->getDefaultValue();
-						else return null;
-					}
-					continue;
-				}
-
-				if ($type instanceof \ReflectionNamedType) {
-					if ($type->allowsNull() && $param->isDefaultValueAvailable()) {
-						$params[] = null;
-						continue;
-					}
-
-					if (!$type->isBuiltin()) {
-						$dep = $type->getName();
-
-						if ($this->container->has($dep)) {
-							$value = $this->container->get($dep);
-						} elseif ($this->container->has($paramName)) {
-							$value = $this->container->get($paramName);
-						} else {
-							$mock = \Base3\Core\DynamicMockFactory::createMock($dep);
-							if ($mock === null) return null;
-							$value = $mock;
-						}
-
-						if ($value instanceof \Closure) $value = $value();
-						$params[] = $value;
-						continue;
-					}
-
-					if ($type->isBuiltin()) {
-						if ($this->container->has($paramName)) {
-							$params[] = $this->container->get($paramName);
-						} elseif ($param->isDefaultValueAvailable()) {
-							$params[] = $param->getDefaultValue();
-						} else {
-							return null;
-						}
-						continue;
-					}
-				}
-
-				if ($param->isDefaultValueAvailable()) {
-					$params[] = $param->getDefaultValue();
-				} else {
-					return null;
-				}
+			if (isset($mem[$class])) {
+				return $this->instantiateFromRecipe($class, $mem[$class]);
 			}
 
-			return $refClass->newInstanceArgs($params);
+			$cache = &$this->getCtorCache();
+			if (isset($cache[$class])) {
+				$mem[$class] = $cache[$class];
+				return $this->instantiateFromRecipe($class, $mem[$class]);
+			}
+
+			// No recipe available in request-time mode (build is expected to generate ctorcache.php)
+			// Fallback to Reflection for safety.
+			$recipe = $this->buildConstructorRecipe($class);
+			$mem[$class] = $recipe;
+			return $this->instantiateFromRecipe($class, $recipe);
 
 		} catch (\Throwable $e) {
 			echo $e->getMessage();
@@ -349,10 +326,175 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		}
 	}
 
+	protected function instantiateFromRecipe(string $class, array $recipe) {
+		if (!empty($recipe['__abstract'])) return null;
+
+		if (empty($recipe['__ctor'])) {
+			return new $class();
+		}
+
+		$params = [];
+
+		foreach ($recipe['p'] as $p) {
+			$k = $p['k'] ?? 'x';
+			$paramName = $p['n'] ?? '';
+			$hasDefault = (bool) ($p['d'] ?? false);
+			$defaultValue = $p['dv'] ?? null;
+			$nullable = (bool) ($p['null'] ?? false);
+
+			if ($k === 'u') {
+				$resolved = false;
+				foreach (($p['t'] ?? []) as $dep) {
+					if ($this->container->has($dep)) {
+						$value = $this->container->get($dep);
+						if ($value instanceof \Closure) $value = $value();
+						$params[] = $value;
+						$resolved = true;
+						break;
+					}
+				}
+
+				if (!$resolved) {
+					if ($hasDefault) $params[] = $defaultValue;
+					elseif ($nullable) $params[] = null;
+					else return null;
+				}
+				continue;
+			}
+
+			if ($k === 'c') {
+				$dep = (string) ($p['t'] ?? '');
+
+				// FIX: nullable + default must use the default (not always null).
+				if ($nullable) {
+					if ($hasDefault) $params[] = $defaultValue;
+					else $params[] = null;
+					continue;
+				}
+
+				if ($this->container->has($dep)) {
+					$value = $this->container->get($dep);
+				} elseif ($this->container->has($paramName)) {
+					$value = $this->container->get($paramName);
+				} else {
+					$mock = \Base3\Core\DynamicMockFactory::createMock($dep);
+					if ($mock === null) return null;
+					$value = $mock;
+				}
+
+				if ($value instanceof \Closure) $value = $value();
+				$params[] = $value;
+				continue;
+			}
+
+			if ($k === 'b') {
+				if ($this->container->has($paramName)) {
+					$params[] = $this->container->get($paramName);
+				} elseif ($hasDefault) {
+					$params[] = $defaultValue;
+				} elseif ($nullable) {
+					$params[] = null;
+				} else {
+					return null;
+				}
+				continue;
+			}
+
+			// untyped fallback
+			if ($hasDefault) {
+				$params[] = $defaultValue;
+			} elseif ($nullable) {
+				$params[] = null;
+			} else {
+				return null;
+			}
+		}
+
+		return new $class(...$params);
+	}
+
+	protected function buildConstructorRecipe(string $class): array {
+		$refClass = new \ReflectionClass($class);
+		if ($refClass->isAbstract()) return ['__ctor' => false, '__abstract' => true];
+
+		$ctor = $refClass->getConstructor();
+		if (!$ctor) return ['__ctor' => false];
+
+		$recipe = ['__ctor' => true, 'p' => []];
+
+		foreach ($ctor->getParameters() as $param) {
+			$type = $param->getType();
+			$name = $param->getName();
+
+			$entry = [
+				'n' => $name,
+				'd' => $param->isDefaultValueAvailable(),
+				'dv' => $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null,
+			];
+
+			if ($type instanceof \ReflectionUnionType) {
+				$types = [];
+				$nullable = false;
+
+				foreach ($type->getTypes() as $t) {
+					if (!$t instanceof \ReflectionNamedType) continue;
+					if ($t->getName() === 'null') {
+						$nullable = true;
+						continue;
+					}
+					$types[] = $t->getName();
+				}
+
+				$entry['k'] = 'u';
+				$entry['t'] = $types;
+				$entry['null'] = $nullable;
+				$recipe['p'][] = $entry;
+				continue;
+			}
+
+			if ($type instanceof \ReflectionNamedType) {
+				$entry['null'] = $type->allowsNull();
+				$entry['tb'] = $type->isBuiltin();
+				$entry['t'] = $type->getName();
+				$entry['k'] = $type->isBuiltin() ? 'b' : 'c';
+				$recipe['p'][] = $entry;
+				continue;
+			}
+
+			$entry['k'] = 'x';
+			$recipe['p'][] = $entry;
+		}
+
+		return $recipe;
+	}
+
+	protected function generateConstructorCache(): void {
+		if (!is_writable(DIR_TMP)) return;
+
+		$recipes = [];
+
+		$map = $this->getMap();
+		foreach ($map as $app => $data) {
+			if (!isset($data['name'])) continue;
+
+			foreach ($data['name'] as $c) {
+				if (!class_exists($c)) continue;
+				$recipes[$c] = $this->buildConstructorRecipe($c);
+			}
+		}
+
+		$str = "<?php return ";
+		$str .= var_export($recipes, true);
+		$str .= ";\n";
+		file_put_contents($this->ctorCacheFile, $str);
+
+		$this->ctorCache = $recipes;
+	}
+
 	public function checkDependencies() {
 		$this->getMap(); // Trigger loading
 		return [
-			'classmap_writable' => is_writable($this->filename ?? '') ? 'Ok' : ($this->filename ?? 'undefined') . ' not writable'
+			'classmap_writable' => is_writable($this->classMapFile ?? '') ? 'Ok' : ($this->classMapFile ?? 'undefined') . ' not writable'
 		];
 	}
 
@@ -374,7 +516,7 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 				$this->map[$app]['interface'][$interface][] = $c['class'];
 			}
 
-			if (!in_array(\Base3\Api\IBase::class, $c['interfaces'])) continue;
+			if (!in_array(IBase::class, $c['interfaces'])) continue;
 			if (!is_callable([$c['class'], 'getName'])) continue;
 
 			try {
@@ -390,7 +532,6 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		$str = "<?php return ";
 		$str .= var_export($this->map, true);
 		$str .= ";\n";
-		file_put_contents($this->filename, $str);
+		file_put_contents($this->classMapFile, $str);
 	}
 }
-

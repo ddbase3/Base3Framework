@@ -11,7 +11,8 @@ public/
 .well-known/
 .phpdoc/
 .docs/
-docs/
+docs/coverage/
+docs/phpdoc/
 vendor/
 
 # Ignored Files (root-level only)
@@ -23,7 +24,6 @@ sitemap-*.txt
 sitemap-*.xml
 .phpunit.result.cache
 
-# Ignoring generated composer files
+# Generated composer file (base file should be committed)
 composer.json
-composer.lock
 

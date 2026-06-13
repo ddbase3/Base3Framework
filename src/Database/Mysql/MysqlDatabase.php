@@ -1,7 +1,24 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Database\Mysql;
 
+use Base3\Configuration\ArrayConfiguration;
 use Base3\Core\ServiceLocator;
 use Base3\Database\Api\IDatabase;
 use Base3\Api\ICheck;
@@ -11,13 +28,13 @@ class MysqlDatabase implements IDatabase, ICheck {
 
 	private static $servicelocator;
 
-	private $connection;
-	private $connected = false;
+	private ?\mysqli $connection = null;
+	private bool $connected = false;
 
-	private $host;
-	private $user;
-	private $pass;
-	private $name;
+	private ?string $host;
+	private ?string $user;
+	private ?string $pass;
+	private ?string $name;
 
 	public function __construct(IConfiguration $config) {
 		$cnf = $config->get('database');
@@ -36,38 +53,69 @@ class MysqlDatabase implements IDatabase, ICheck {
 			}
 		}
 
-		return new self(new class($cnf) implements IConfiguration {
-			private $cnf;
-			public function __construct($cnf) { $this->cnf = $cnf; }
-			public function get($configuration = "") { return $this->cnf; }
-			public function set($data, $configuration = "") {}
-			public function save() {}
-		});
+		$data = [];
+		if (is_array($cnf)) {
+			$data = isset($cnf['database']) && is_array($cnf['database'])
+				? $cnf
+				: ['database' => $cnf];
+		}
+
+		return new self(new ArrayConfiguration($data));
 	}
 
-	public function connect() {
+	public function connect(): void {
 		if ($this->connected) return;
 		if (empty($this->host) || empty($this->user) || empty($this->pass) || empty($this->name)) return;
+
 		$this->connection = new \mysqli($this->host, $this->user, $this->pass, $this->name);
 		if ($this->connection->connect_errno) return;
+
 		$this->connection->set_charset('utf8mb4');
 		$this->connected = true;
 	}
 
-	public function connected() {
+	public function connected(): bool {
 		return $this->connected;
 	}
 
-	public function disconnect() {
+	public function disconnect(): void {
 		$this->connected = false;
 		if ($this->connection) $this->connection->close();
 	}
 
-	public function nonQuery($query) {
+	public function beginTransaction(): void {
+		$this->connect();
+		if (!$this->connection) throw new \RuntimeException("MySQL connection not available.");
+
+		// mysqli will disable autocommit for the transaction scope internally.
+		if (!$this->connection->begin_transaction()) {
+			throw new \RuntimeException("Failed to begin transaction: " . $this->connection->error);
+		}
+	}
+
+	public function commit(): void {
+		$this->connect();
+		if (!$this->connection) throw new \RuntimeException("MySQL connection not available.");
+
+		if (!$this->connection->commit()) {
+			throw new \RuntimeException("Failed to commit transaction: " . $this->connection->error);
+		}
+	}
+
+	public function rollback(): void {
+		$this->connect();
+		if (!$this->connection) throw new \RuntimeException("MySQL connection not available.");
+
+		if (!$this->connection->rollback()) {
+			throw new \RuntimeException("Failed to rollback transaction: " . $this->connection->error);
+		}
+	}
+
+	public function nonQuery(string $query): void {
 		$this->connection->query($query);
 	}
 
-	public function scalarQuery($query) {
+	public function scalarQuery(string $query): mixed {
 		$result = $this->connection->query($query);
 		if (!$result || !$result->num_rows) return null;
 		if ($row = $result->fetch_array(MYSQLI_NUM)) {
@@ -77,7 +125,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 		return null;
 	}
 
-	public function singleQuery($query) {
+	public function singleQuery(string $query): ?array {
 		$result = $this->connection->query($query);
 		if (!$result || !$result->num_rows) return null;
 		if ($row = $result->fetch_assoc()) {
@@ -87,7 +135,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 		return null;
 	}
 
-	public function &listQuery($query) {
+	public function &listQuery(string $query): array {
 		$list = [];
 		$result = $this->connection->query($query);
 		if (!$result || !$result->num_rows) return $list;
@@ -96,7 +144,7 @@ class MysqlDatabase implements IDatabase, ICheck {
 		return $list;
 	}
 
-	public function &multiQuery($query) {
+	public function &multiQuery(string $query): array {
 		$rows = [];
 		$result = $this->connection->query($query);
 		if (!$result || !$result->num_rows) return $rows;
@@ -105,27 +153,27 @@ class MysqlDatabase implements IDatabase, ICheck {
 		return $rows;
 	}
 
-	public function affectedRows() {
+	public function affectedRows(): int {
 		return $this->connection->affected_rows;
 	}
 
-	public function insertId() {
+	public function insertId(): int|string {
 		return $this->connection->insert_id;
 	}
 
-	public function escape($str) {
+	public function escape(string $str): string {
 		return $this->connection->real_escape_string($str);
 	}
 
-	public function isError() {
+	public function isError(): bool {
 		return $this->connection->error !== '';
 	}
 
-	public function errorNumber() {
+	public function errorNumber(): int {
 		return $this->connection->errno;
 	}
 
-	public function errorMessage() {
+	public function errorMessage(): string {
 		return $this->connection->error;
 	}
 
@@ -137,4 +185,3 @@ class MysqlDatabase implements IDatabase, ICheck {
 		];
 	}
 }
-

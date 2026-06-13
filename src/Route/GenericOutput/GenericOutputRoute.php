@@ -1,5 +1,21 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Route\GenericOutput;
 
 use Base3\Route\Api\IRoute;
@@ -9,84 +25,84 @@ use Base3\Configuration\Api\IConfiguration;
 use Base3\Accesscontrol\Api\IAccesscontrol;
 
 final class GenericOutputRoute implements IRoute {
-    public function __construct(
-        private IClassMap $classmap,
-        private IConfiguration $config,
-        private IAccesscontrol $accesscontrol,
-        private ?object $language = null
-    ) {}
 
-    public function match(string $path): ?array {
-        $path = explode('?', $path, 2)[0];
-        $path = ltrim($path, '/');
+	public function __construct(
+		private IClassMap $classmap,
+		private IConfiguration $config,
+		private IAccesscontrol $accesscontrol,
+		private ?object $language = null
+	) {}
 
-        // Sprachcode + Name
-        if (preg_match('#^(?P<data>[a-z]{2})/(?P<name>[^/\.]+)\.(?P<out>php|html|json|xml|help)$#i', $path, $m)) {
-            $instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, $m['name']);
-            if (is_object($instance)) {
-                return ['data' => $m['data'], 'name' => $m['name'], 'out' => $m['out']];
-            }
-            return null;
-        }
+	public function match(string $path): ?array {
+		$path = explode('?', $path, 2)[0];
+		$path = ltrim($path, '/');
 
-        // Nur Name
-        if (preg_match('#^(?P<name>[^/\.]+)\.(?P<out>php|html|json|xml|help)$#i', $path, $m)) {
-            $instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, $m['name']);
-            if (is_object($instance)) {
-                return ['data' => '', 'name' => $m['name'], 'out' => $m['out']];
-            }
-            return null;
-        }
+		// Sprachcode + Name
+		if (preg_match('#^(?P<data>[a-z]{2})/(?P<name>[^/\.]+)\.(?P<out>php|html|json|xml|help)$#i', $path, $m)) {
+			$instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, $m['name']);
+			if (is_object($instance)) {
+				return ['data' => $m['data'], 'name' => $m['name'], 'out' => $m['out']];
+			}
+			return null;
+		}
 
-        // Root oder index.php
-        if ($path === '' || $path === 'index.php') {
-            $instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, 'index');
-            if (is_object($instance)) {
-                return ['data' => '', 'name' => 'index', 'out' => 'php'];
-            }
-            return null;
-        }
+		// Nur Name
+		if (preg_match('#^(?P<name>[^/\.]+)\.(?P<out>php|html|json|xml|help)$#i', $path, $m)) {
+			$instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, $m['name']);
+			if (is_object($instance)) {
+				return ['data' => '', 'name' => $m['name'], 'out' => $m['out']];
+			}
+			return null;
+		}
 
-        return null;
-    }
+		// Root oder index.php
+		if ($path === '' || $path === 'index.php') {
+			$instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, 'index');
+			if (is_object($instance)) {
+				return ['data' => '', 'name' => 'index', 'out' => 'php'];
+			}
+			return null;
+		}
 
-    public function dispatch(array $match): string {
-        $name = $match['name'];
-        $out  = $match['out'];
-        $data = $match['data'] ?? '';
+		return null;
+	}
 
-        if ($out === 'php') {
-            $out = 'html';
-        }
+	public function dispatch(array $match): string {
+		$name = $match['name'];
+		$out = $match['out'];
+		$data = $match['data'] ?? '';
 
-        $_GET['name'] = $name;
-        $_REQUEST['name'] = $name;
+		if ($out === 'php') {
+			$out = 'html';
+		}
 
-        // Sprache weitergeben
-        if ($this->language && $data !== '' && strlen($data) === 2 && method_exists($this->language, 'setLanguage')) {
-            $this->language->setLanguage($data);
-        }
+		$_GET['name'] = $name;
+		$_REQUEST['name'] = $name;
 
-        $base = $this->config->get('base');
-        if (!empty($this->accesscontrol->getUserId()) && !empty($base['intern'] ?? '') && $name === 'index') {
-            header('Location: ' . ($base['url'] ?? '/') . $base['intern']);
-            exit;
-        }
+		// Sprache weitergeben
+		if ($this->language && $data !== '' && strlen($data) === 2 && method_exists($this->language, 'setLanguage')) {
+			$this->language->setLanguage($data);
+		}
 
-        $instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, $name);
+		$base = $this->config->get('base');
+		if (!empty($this->accesscontrol->getUserId()) && !empty($base['intern'] ?? '') && $name === 'index') {
+			header('Location: ' . ($base['url'] ?? '/') . $base['intern']);
+			exit;
+		}
 
-        if ($out === 'help') {
-            if (!getenv('DEBUG')) return '';
-            return $instance->getHelp();
-        }
-        if ($out === 'json') {
-            header('Content-Type: application/json');
-        }
-        if ($out === 'html') {
-            header('Content-Type: text/html; charset=utf-8');
-        }
+		$instance = $this->classmap->getInstanceByInterfaceName(IOutput::class, $name);
 
-        return (string)$instance->getOutput($out);
-    }
+		if ($out === 'help') {
+			if (!getenv('DEBUG')) return '';
+			return $instance->getHelp();
+		}
+		if ($out === 'json') {
+			header('Content-Type: application/json');
+		}
+		if ($out === 'html') {
+			header('Content-Type: text/html; charset=utf-8');
+		}
+
+		return (string) $instance->getOutput($out);
+	}
 }
-

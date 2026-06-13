@@ -1,117 +1,170 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Database\Api;
 
 /**
  * Interface IDatabase
  *
- * Defines a basic database access interface for executing queries and handling connections.
+ * Abstraction for database access used throughout the framework.
+ *
+ * Design principles:
+ * ------------------
+ * - Implementations MUST support lazy connections.
+ * - Calling connect() multiple times MUST be safe.
+ *
+ * Consumers of this interface:
+ * - SHOULD call connect() proactively before executing queries to guarantee connectivity
+ * - MAY call connect() redundantly without side effects
+ *
+ * This explicit contract avoids:
+ * - implicit connection assumptions
+ * - "am I connected?" conditionals in application code
+ * - accidental early or duplicate connections
  */
 interface IDatabase {
 
 	/**
-	 * Establishes a connection to the database.
+	 * Establishes a database connection if not already connected.
 	 *
-	 * @return void
+	 * Semantics:
+	 * - Implementations MUST implement this as a lazy connect.
+	 * - Calling this method when already connected MUST be a no-op.
+	 * - Calling this method multiple times MUST be safe.
 	 */
-	public function connect();
+	public function connect(): void;
 
 	/**
-	 * Checks whether a connection to the database is active.
+	 * Indicates whether a database connection is currently active.
 	 *
-	 * @return bool True if connected, false otherwise
+	 * @return bool True if a connection is currently established.
 	 */
-	public function connected();
+	public function connected(): bool;
 
 	/**
 	 * Closes the database connection.
 	 *
-	 * @return void
+	 * Semantics:
+	 * - After disconnect(), connected() MUST return false.
+	 * - A subsequent call to connect() MUST re-establish the connection.
 	 */
-	public function disconnect();
+	public function disconnect(): void;
+
+	/**
+	 * Begins a database transaction.
+	 *
+	 * Semantics:
+	 * - Implementations SHOULD throw if no connection exists (or auto-connect).
+	 * - Nested transactions are implementation-defined (no requirement here).
+	 */
+	public function beginTransaction(): void;
+
+	/**
+	 * Commits the current transaction.
+	 */
+	public function commit(): void;
+
+	/**
+	 * Rolls back the current transaction.
+	 */
+	public function rollback(): void;
 
 	/**
 	 * Executes a query that modifies data (INSERT, UPDATE, DELETE).
-	 *
-	 * @param string $query SQL statement
-	 * @return void
 	 */
-	public function nonQuery($query);
+	public function nonQuery(string $query): void;
 
 	/**
 	 * Executes a query that returns a single scalar value.
 	 *
-	 * @param string $query SQL statement
-	 * @return mixed Scalar result (e.g. int, string)
+	 * Semantics:
+	 * - If the query yields no rows, NULL SHOULD be returned.
+	 * - If multiple rows are returned, the first value is used.
+	 *
+	 * @return mixed Scalar value or NULL.
 	 */
-	public function scalarQuery($query);
+	public function scalarQuery(string $query): mixed;
 
 	/**
-	 * Executes a query that returns one row as an associative array.
+	 * Executes a query that returns a single row as an associative array.
 	 *
-	 * @param string $query SQL statement
-	 * @return array|null Associative row or null if no result
+	 * Semantics:
+	 * - If no row is found, NULL MUST be returned.
+	 * - If multiple rows are found, only the first row is returned.
+	 *
+	 * @return array|null Row or NULL.
 	 */
-	public function singleQuery($query);
+	public function singleQuery(string $query): ?array;
 
 	/**
-	 * Executes a query that returns a list of scalar values (one column).
+	 * Executes a query that returns a list of scalar values (single column).
 	 *
-	 * @param string $query SQL statement
-	 * @return array List of scalar values
+	 * @return array List of scalar values.
 	 */
-	public function &listQuery($query);
+	public function &listQuery(string $query): array;
 
 	/**
 	 * Executes a query that returns multiple rows as associative arrays.
 	 *
-	 * @param string $query SQL statement
-	 * @return array List of rows
+	 * @return array List of associative rows.
 	 */
-	public function &multiQuery($query);
+	public function &multiQuery(string $query): array;
 
 	/**
-	 * Returns the number of rows affected by the last query.
-	 *
-	 * @return int Number of affected rows
+	 * Returns the number of rows affected by the last data-modifying query.
 	 */
-	public function affectedRows();
+	public function affectedRows(): int;
 
 	/**
 	 * Returns the ID generated by the last INSERT operation.
 	 *
-	 * @return int|string Insert ID (may be numeric or UUID depending on backend)
+	 * Note:
+	 * - Backends may return int (auto-increment) or string (UUID).
 	 */
-	public function insertId();
+	public function insertId(): int|string;
 
 	/**
-	 * Escapes a string for safe use in SQL queries.
+	 * Escapes a string for safe inclusion in SQL queries.
 	 *
-	 * @param string $str Input string
-	 * @return string Escaped string
+	 * Semantics:
+	 * - This method MUST return a quoted-safe string fragment.
+	 * - Consumers MUST still handle surrounding quotes themselves.
 	 */
-	public function escape($str);
+	public function escape(string $str): string;
 
 	/**
-	 * Checks if the last query resulted in an error.
-	 *
-	 * @return bool True if an error occurred
+	 * Indicates whether the last executed query resulted in an error.
 	 */
-	public function isError();
+	public function isError(): bool;
 
 	/**
-	 * Returns the numeric error code from the last error.
+	 * Returns the numeric error code of the last error.
 	 *
-	 * @return int|null Error code or null if no error
+	 * Note (matches current MysqlDatabase behavior):
+	 * - Returns 0 if no error occurred.
 	 */
-	public function errorNumber();
+	public function errorNumber(): int;
 
 	/**
-	 * Returns the message associated with the last error.
+	 * Returns the error message of the last error.
 	 *
-	 * @return string|null Error message or null if no error
+	 * Note (matches current MysqlDatabase behavior):
+	 * - Returns an empty string if no error occurred.
 	 */
-	public function errorMessage();
-
+	public function errorMessage(): string;
 }
-

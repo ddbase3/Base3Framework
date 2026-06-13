@@ -67,7 +67,7 @@ composer --working-dir=plugin install
 Optional merging of plugin composer files:
 
 ```bash
-php setup/merge-composer.php
+php tools/setup/merge-composer.php
 composer --working-dir=plugin install
 ```
 
@@ -183,7 +183,7 @@ Manage structured configuration data using `IConfiguration`.
 use Base3\Page\Api\IPage;
 
 class HelloController implements IPage {
-    public function getOutput($out = 'html') {
+    public function getOutput(string $out = 'html', bool $final = false): string {
         return '<h1>Hello, World!</h1>';
     }
 
@@ -207,6 +207,8 @@ The BASE3 Framework can be extended through numerous plugins that add modular fu
   Interactive reports with configurable tables and charts directly within BASE3 pages.
 - **[Vizion](https://github.com/ddbase3/Vizion)**  
   Visual representation of data using bar, pie, line charts, etc., based on DataHawk.
+- **[Memora](https://github.com/ddbase3/Memora)**  
+  CRM/XRM service for knowledge graphs; optimized for AI usage, i.e. Graph RAG.
 
 ### 🤖 AI & Automation
 

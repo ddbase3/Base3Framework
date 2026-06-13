@@ -4,8 +4,8 @@ namespace Base3\Xrm;
 
 class XrmEntryAccess {
 
-	public $mode;		// owner | read | write
-	public $usergroup;	// user | group
+	public string $mode;		// owner | read | write
+	public string $usergroup;	// user | group
 	public $id;		// user id/group id
 
 	public static function unserialize($data) {
@@ -23,5 +23,4 @@ class XrmEntryAccess {
 
 		return $xrmentry;
 	}
-
 }

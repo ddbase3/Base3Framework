@@ -118,7 +118,8 @@ class FileXrm extends AbstractXrm implements ICheck {
 	}
 
 	public function getEntry($id) {
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "id" => $id)), ['scope' => 'xrm']);
+		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getEntry", "id" => $id)), ['scope' => 'xrm']);
 
 		$filename = $this->getFilename($id);
 		$result = null;
@@ -130,7 +131,7 @@ class FileXrm extends AbstractXrm implements ICheck {
 				$result = array("id" => $id, "name" => substr($id, 4), "alloc" => array());
 				$this->writeToFile($filename, json_encode($result));
 			} else {
-				if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "num" => 0)), ['scope' => 'xrm']);
+				if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getEntry", "num" => 0)), ['scope' => 'xrm']);
 				return null;
 			}
 		}
@@ -166,19 +167,20 @@ class FileXrm extends AbstractXrm implements ICheck {
 		$access = $this->getAccess($entry);
 		if ($access == "none") return false;
 
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntry", "num" => 1)), ['scope' => 'xrm']);
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getEntry", "num" => 1)), ['scope' => 'xrm']);
 		return $entry;
 	}
 
 	public function getEntries($ids) {
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "ids" => $ids)), ['scope' => 'xrm']);
+		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getEntries", "ids" => $ids)), ['scope' => 'xrm']);
 		$entries = array();
 		foreach ($ids as $id) {
 			if (substr($id, 0, 2) == "xx") continue;
 			$entry = $this->getEntry($id);
 			if ($entry != null) $entries[] = $entry;
 		}
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getEntries", "num" => sizeof($entries))), ['scope' => 'xrm']);
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getEntries", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 
@@ -187,7 +189,8 @@ class FileXrm extends AbstractXrm implements ICheck {
 		// no access check on allocs, because only ids
 		// jetzt doch
 
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "id" => $id)), ['scope' => 'xrm']);
+		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getAllocIds", "id" => $id)), ['scope' => 'xrm']);
 		$allocs = array();
 		$entry = $this->getEntry($id);
 		if ($entry && $this->getAccess($entry) != "none" && $entry->alloc) $allocs = $entry->alloc;
@@ -196,7 +199,7 @@ class FileXrm extends AbstractXrm implements ICheck {
 		$filter = new \Base3\Xrm\XrmFilter("ids", "in", $allocs);
 		$entries = $this->xrmglobal->getEntriesIntern($filter, true);
 
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "num" => sizeof($allocs))), ['scope' => 'xrm']);
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getAllocIds", "num" => sizeof($allocs))), ['scope' => 'xrm']);
 		return $entries;
 
 /*
@@ -214,7 +217,7 @@ class FileXrm extends AbstractXrm implements ICheck {
 
 		$filename = $this->getFilename($id);
 		if (!file_exists($filename)) {
-			if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "num" => 0)), ['scope' => 'xrm']);
+			if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getAllocIds", "num" => 0)), ['scope' => 'xrm']);
 			return array();
 		}
 
@@ -222,7 +225,7 @@ class FileXrm extends AbstractXrm implements ICheck {
 		$result = json_decode($content, true);
 
 		$entries = isset($result["alloc"]) ? $result["alloc"] : array();
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllocIds", "num" => sizeof($entries))), ['scope' => 'xrm']);
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getAllocIds", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 */
 	}
@@ -231,9 +234,10 @@ class FileXrm extends AbstractXrm implements ICheck {
 		$user = (object) $this->usermanager->getUser();
 		if ($user->role != "admin") return array();
 
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllEntryIds")), ['scope' => 'xrm']);
+		$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getAllEntryIds")), ['scope' => 'xrm']);
 		$entries = $this->getXrmEntryIdsRecursive(DIR_LOCAL . "FileXrm");
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getAllEntryIds", "num" => sizeof($entries))), ['scope' => 'xrm']);
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getAllEntryIds", "num" => sizeof($entries))), ['scope' => 'xrm']);
 		return $entries;
 	}
 
@@ -242,9 +246,9 @@ class FileXrm extends AbstractXrm implements ICheck {
 		if ($user->role != "admin") return array();
 
 		if ((!$invert && $xrmname != $this->xrmname) || ($invert && $xrmname == $this->xrmname)) return array();
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getXrmEntryIds", "xrmname" => $xrmname)), ['scope' => 'xrm']);
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getXrmEntryIds", "xrmname" => $xrmname)), ['scope' => 'xrm']);
 		$entries = $this->getAllEntryIds();
-		if ($this->logging) $this->logger->info(json_encode(array("host" => $_SERVER['HTTP_HOST'] , "fn" => "getXrmEntryIds", "num" => sizeof($entries), "entries" => $entries)), ['scope' => 'xrm']);
+		if ($this->logging) $this->logger->info(json_encode(array("host" => $host, "fn" => "getXrmEntryIds", "num" => sizeof($entries), "entries" => $entries)), ['scope' => 'xrm']);
 		return $entries;
 	}
 

@@ -1,5 +1,21 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Core;
 
 use Base3\Api\IBootstrap;
@@ -7,15 +23,17 @@ use Base3\Api\IClassMap;
 use Base3\Api\IContainer;
 use Base3\Api\IPlugin;
 use Base3\Api\IRequest;
+use Base3\Api\ISystemService;
 use Base3\Accesscontrol\Api\IAccesscontrol;
 use Base3\Accesscontrol\No\NoAccesscontrol;
 use Base3\Core\Request;
 use Base3\Core\ServiceLocator;
+use Base3\Core\SystemService;
 use Base3\Configuration\ConfigFile\ConfigFile;
 use Base3\Configuration\Api\IConfiguration;
 use Base3\Core\PluginClassMap;
-use Base3\Hook\IHookManager;
-use Base3\Hook\IHookListener;
+use Base3\Hook\Api\IHookManager;
+use Base3\Hook\Api\IHookListener;
 use Base3\Hook\HookManager;
 use Base3\ServiceSelector\Api\IServiceSelector;
 use Base3\ServiceSelector\Standard\StandardServiceSelector;
@@ -29,6 +47,7 @@ class Bootstrap implements IBootstrap {
 		ServiceLocator::useInstance($container);
 		$container
 			->set('servicelocator', $container, IContainer::SHARED)
+			->set(ISystemService::class, fn() => new SystemService(), IContainer::SHARED)
 			->set(IRequest::class, fn() => Request::fromGlobals(), IContainer::SHARED)
 			->set(IContainer::class, 'servicelocator', IContainer::ALIAS)
 			->set(IHookManager::class, fn() => new HookManager(), IContainer::SHARED)

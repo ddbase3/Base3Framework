@@ -21,7 +21,7 @@ class XrmSearchService implements IOutput {
 
 	// Implementation of IOutput
 
-	public function getOutput($out = "html") {
+	public function getOutput(string $out = 'html', bool $final = false): string {
 
 		if (!isset($_REQUEST["q"])) return null;
 
@@ -58,8 +58,7 @@ class XrmSearchService implements IOutput {
 		return null;
 	}
 
-	public function getHelp() {
+	public function getHelp(): string {
 		return 'Help of XrmSearchService' . "\n";
 	}
-
 }
