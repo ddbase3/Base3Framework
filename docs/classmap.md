@@ -57,6 +57,7 @@ IHookListener
 IPlugin
 IJobExecutionPolicy + name=dailywindowjobpolicy
 IConfigValueModeResolver
+IDatabaseMigrationProvider
 ```
 
 ---
@@ -110,6 +111,7 @@ A plugin can add:
 * execution policies
 * checks
 * config value modes
+* database migration providers
 * event-aware services
 * provider definitions
 * connection drivers
@@ -477,6 +479,7 @@ IJob::class
 IJobExecutionPolicy::class
 ICheck::class
 IConfigValueModeResolver::class
+IDatabaseMigrationProvider::class
 ```
 
 A plugin class becomes discoverable for one of these extension points by implementing the relevant interface.
@@ -1464,7 +1467,22 @@ No central resolver factory has to be changed.
 
 ---
 
-## 47. Recommended discoverable component style
+## 47. How this affects migration providers
+
+Database migration providers are discoverable components. The migration runner asks the class map for all `IDatabaseMigrationProvider` implementations and then evaluates each provider's `isActive()` method.
+
+This distinction is important:
+
+```text
+Class map discovery says: this provider class exists.
+Provider activation says: this provider is relevant for the current runtime composition.
+```
+
+Do not run migrations merely because a provider class exists. A provider should be active only when the implementation or feature that owns the schema is actually wired in the current project.
+
+---
+
+## 48. Recommended discoverable component style
 
 A class that should be discovered by the class map should:
 
@@ -1516,7 +1534,7 @@ final class MailImportJob implements IJob {
 
 ---
 
-## 48. Recommended plugin class style
+## 49. Recommended plugin class style
 
 A plugin class itself is also a discoverable class.
 
@@ -1562,7 +1580,7 @@ or other very early core services.
 
 ---
 
-## 49. Early discovery caveat
+## 50. Early discovery caveat
 
 Some classes are discovered before plugin `init()` has registered plugin services.
 
@@ -1584,7 +1602,7 @@ Runtime classes selected later can depend on plugin services registered during `
 
 ---
 
-## 50. Recommended naming style
+## 51. Recommended naming style
 
 Use stable lowercase technical names.
 
@@ -1610,7 +1628,7 @@ If a human-readable label is needed, expose it through a separate method or sett
 
 ---
 
-## 51. Deployment considerations
+## 52. Deployment considerations
 
 For reliable class map behavior:
 
@@ -1633,7 +1651,7 @@ after updating framework or plugin code.
 
 ---
 
-## 52. Development troubleshooting
+## 53. Development troubleshooting
 
 ### New plugin class is not found
 
@@ -1673,7 +1691,7 @@ Check:
 
 ---
 
-## 53. Custom class maps
+## 54. Custom class maps
 
 A project or host integration can provide a different class map implementation.
 
@@ -1706,7 +1724,7 @@ IClassMap
 
 ---
 
-## 54. Practical rules for plugin developers
+## 55. Practical rules for plugin developers
 
 Put plugin PHP classes under `plugin/<PluginName>/src`.
 
@@ -1734,7 +1752,7 @@ Avoid constructor dependencies that are not available at the time the class is d
 
 ---
 
-## 55. Summary
+## 56. Summary
 
 The BASE3 Class Map system discovers and instantiates framework and plugin classes.
 

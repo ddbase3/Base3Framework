@@ -78,6 +78,7 @@ Typical uses are:
 
 * register your own services
 * provide default implementations under interfaces
+* replace infrastructure defaults such as `IMigrationRunner` in project plugins
 * expose simple parameters
 * define aliases when needed
 * fetch already registered services during setup
@@ -607,7 +608,38 @@ If a class only works because probing used a placeholder, the real solution is u
 
 ---
 
-## 16. Practical design rules
+## 16. Migration runner wiring
+
+The migration runner is a good example of container-based composition.
+
+The default bootstrap can register:
+
+```php
+$container->set(
+	IMigrationRunner::class,
+	fn() => new NoMigrationRunner(),
+	IContainer::SHARED
+);
+```
+
+A project plugin that has a database can deliberately replace this binding:
+
+```php
+$this->container->set(
+	IMigrationRunner::class,
+	fn($c) => new DatabaseMigrationRunner(
+		$c->get(IClassMap::class),
+		$c->get(IDatabase::class)
+	),
+	IContainer::SHARED
+);
+```
+
+The runner is a known service and therefore belongs in the container. Migration providers are discoverable components and therefore belong in the class map.
+
+---
+
+## 17. Practical design rules
 
 ### Prefer interfaces when replacement matters
 
@@ -647,7 +679,7 @@ Not everything must be interface-based. Registries, small helpers, or internal u
 
 ---
 
-## 17. Common mistakes and better alternatives
+## 18. Common mistakes and better alternatives
 
 ### Mistake: manual container lookup inside business code
 
@@ -679,7 +711,7 @@ Better:
 
 ---
 
-## 18. A small checklist for every new plugin service
+## 19. A small checklist for every new plugin service
 
 Before adding a service, ask:
 
@@ -693,7 +725,7 @@ That is usually enough to keep BASE3 plugin DI clean.
 
 ---
 
-## 19. Summary
+## 20. Summary
 
 For plugin developers, BASE3 dependency injection can be reduced to a few practical rules:
 
@@ -710,7 +742,7 @@ If you follow these patterns, your plugin will fit naturally into BASE3 and rema
 
 ---
 
-## 20. Final checklist for plugin developers
+## 21. Final checklist for plugin developers
 
 Before shipping a plugin, check the following:
 

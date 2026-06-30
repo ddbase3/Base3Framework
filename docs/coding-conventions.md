@@ -15,6 +15,7 @@ In BASE3, coding conventions also protect the framework architecture:
 * project-level composition
 * MVC separation
 * stable technical names
+* immutable migration steps
 * portable asset and path handling
 
 A class can be formatted correctly and still violate BASE3 conventions if it creates unwanted plugin dependencies or bypasses the container and class map model.
@@ -374,6 +375,7 @@ ILogger::class
 ISettingsStore::class
 IStateStore::class
 IEventManager::class
+IMigrationRunner::class
 ```
 
 Register services under interfaces when replacement is expected.
@@ -407,6 +409,7 @@ IJob::class
 ICheck::class
 IJobExecutionPolicy::class
 IConfigValueModeResolver::class
+IDatabaseMigrationProvider::class
 ```
 
 Use class map lookup when the caller knows the role but not the concrete class.
@@ -1249,7 +1252,44 @@ A foundation plugin is justified when it prevents unwanted dependencies and defi
 
 ---
 
-## 42. Summary
+## 42. Database migration conventions
+
+Migration providers and migration steps are part of the framework architecture and should follow the same discoverability and DI rules as other BASE3 components.
+
+Rules:
+
+* put migration providers and steps under `src/Migration/`
+* make providers implement `IDatabaseMigrationProvider`
+* make steps implement `IDatabaseMigration`
+* use stable lowercase `getName()` values
+* treat released migration steps as immutable
+* add a new migration step instead of editing an old released step
+* inject `IDatabase` into migration steps through the constructor
+* keep each migration focused on one schema or data change
+* do not run migrations in plugin `init()`
+* let the configured `IMigrationRunner` execute migrations after plugin initialization
+
+Good migration name:
+
+```php
+public static function getName(): string {
+	return 'exampleplugin_002_add_status_index';
+}
+```
+
+Bad migration name:
+
+```php
+public static function getName(): string {
+	return 'Add Status Index';
+}
+```
+
+Migration providers should be active only when their schema owner is relevant to the current runtime composition.
+
+---
+
+## 43. Summary
 
 BASE3 coding conventions combine formatting and architecture.
 

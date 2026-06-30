@@ -13,7 +13,7 @@ It is written for developers who want to understand:
 * what `IPlugin` is for
 * what happens inside a plugin `init()` method
 * how plugins register services
-* how plugins expose outputs, displays, jobs, checks, listeners, policies, and other extension classes
+* how plugins expose outputs, displays, jobs, checks, migration providers, listeners, policies, and other extension classes
 * how plugin assets, templates, language files, tests, local data, and documentation are structured
 * how MVC-style display classes and templates are kept parallel
 * how embedded systems can use another plugin layout by providing another class map
@@ -37,9 +37,11 @@ It can add:
 * language files
 * jobs
 * checks
+* migration providers
 * event listeners
 * hook listeners
 * config value modes
+* migration providers
 * settings UIs
 * domain APIs
 * factories
@@ -235,6 +237,7 @@ src/
 ├── Display/
 ├── Event/
 ├── Job/
+├── Migration/
 ├── Listener/
 ├── Service/
 └── ExamplePlugin.php
@@ -393,7 +396,7 @@ install/
 
 This is useful when a plugin needs:
 
-* database tables
+* database tables when no automatic migration provider exists
 * initial settings
 * external setup steps
 * manual migration notes
@@ -461,6 +464,7 @@ src/
 ├── Export/
 ├── Factory/
 ├── Job/
+├── Migration/
 ├── Listener/
 ├── Memory/
 ├── Model/
@@ -1235,7 +1239,29 @@ This allows plugins to add background behavior without changing the worker core.
 
 ---
 
-## 30. Config value modes in plugins
+## 30. Migrations in plugins
+
+A plugin that owns database schema should provide migration classes under its own `src/` tree.
+
+Typical structure:
+
+```text
+plugin/ExamplePlugin/
+└── src/
+    └── Migration/
+        ├── ExamplePluginMigrationProvider.php
+        ├── Migration001CreateTables.php
+        ├── Migration002AddIndexes.php
+        └── Migration003BackfillDefaults.php
+```
+
+The provider implements `IDatabaseMigrationProvider` and is discovered through the class map. It should only be active when the plugin feature that owns the database schema is active in the current project.
+
+Do not execute migrations inside `init()`. `init()` registers services. The configured migration runner executes migrations after all plugins have initialized and before request handling starts.
+
+---
+
+## 31. Config value modes in plugins
 
 A plugin can add a new generic config value mode by implementing:
 
@@ -1267,7 +1293,7 @@ runtime code consumes IConfigValueResolver
 
 ---
 
-## 31. Outputs and displays in plugins
+## 32. Outputs and displays in plugins
 
 Plugins commonly expose UI or response components.
 
@@ -1305,7 +1331,7 @@ The corresponding template should:
 
 ---
 
-## 32. APIs inside plugins
+## 33. APIs inside plugins
 
 A plugin can define its own interfaces under:
 
@@ -1333,7 +1359,7 @@ When another plugin should integrate with your plugin, expose a small and stable
 
 ---
 
-## 33. Service registration style
+## 34. Service registration style
 
 Prefer this style:
 
@@ -1371,7 +1397,7 @@ Use the container directly mainly in plugin `init()` and bootstrap composition c
 
 ---
 
-## 34. Plugin dependencies
+## 35. Plugin dependencies
 
 A plugin can depend on services or other plugins.
 
@@ -1401,7 +1427,7 @@ If the container does not support `has()` in the local API style, use the framew
 
 ---
 
-## 35. Plugin initialization best practices
+## 36. Plugin initialization best practices
 
 A plugin `init()` should be predictable.
 
@@ -1427,7 +1453,7 @@ Request-specific behavior should happen later in outputs, displays, controllers,
 
 ---
 
-## 36. Class map and plugin cache
+## 37. Class map and plugin cache
 
 Because plugin classes are discovered by the class map, new classes may not appear until the class map cache is regenerated.
 
@@ -1450,7 +1476,7 @@ $classMap->generate(true);
 
 ---
 
-## 37. Embedded plugin layouts
+## 38. Embedded plugin layouts
 
 In a standalone framework, the default layout is:
 
@@ -1487,7 +1513,7 @@ It requires the active class map to find the plugin classes.
 
 ---
 
-## 38. Good minimal plugin
+## 39. Good minimal plugin
 
 A minimal plugin can look like this:
 
@@ -1514,7 +1540,7 @@ The template renders the display.
 
 ---
 
-## 39. Larger plugin structure
+## 40. Larger plugin structure
 
 A larger plugin can look like this:
 
@@ -1556,7 +1582,7 @@ This structure keeps different concerns separate while staying discoverable.
 
 ---
 
-## 40. Common mistakes
+## 41. Common mistakes
 
 ### Plugin class outside `src/`
 
@@ -1617,7 +1643,7 @@ Use database, state store, settings store, or other appropriate storage.
 
 ---
 
-## 41. Practical rules
+## 42. Practical rules
 
 Put plugin classes under `plugin/<PluginName>/src`.
 
@@ -1649,7 +1675,7 @@ Use a custom class map when embedded layout differs from the standalone plugin d
 
 ---
 
-## 42. Summary
+## 43. Summary
 
 BASE3 plugins are the main extension mechanism for framework applications.
 

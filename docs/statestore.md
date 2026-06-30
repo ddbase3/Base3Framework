@@ -717,7 +717,30 @@ This keeps the service convenient for runtime use:
 
 ---
 
-## 13. Storage schema
+## 13. DatabaseStateStore and migrations
+
+`DatabaseStateStore` owns a private technical table. It may use a guarded automatic table-initialization step because the table is an implementation detail of the database-backed state store.
+
+This is different from plugin domain tables. Domain tables should normally be managed through database migration providers.
+
+Recommended split for state-store storage:
+
+```text
+Initial private state-store table
+  may be created by DatabaseStateStore ensure logic
+
+Later schema changes
+  should be added as DatabaseStateStore migration steps
+
+Runtime state keys and values
+  are normal State Store data, not migration data
+```
+
+If a project uses a file-backed or host-backed `IStateStore`, no database state-store migrations are needed. A `DatabaseStateStoreMigrationProvider` should therefore be active only when the database-backed implementation is actually wired.
+
+---
+
+## 14. Storage schema
 
 `DatabaseStateStore` creates a table with this logical structure:
 
@@ -753,7 +776,7 @@ CREATE TABLE IF NOT EXISTS `base3_statestore` (
 
 ---
 
-## 14. TTL semantics
+## 15. TTL semantics
 
 TTL support is implemented through the `expires_at` column.
 
@@ -783,7 +806,7 @@ This means expiration is primarily **semantic** from the caller’s perspective.
 
 ---
 
-## 15. How reads behave
+## 16. How reads behave
 
 When `get()` is called, `DatabaseStateStore` does the following:
 
@@ -813,7 +836,7 @@ This is a very practical behavior for runtime state because callers automaticall
 
 ---
 
-## 16. How writes behave
+## 17. How writes behave
 
 `set()` uses an upsert strategy.
 
@@ -843,7 +866,7 @@ This gives predictable overwrite behavior for ordinary runtime markers.
 
 ---
 
-## 17. Atomic creation and lock semantics in DatabaseStateStore
+## 18. Atomic creation and lock semantics in DatabaseStateStore
 
 `setIfNotExists()` is implemented with a single SQL statement using `INSERT ... ON DUPLICATE KEY UPDATE` and conditional update logic.
 
@@ -879,7 +902,7 @@ This is exactly the behavior you want for lock-like keys.
 
 ---
 
-## 18. Serialization behavior
+## 19. Serialization behavior
 
 `DatabaseStateStore` stores values as JSON.
 
@@ -913,7 +936,7 @@ This is intentionally pragmatic. The state store is runtime plumbing, and the im
 
 ---
 
-## 19. Expired rows and list behavior
+## 20. Expired rows and list behavior
 
 The database implementation removes expired rows opportunistically when they are accessed by `get()` or `has()`.
 
@@ -929,7 +952,7 @@ So when using `listKeys()`:
 
 ---
 
-## 20. `flush()` in DatabaseStateStore
+## 21. `flush()` in DatabaseStateStore
 
 The database implementation writes immediately.
 
@@ -945,7 +968,7 @@ This still matters architecturally because it keeps the interface flexible enoug
 
 ---
 
-## 21. Database portability notes
+## 22. Database portability notes
 
 The shown `DatabaseStateStore` implementation assumes a MySQL or MariaDB style dialect for:
 
@@ -964,7 +987,7 @@ If your project uses a different database dialect, you may need:
 
 ---
 
-## 22. Operational recommendations
+## 23. Operational recommendations
 
 ## 22.1 Always namespace keys
 
@@ -1076,7 +1099,7 @@ Correct idea:
 
 ---
 
-## 23. Example: building a plugin service around state
+## 24. Example: building a plugin service around state
 
 ```mermaid
 classDiagram
@@ -1114,7 +1137,7 @@ This is the intended dependency structure:
 
 ---
 
-## 24. Testing strategies
+## 25. Testing strategies
 
 When testing services that depend on `IStateStore`, you usually have three options.
 
@@ -1194,7 +1217,7 @@ The more your service only depends on the documented behavior of `IStateStore`, 
 
 ---
 
-## 25. Implementing your own backend
+## 26. Implementing your own backend
 
 You may want a custom implementation when:
 
@@ -1264,7 +1287,7 @@ If those semantics are preserved, consumers can usually switch implementations w
 
 ---
 
-## 26. Example decision table
+## 27. Example decision table
 
 | Requirement                            | Good fit for `IStateStore` | Better elsewhere      |
 | -------------------------------------- | -------------------------- | --------------------- |
@@ -1278,7 +1301,7 @@ If those semantics are preserved, consumers can usually switch implementations w
 
 ---
 
-## 27. Summary
+## 28. Summary
 
 The BASE3 state store is a small but very important infrastructure component.
 
@@ -1298,7 +1321,7 @@ When used correctly, the state store becomes the natural home for scheduling mar
 
 ---
 
-## 28. Practical takeaway
+## 29. Practical takeaway
 
 If you are building a plugin and need to remember something that the system learned while running, ask yourself:
 

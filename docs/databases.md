@@ -1076,7 +1076,32 @@ $count = $row !== null ? (int) $row['downloads'] : 0;
 
 ---
 
-## 14. Recommended coding guidelines for plugin authors
+## 14. Database migrations and schema ownership
+
+Database access and database schema ownership are separate concerns.
+
+A repository or runtime service may use `IDatabase` for normal reads and writes, but it should not repeatedly inspect or repair domain table structure during every request. Domain tables should normally be managed through migration providers and migration steps.
+
+A small private technical table owned by a concrete backend may still use a guarded `ensureTable()` pattern when that table is required for the backend to function at all. Examples include database-backed state, settings, logging, or migration metadata tables. Once such a table needs versioned changes, add migration steps owned by that backend.
+
+Practical split:
+
+```text
+Private backend table required for startup
+  guarded ensureTable() is acceptable
+
+Versioned backend schema evolution
+  migration provider owned by the backend
+
+Plugin/domain tables
+  migration provider owned by the plugin or implementation
+```
+
+The default framework migration runner is a no-op because not every BASE3 project uses a database. A project plugin that wires `IDatabase` may also wire a database-backed `IMigrationRunner`.
+
+---
+
+## 15. Recommended coding guidelines for plugin authors
 
 ### Do
 
@@ -1099,7 +1124,7 @@ $count = $row !== null ? (int) $row['downloads'] : 0;
 
 ---
 
-## 15. End-to-end example: a small plugin repository
+## 16. End-to-end example: a small plugin repository
 
 This example shows a complete and realistic repository that a plugin developer could start with.
 
@@ -1169,7 +1194,7 @@ What this example demonstrates:
 
 ---
 
-## 16. Summary
+## 17. Summary
 
 The BASE3 database layer is intentionally straightforward.
 
@@ -1191,7 +1216,7 @@ Once that convention is internalized, the rest of the API becomes very easy to u
 
 ---
 
-## 17. Quick reference
+## 18. Quick reference
 
 | Task                           | Method                                           |
 | ------------------------------ | ------------------------------------------------ |
@@ -1213,7 +1238,7 @@ Once that convention is internalized, the rest of the API becomes very easy to u
 
 ---
 
-## 18. Final rule of thumb
+## 19. Final rule of thumb
 
 When building a BASE3 plugin, a safe default repository method usually looks like this:
 

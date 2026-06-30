@@ -245,6 +245,7 @@ The current bootstrap code dispatches three framework lifecycle hooks:
 
 * `bootstrap.init`
 * `bootstrap.start`
+* `bootstrap.migrated`
 * `bootstrap.finish`
 
 These hooks define the earliest framework-level extension points that plugin developers can rely on.
@@ -260,9 +261,11 @@ flowchart TD
 	G --> H[Discover all IPlugin instances]
 	H --> I[Call plugin.init on each plugin]
 	I --> J[Dispatch bootstrap.start]
-	J --> K[Run IServiceSelector.go]
-	K --> L[Output response]
-	L --> M[Dispatch bootstrap.finish]
+	J --> K[Run IMigrationRunner.migrate]
+	K --> L[Dispatch bootstrap.migrated]
+	L --> M[Run IServiceSelector.go]
+	M --> N[Output response]
+	N --> O[Dispatch bootstrap.finish]
 ```
 
 ### Suggested interpretation
@@ -280,13 +283,25 @@ Typical use cases:
 
 #### `bootstrap.start`
 
-Use this for logic that should run **after plugin initialization** but **before request execution/output generation**.
+Use this for logic that should run **after plugin initialization** but **before migration execution and request execution/output generation**.
 
 Typical use cases:
 
 * plugin coordination after all plugins finished `init()`
 * service preparation
 * additional registrations that require initialized plugins
+
+#### `bootstrap.migrated`
+
+Use this for logic that should run **after the configured migration runner completed successfully** but before request execution.
+
+Typical use cases:
+
+* diagnostics after schema migration
+* cache preparation that depends on migrated database structures
+* project-specific checks before routing starts
+
+Do not use this hook to perform the core migration step itself when migrations are part of the framework lifecycle. The bootstrap calls the configured migration runner directly.
 
 #### `bootstrap.finish`
 

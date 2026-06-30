@@ -159,7 +159,7 @@ use Base3\Migration\Api\IMigrationRunner;
 use Base3\Migration\No\NoMigrationRunner;
 
 $container
-    ->set(IMigrationRunner::class, fn() => new NoMigrationRunner(), IContainer::SHARED);
+	->set(IMigrationRunner::class, fn() => new NoMigrationRunner(), IContainer::SHARED);
 ```
 
 The runner is called after plugin initialization and after `bootstrap.start`, but before request execution.
@@ -229,6 +229,7 @@ namespace ProjectPlugin;
 use Base3\Api\IClassMap;
 use Base3\Api\IContainer;
 use Base3\Api\IPlugin;
+use Base3\Configuration\Api\IConfiguration;
 use Base3\Database\Api\IDatabase;
 use Base3\Database\Mysql\MysqlDatabase;
 use Base3\Migration\Api\IMigrationRunner;

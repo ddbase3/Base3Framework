@@ -1028,7 +1028,88 @@ Use storage for runtime data.
 
 ---
 
-## 27. Summary
+## 27. Add a database migration provider
+
+Use a migration provider when a plugin or framework implementation owns database schema that may evolve over time.
+
+Create:
+
+```text
+src/Migration/ExamplePluginMigrationProvider.php
+src/Migration/Migration001CreateTables.php
+src/Migration/Migration002AddIndexes.php
+```
+
+Provider example:
+
+```php
+<?php declare(strict_types=1);
+
+namespace ExamplePlugin\Migration;
+
+use Base3\Migration\Api\IDatabaseMigrationProvider;
+
+final class ExamplePluginMigrationProvider implements IDatabaseMigrationProvider {
+
+	public static function getName(): string {
+		return 'examplepluginmigrationprovider';
+	}
+
+	public function isActive(): bool {
+		return true;
+	}
+
+	public function getMigrations(): array {
+		return [
+			Migration001CreateTables::class,
+			Migration002AddIndexes::class
+		];
+	}
+}
+```
+
+Migration step example:
+
+```php
+<?php declare(strict_types=1);
+
+namespace ExamplePlugin\Migration;
+
+use Base3\Database\Api\IDatabase;
+use Base3\Migration\Api\IDatabaseMigration;
+
+final class Migration001CreateTables implements IDatabaseMigration {
+
+	public function __construct(
+		private readonly IDatabase $database
+	) {}
+
+	public static function getName(): string {
+		return 'exampleplugin_001_create_tables';
+	}
+
+	public function getVersion(): string {
+		return '001';
+	}
+
+	public function getDescription(): string {
+		return 'Creates the initial ExamplePlugin tables.';
+	}
+
+	public function up(): void {
+		$this->database->connect();
+		$this->database->nonQuery(
+			'CREATE TABLE IF NOT EXISTS `example_items` (`id` INT NOT NULL AUTO_INCREMENT, `title` VARCHAR(255) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+		);
+	}
+}
+```
+
+Do not run this from plugin `init()`. The configured migration runner runs after all plugins have initialized.
+
+---
+
+## 28. Summary
 
 BASE3 extension work follows a small set of patterns:
 

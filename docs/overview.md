@@ -61,6 +61,7 @@ Project plugins
 Service selector
 Outputs / Displays / MVC templates
 Settings / State / Configuration
+Database migrations
 Hooks / Events
 Workers / Jobs
 ```
@@ -143,6 +144,8 @@ index.php
      -> discover plugins
      -> call plugin.init()
      -> dispatch bootstrap.start
+     -> run migration runner
+     -> dispatch bootstrap.migrated
      -> run service selector
      -> dispatch bootstrap.finish
 ```
@@ -160,9 +163,11 @@ flowchart TD
 	G --> H[Plugin discovery]
 	H --> I[plugin.init]
 	I --> J[bootstrap.start]
-	J --> K[Service selector]
-	K --> L[Output / response]
-	L --> M[bootstrap.finish]
+	J --> K[Migration runner]
+	K --> L[bootstrap.migrated]
+	L --> M[Service selector]
+	M --> N[Output / response]
+	N --> O[bootstrap.finish]
 ```
 
 The bootstrap is the first composition root.
@@ -188,6 +193,7 @@ IClassMap
 ISettingsStore
 IStateStore
 IDatabase
+IMigrationRunner
 ILogger
 IEventManager
 IAssetResolver
@@ -414,7 +420,19 @@ This is especially useful for secrets and deployment-specific values.
 
 ---
 
-## 13. Hooks and Events
+## 13. Database migrations
+
+BASE3 provides a migration slot but does not assume that every project has a database.
+
+The default bootstrap registers a no-op migration runner. A project plugin replaces it with a database-backed runner only when the project wires `IDatabase` and wants database migrations to run automatically.
+
+Migration providers are discoverable components. They own one schema area and decide whether they are active based on the final runtime composition. This means a database-backed configuration service can provide its own migrations, while a file-backed configuration service needs none.
+
+Read `migrations.md` for the full model.
+
+---
+
+## 14. Hooks and Events
 
 BASE3 has both hooks and events.
 
@@ -445,7 +463,7 @@ Events are mostly runtime behavior-oriented.
 
 ---
 
-## 14. Workers and jobs
+## 15. Workers and jobs
 
 BASE3 includes a worker system for background jobs.
 
@@ -469,7 +487,7 @@ This allows plugins to add background behavior without changing the worker core.
 
 ---
 
-## 15. Standalone and embedded runtime
+## 16. Standalone and embedded runtime
 
 In standalone mode, BASE3 owns the runtime.
 
@@ -492,7 +510,7 @@ Code should therefore depend on interfaces and avoid hardcoded assumptions about
 
 ---
 
-## 16. Recommended reading order
+## 17. Recommended reading order
 
 A new developer should read the docs in this order:
 
@@ -500,10 +518,10 @@ A new developer should read the docs in this order:
 overview.md
 architecture-principles.md
 bootstrap.md
-dependencyinjection.md
+dependency-injection.md
 classmap.md
 plugins.md
-foundations.md
+migrations.md
 extension-cookbook.md
 routing.md
 mvc.md
@@ -515,17 +533,17 @@ hooks.md
 events.md
 worker.md
 assets.md
-requestdata.md
+request-data.md
 systemservice.md
 ```
 
 Not every project needs every subsystem immediately.
 
-But the first seven documents explain the mental model.
+But the first eight documents explain the mental model.
 
 ---
 
-## 17. Summary
+## 18. Summary
 
 BASE3 is built around a small set of architectural rules:
 
@@ -538,6 +556,7 @@ Foundation plugins define contracts.
 Project plugins wire final implementations.
 Outputs and displays handle requests.
 Settings, state, and config are separated.
+Migrations update active database schemas before request handling.
 Hooks extend lifecycle.
 Events announce runtime behavior.
 Workers run background jobs.

@@ -51,6 +51,7 @@ Examples:
 IConfiguration
 IRequest
 IDatabase
+IMigrationRunner
 ILogger
 ISettingsStore
 IStateStore
@@ -89,6 +90,7 @@ IJob
 ICheck
 IJobExecutionPolicy
 IConfigValueModeResolver
+IDatabaseMigrationProvider
 ```
 
 The class map is useful when the system asks:
@@ -240,6 +242,8 @@ A project plugin is the composition layer.
 It may bind:
 
 ```php
+IDatabase::class => MysqlDatabase
+IMigrationRunner::class => DatabaseMigrationRunner
 ISettingsStore::class => DatabaseSettingsStore
 IQuerySchemaProvider::class => ProjectQuerySchemaProvider
 IReportConfigProvider::class => ProjectReportConfigProvider
@@ -321,6 +325,8 @@ bootstrap.init
 Plugin discovery
 plugin.init()
 bootstrap.start
+Migration runner
+bootstrap.migrated
 Service selector
 Output / Display / MVC
 bootstrap.finish
@@ -349,6 +355,9 @@ sequenceDiagram
 	B->>M: discover IPlugin
 	B->>P: init()
 	B->>H: dispatch bootstrap.start
+	B->>C: resolve IMigrationRunner
+	B->>C: migrate active schema providers
+	B->>H: dispatch bootstrap.migrated
 	B->>S: go()
 	S->>O: resolve and render output
 	B->>H: dispatch bootstrap.finish
@@ -512,7 +521,32 @@ configuration group/key
 
 ---
 
-## 16. Assets must be resolved
+## 16. Database migrations follow active composition
+
+Database migrations follow the same composition rule as other infrastructure.
+
+The default framework bootstrap registers `IMigrationRunner` as a no-op service because BASE3 must be able to run without a database. A project plugin replaces that runner only when the project wires `IDatabase` and wants database migrations to run.
+
+Migration providers are discoverable through the class map, but they must still decide whether they are active for the current runtime composition. A provider should own one schema area and should not run merely because its class exists.
+
+Examples:
+
+```text
+DatabaseStateStoreMigrationProvider
+  active when IStateStore is wired to DatabaseStateStore
+
+DatabaseConfigurationMigrationProvider
+  active when IConfiguration is wired to a database-backed implementation
+
+ExamplePluginMigrationProvider
+  active when ExamplePlugin's database feature is enabled
+```
+
+This keeps schema ownership with the code that owns the data structure, while the project plugin still decides which implementations are active.
+
+---
+
+## 17. Assets must be resolved
 
 Plugins should reference assets through logical plugin paths.
 
@@ -530,7 +564,7 @@ This keeps plugin templates portable.
 
 ---
 
-## 17. Hooks versus events
+## 18. Hooks versus events
 
 Use hooks for lifecycle extension points.
 
@@ -566,7 +600,7 @@ What happened during runtime behavior?
 
 ---
 
-## 18. Standalone versus embedded
+## 19. Standalone versus embedded
 
 BASE3 should not assume one runtime layout.
 
@@ -596,7 +630,7 @@ Use interfaces and resolvers.
 
 ---
 
-## 19. Local project files
+## 20. Local project files
 
 A project plugin may include a `local/` directory with project-specific configuration files, presets, prompts, schemas, or sample data.
 
@@ -621,7 +655,7 @@ Do not use `local/` as a replacement for proper storage when data is user-specif
 
 ---
 
-## 20. Documentation principle
+## 21. Documentation principle
 
 Subsystem documentation should explain two things:
 
@@ -640,7 +674,7 @@ Those conventions should be documented directly.
 
 ---
 
-## 21. Practical rules
+## 22. Practical rules
 
 Use constructor injection for runtime classes.
 
@@ -676,7 +710,7 @@ Use workers for background execution.
 
 ---
 
-## 22. Summary
+## 23. Summary
 
 BASE3 architecture is built around separation of roles:
 

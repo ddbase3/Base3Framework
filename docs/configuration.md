@@ -1032,7 +1032,19 @@ This pattern is especially useful for plugins that need guaranteed keys to exist
 
 ---
 
-## 18. Configuration file structure and naming guidance
+## 18. Database-backed configuration and migrations
+
+Configuration illustrates why migrations must follow active composition.
+
+When `IConfiguration` is wired to `ConfigFile`, no database table is needed. When a project wires `IConfiguration` to a database-backed implementation, the table needed by that implementation belongs to that implementation, not to the project plugin.
+
+A database-backed configuration service may use a guarded minimal table initialization step if that table is required before configuration can load. Later schema evolution should be represented as migration steps owned by the database-backed configuration implementation.
+
+The project plugin should decide which configuration implementation is active. It should not need to copy the internal schema logic of that implementation.
+
+---
+
+## 19. Configuration file structure and naming guidance
 
 BASE3 itself does not force a strict global naming scheme beyond the group/key structure, but plugin authors should still be disciplined.
 
@@ -1073,7 +1085,7 @@ Once a plugin is used in real installations, changing group or key names careles
 
 ---
 
-## 19. Example: plugin settings form save flow
+## 20. Example: plugin settings form save flow
 
 A common real-world scenario is an admin form that edits plugin settings.
 
@@ -1116,7 +1128,7 @@ This keeps configuration handling centralized and testable.
 
 ---
 
-## 20. Testing code that depends on configuration
+## 21. Testing code that depends on configuration
 
 One of the biggest advantages of the interface-based design is testability.
 
@@ -1154,7 +1166,7 @@ For plugin authors, this is often the fastest path to reliable unit tests.
 
 ---
 
-## 21. Operational behavior and reloads
+## 22. Operational behavior and reloads
 
 Most web requests are short-lived, but some processes are not.
 
@@ -1196,7 +1208,7 @@ Without reload support, long-running processes might keep using stale settings i
 
 ---
 
-## 22. Error handling and save behavior
+## 23. Error handling and save behavior
 
 The configuration API intentionally keeps `save()` for backwards compatibility, even though it does not expose a return value.
 
@@ -1238,7 +1250,7 @@ The interface standardizes behavior, but a plugin that cares deeply about save d
 
 ---
 
-## 23. Recommended usage patterns for plugin authors
+## 24. Recommended usage patterns for plugin authors
 
 ### Prefer this
 
@@ -1275,7 +1287,7 @@ That decision belongs to project wiring and container setup.
 
 ---
 
-## 24. Anti-patterns
+## 25. Anti-patterns
 
 ### 1. Depending on a concrete backend without need
 
@@ -1342,7 +1354,7 @@ Prefer either:
 
 ---
 
-## 25. End-to-end example
+## 26. End-to-end example
 
 The following example shows a small but realistic plugin service using configuration through DI.
 
@@ -1406,7 +1418,7 @@ This is the typical BASE3 style:
 
 ---
 
-## 26. Summary
+## 27. Summary
 
 BASE3 configuration is built around one central abstraction: `IConfiguration`.
 
@@ -1430,7 +1442,7 @@ If you follow those rules, your plugin configuration will remain portable, testa
 
 ---
 
-## 27. Quick reference
+## 28. Quick reference
 
 ### Read operations
 

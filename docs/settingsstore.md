@@ -638,7 +638,17 @@ settings JSON-encoded settings array
 
 ---
 
-## 15. Database table schema
+## 15. DatabaseSettingsStore and migrations
+
+The database-backed settings store owns its private settings table. A guarded table initialization step is acceptable for the minimal table that the backend needs to function.
+
+Later schema changes should be represented as migration steps owned by the database-backed settings implementation. They should not be copied into every project plugin that chooses this backend.
+
+If a project uses the JSON-backed settings store, no settings-store database migration is relevant. A settings-store migration provider should therefore check the active runtime composition before returning active migrations.
+
+---
+
+## 16. Database table schema
 
 The database backend ensures the table exists automatically.
 
@@ -666,7 +676,7 @@ mail_accounts/billing
 
 ---
 
-## 16. Database backend lifecycle
+## 17. Database backend lifecycle
 
 ```mermaid
 flowchart TD
@@ -690,7 +700,7 @@ That means:
 
 ---
 
-## 17. Database backend write behavior
+## 18. Database backend write behavior
 
 `set()` serializes the settings array to JSON and writes it with an upsert:
 
@@ -711,7 +721,7 @@ If JSON encoding or decoding fails, the backend throws an exception.
 
 ---
 
-## 18. Database backend read behavior
+## 19. Database backend read behavior
 
 `get()` loads the JSON payload for one group/name pair.
 
@@ -740,7 +750,7 @@ If a row cannot be decoded into an array, an exception is thrown.
 
 ---
 
-## 19. Choosing the backend
+## 20. Choosing the backend
 
 Use `JsonSettingsStore` when:
 
@@ -769,7 +779,7 @@ flowchart TD
 
 ---
 
-## 20. Dependency injection usage
+## 21. Dependency injection usage
 
 Plugin code should depend on the interface:
 
@@ -816,7 +826,7 @@ The project should decide which backend is bound to `ISettingsStore`.
 
 ---
 
-## 21. Example registration
+## 22. Example registration
 
 The exact registration depends on the project bootstrap, but conceptually the container maps the interface to one backend.
 
@@ -856,7 +866,7 @@ The important part is that consumers receive only `ISettingsStore`.
 
 ---
 
-## 22. Example: provider settings
+## 23. Example: provider settings
 
 A common use case is a provider registry.
 
@@ -903,7 +913,7 @@ $enabled = array_filter(
 
 ---
 
-## 23. Example: mail account settings
+## 24. Example: mail account settings
 
 ```php
 $settingsStore->set('mail_accounts', 'support', [
@@ -932,7 +942,7 @@ This keeps the mail account definition outside the job logic.
 
 ---
 
-## 24. Example: CRM resource settings
+## 25. Example: CRM resource settings
 
 For CRM-style resource monitoring, each resource can be a named dataset.
 
@@ -975,7 +985,7 @@ foreach ($resources as $name => $resource) {
 
 ---
 
-## 25. Group and name conventions
+## 26. Group and name conventions
 
 Use stable, readable group names.
 
@@ -1019,7 +1029,7 @@ The implementation only rejects empty group and name values, but projects should
 
 ---
 
-## 26. Suggested naming pattern
+## 27. Suggested naming pattern
 
 A practical convention is:
 
@@ -1044,7 +1054,7 @@ This keeps admin screens and code predictable.
 
 ---
 
-## 27. Validation responsibility
+## 28. Validation responsibility
 
 The Settings Store validates only the storage shape:
 
@@ -1076,7 +1086,7 @@ For larger plugins, create a dedicated settings service instead of spreading val
 
 ---
 
-## 28. Recommended wrapper service
+## 29. Recommended wrapper service
 
 A wrapper service keeps access consistent.
 
@@ -1132,7 +1142,7 @@ This has several advantages:
 
 ---
 
-## 29. Error handling
+## 30. Error handling
 
 Concrete implementations throw exceptions for invalid or failed storage operations.
 
@@ -1170,7 +1180,7 @@ catch (RuntimeException $e) {
 
 ---
 
-## 30. Security considerations
+## 31. Security considerations
 
 The Settings Store persists plain array data.
 
@@ -1196,7 +1206,7 @@ A safer pattern is to store references to secrets instead of raw secrets when th
 
 ---
 
-## 31. Common usage patterns
+## 32. Common usage patterns
 
 ### 31.1 Admin settings form
 
@@ -1261,7 +1271,7 @@ $settingsStore->save();
 
 ---
 
-## 32. Long-running processes
+## 33. Long-running processes
 
 Long-running workers should call `reload()` when they need current settings.
 
@@ -1289,7 +1299,7 @@ This avoids stale in-memory settings in the JSON backend and makes the intent cl
 
 ---
 
-## 33. Backend-independent write style
+## 34. Backend-independent write style
 
 Because `save()` behaves differently depending on the backend, plugin code should use this simple pattern:
 
@@ -1308,7 +1318,7 @@ This keeps plugin code portable.
 
 ---
 
-## 34. What should not go into the Settings Store
+## 35. What should not go into the Settings Store
 
 Do not use the Settings Store for high-volume domain data.
 
@@ -1329,7 +1339,7 @@ The Settings Store is best for compact, named settings records.
 
 ---
 
-## 35. Custom implementations
+## 36. Custom implementations
 
 A project can provide another implementation of `ISettingsStore`.
 
@@ -1354,7 +1364,7 @@ A custom implementation must preserve the interface behavior:
 
 ---
 
-## 36. Recommended plugin structure
+## 37. Recommended plugin structure
 
 A plugin that uses settings heavily should keep settings access behind service classes.
 
@@ -1375,7 +1385,7 @@ This avoids scattering raw group and name strings across unrelated classes.
 
 ---
 
-## 37. Practical rules
+## 38. Practical rules
 
 Use `ISettingsStore` through constructor injection.
 
@@ -1399,7 +1409,7 @@ Do not log complete settings arrays when they may contain secrets.
 
 ---
 
-## 38. Summary
+## 39. Summary
 
 The BASE3 Settings Store provides a compact abstraction for grouped, named settings datasets.
 

@@ -12,6 +12,7 @@ It is written for developers who want to understand:
 * which services are registered before plugins run
 * when hooks are dispatched
 * when plugin `init()` methods are called
+* how the migration runner is called before request handling
 * how the service selector starts request handling
 * how a project or host system can replace the default bootstrap with a custom one
 
@@ -53,7 +54,7 @@ The default implementation is:
 Base3\Core\Bootstrap
 ```
 
-It builds the service container, registers core services, discovers hooks and plugins, initializes plugins, and finally executes the service selector.
+It builds the service container, registers core services, discovers hooks and plugins, initializes plugins, runs the configured migration runner, and finally executes the service selector.
 
 ```mermaid id="4lg8um"
 flowchart TD
@@ -67,8 +68,10 @@ flowchart TD
 	H --> I[Dispatch bootstrap.init]
 	I --> J[Initialize plugins]
 	J --> K[Dispatch bootstrap.start]
-	K --> L[Run service selector]
-	L --> M[Dispatch bootstrap.finish]
+	K --> L[Run migration runner]
+	L --> M[Dispatch bootstrap.migrated]
+	M --> N[Run service selector]
+	N --> O[Dispatch bootstrap.finish]
 ```
 
 ---
@@ -91,7 +94,7 @@ A custom bootstrap can:
 * use a different service selector
 * register logging earlier
 * bind project-specific infrastructure
-* pre-register settings, state, session, cache, or database services
+* pre-register settings, state, session, cache, database, or migration services
 * integrate BASE3 into another host system
 * skip standalone assumptions from the framework-owned `index.php`
 
@@ -306,6 +309,9 @@ sequenceDiagram
 	B->>M: discover plugins
 	B->>P: plugin.init()
 	B->>H: dispatch bootstrap.start
+	B->>C: resolve IMigrationRunner
+	B->>C: migrate()
+	B->>H: dispatch bootstrap.migrated
 	B->>S: go()
 	S-->>B: output
 	B->>I: echo output
@@ -497,7 +503,27 @@ A host-specific bootstrap is the right place to do that.
 
 ---
 
-## 11.9 `IServiceSelector`
+## 11.9 `IMigrationRunner`
+
+The default bootstrap registers a no-op migration runner.
+
+Conceptually:
+
+```php
+$container->set(
+	IMigrationRunner::class,
+	fn() => new NoMigrationRunner(),
+	IContainer::SHARED
+);
+```
+
+This default is intentional because BASE3 can run without a database. A project plugin may replace this service after bootstrap registration and before request execution.
+
+The bootstrap calls `migrate()` after `bootstrap.start` and before the service selector. If no project replaced the runner, the no-op runner does nothing.
+
+---
+
+## 11.10 `IServiceSelector`
 
 ```php id="tkt97r"
 IServiceSelector::class => StandardServiceSelector
@@ -511,7 +537,7 @@ A project can replace this with a route-based selector or host-specific selector
 
 ---
 
-## 11.10 `middlewares`
+## 11.11 `middlewares`
 
 ```php id="rm8wpw"
 'middlewares' => []
@@ -705,7 +731,22 @@ Request execution belongs to the service selector and output classes.
 
 ---
 
-## 17. Request execution
+## 17. Migration execution
+
+After plugins have initialized and `bootstrap.start` has been dispatched, the bootstrap resolves `IMigrationRunner` and calls `migrate()`.
+
+```php
+$container->get(IMigrationRunner::class)->migrate();
+$hookManager->dispatch('bootstrap.migrated');
+```
+
+The default implementation is `NoMigrationRunner`, so projects without a database do not need to configure anything. A project plugin that wires `IDatabase` may replace the runner with `DatabaseMigrationRunner`.
+
+This step belongs after plugin initialization because project plugins must have a chance to replace the default runner and wire final database services. It belongs before request execution because outputs and services should see the expected schema state.
+
+---
+
+## 18. Request execution
 
 After plugin initialization and `bootstrap.start`, the bootstrap runs the service selector.
 
@@ -730,7 +771,7 @@ That responsibility belongs to `IServiceSelector`.
 
 ---
 
-## 18. Default startup sequence
+## 19. Default startup sequence
 
 The default sequence is:
 
@@ -745,9 +786,11 @@ The default sequence is:
 8. Bootstrap discovers plugins
 9. Bootstrap calls plugin.init()
 10. Bootstrap dispatches bootstrap.start
-11. Bootstrap runs IServiceSelector
-12. Bootstrap echoes output
-13. Bootstrap dispatches bootstrap.finish
+11. Bootstrap runs IMigrationRunner
+12. Bootstrap dispatches bootstrap.migrated
+13. Bootstrap runs IServiceSelector
+14. Bootstrap echoes output
+15. Bootstrap dispatches bootstrap.finish
 ```
 
 Diagram:
@@ -771,7 +814,7 @@ flowchart TD
 
 ---
 
-## 19. Entry file vs bootstrap
+## 20. Entry file vs bootstrap
 
 It is useful to keep the responsibilities separate.
 
@@ -812,7 +855,7 @@ Examples:
 
 ---
 
-## 20. Custom bootstrap use cases
+## 21. Custom bootstrap use cases
 
 A custom bootstrap is useful when BASE3 is embedded into another project or host system.
 
@@ -833,7 +876,7 @@ In these cases, a custom bootstrap can still implement `IBootstrap`, but build a
 
 ---
 
-## 21. Example custom entry file
+## 22. Example custom entry file
 
 A host project can use its own entry file.
 
@@ -870,7 +913,7 @@ new \Project\Base3\ProjectBootstrap()
 
 ---
 
-## 22. Example custom bootstrap
+## 23. Example custom bootstrap
 
 A custom bootstrap can register a different default service graph.
 
@@ -938,7 +981,7 @@ This follows the same lifecycle shape but uses project-specific services.
 
 ---
 
-## 23. What a custom bootstrap should preserve
+## 24. What a custom bootstrap should preserve
 
 A custom bootstrap does not have to copy the default implementation exactly.
 
@@ -958,7 +1001,7 @@ If a custom bootstrap intentionally skips one of these, it should be because the
 
 ---
 
-## 24. Service replacement points
+## 25. Service replacement points
 
 The bootstrap is the best place to replace framework defaults.
 
@@ -1000,7 +1043,7 @@ $container->set(
 
 ---
 
-## 25. Why the default bootstrap uses `NoAccesscontrol`
+## 26. Why the default bootstrap uses `NoAccesscontrol`
 
 The default bootstrap registers:
 
@@ -1021,7 +1064,7 @@ For real applications, projects usually replace this service with a project-spec
 
 ---
 
-## 26. Why the default bootstrap uses `StandardServiceSelector`
+## 27. Why the default bootstrap uses `StandardServiceSelector`
 
 The default bootstrap registers:
 
@@ -1043,7 +1086,7 @@ The rest of the framework can keep depending on `IServiceSelector`.
 
 ---
 
-## 27. Middleware initialization
+## 28. Middleware initialization
 
 The default bootstrap registers:
 
@@ -1080,7 +1123,7 @@ output decoration
 
 ---
 
-## 28. Bootstrap and plugin ordering
+## 29. Bootstrap and plugin ordering
 
 The ordering is important.
 
@@ -1114,7 +1157,7 @@ Use outputs, routes, middleware, and controllers for request-specific execution.
 
 ---
 
-## 29. Practical guidance for plugin authors
+## 30. Practical guidance for plugin authors
 
 Plugin authors usually do not need to write a bootstrap.
 
@@ -1151,7 +1194,7 @@ Avoid using the bootstrap as a place for plugin business logic.
 
 ---
 
-## 30. Practical guidance for project integrators
+## 31. Practical guidance for project integrators
 
 Project integrators may need to write or replace a bootstrap.
 
@@ -1172,7 +1215,7 @@ A good custom bootstrap should be small enough to understand, but explicit enoug
 
 ---
 
-## 31. Common mistakes
+## 32. Common mistakes
 
 ### Running plugin logic in the entry file
 
@@ -1235,7 +1278,7 @@ service selector runs
 
 ---
 
-## 32. Minimal standalone startup summary
+## 33. Minimal standalone startup summary
 
 Standalone BASE3 startup looks like this:
 
@@ -1255,7 +1298,7 @@ The entry file and bootstrap together form the startup boundary.
 
 ---
 
-## 33. Summary
+## 34. Summary
 
 The BASE3 bootstrap system is deliberately small and replaceable.
 
