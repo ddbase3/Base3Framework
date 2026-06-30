@@ -35,6 +35,8 @@ use Base3\Core\PluginClassMap;
 use Base3\Hook\Api\IHookManager;
 use Base3\Hook\Api\IHookListener;
 use Base3\Hook\HookManager;
+use Base3\Migration\Api\IMigrationRunner;
+use Base3\Migration\No\NoMigrationRunner;
 use Base3\ServiceSelector\Api\IServiceSelector;
 use Base3\ServiceSelector\Standard\StandardServiceSelector;
 
@@ -55,8 +57,9 @@ class Bootstrap implements IBootstrap {
 			->set(IConfiguration::class, 'configuration', IContainer::ALIAS)
 			->set('classmap', fn($c) => new PluginClassMap($c->get(IContainer::class)), IContainer::SHARED)
 			->set(IClassMap::class, 'classmap', IContainer::ALIAS)
-                        ->set('accesscontrol', fn($c) => new NoAccesscontrol(), IContainer::SHARED)
-                        ->set(IAccesscontrol::class, 'accesscontrol', IContainer::ALIAS)
+			->set(IMigrationRunner::class, fn() => new NoMigrationRunner(), IContainer::SHARED)
+			->set('accesscontrol', fn($c) => new NoAccesscontrol(), IContainer::SHARED)
+			->set(IAccesscontrol::class, 'accesscontrol', IContainer::ALIAS)
 			->set(IServiceSelector::class, fn($c) => new StandardServiceSelector($c), IContainer::SHARED)
 			->set('middlewares', [])
 		;
@@ -72,10 +75,13 @@ class Bootstrap implements IBootstrap {
 		foreach ($plugins as $plugin) $plugin->init();
 		$hookManager->dispatch('bootstrap.start');
 
+		// migrations
+		$container->get(IMigrationRunner::class)->migrate();
+		$hookManager->dispatch('bootstrap.migrated');
+
 		// go
 		$serviceSelector = $container->get(IServiceSelector::class);
 		echo $serviceSelector->go();
 		$hookManager->dispatch('bootstrap.finish');
 	}
 }
-
