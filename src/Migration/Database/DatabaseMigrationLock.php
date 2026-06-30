@@ -22,93 +22,58 @@ use Base3\Database\Api\IDatabase;
 use Base3\Migration\Exception\MigrationException;
 
 /**
- * Provides a small database-backed lock for migration execution.
+ * Provides a connection-scoped database lock for migration execution.
+ *
+ * The lock uses MySQL/MariaDB named locks with timeout 0. It never waits.
+ * If another process is already migrating, acquire() returns false
+ * immediately. The lock is released explicitly or automatically when the
+ * database connection closes.
  */
 final class DatabaseMigrationLock {
 
-	private bool $initialized = false;
-	private ?string $token = null;
+	private ?string $lockName = null;
 
 	public function __construct(
 		private readonly IDatabase $database,
-		private readonly int $ttlSeconds = 300
+		private readonly int $ttlSeconds = 0
 	) {}
 
 	public function acquire(string $name): bool {
-		$this->ensureReady();
-
-		$now = time();
-		$expiresAt = $now + $this->ttlSeconds;
-		$token = bin2hex(random_bytes(16));
-
-		$this->database->nonQuery(
-			"DELETE FROM `base3_migration_locks`
-			 WHERE `expires_at` < " . $now
-		);
-		$this->assertNoError('Could not remove expired migration locks.');
-
-		$this->database->nonQuery(
-			"INSERT IGNORE INTO `base3_migration_locks`
-			 (`name`, `token`, `acquired_at`, `expires_at`)
-			 VALUES (
-				" . $this->quote($name) . ",
-				" . $this->quote($token) . ",
-				" . $now . ",
-				" . $expiresAt . "
-			 )"
-		);
-		$this->assertNoError('Could not acquire migration lock.');
-
-		if ($this->database->affectedRows() !== 1) {
-			return false;
-		}
-
-		$this->token = $token;
-		return true;
-	}
-
-	public function release(string $name): void {
-		if ($this->token === null) {
-			return;
-		}
-
-		$this->database->nonQuery(
-			"DELETE FROM `base3_migration_locks`
-			 WHERE `name` = " . $this->quote($name) . "
-			 AND `token` = " . $this->quote($this->token)
-		);
-
-		$this->token = null;
-	}
-
-	private function ensureReady(): void {
 		$this->database->connect();
 
 		if (!$this->database->connected()) {
 			throw new MigrationException('Database connection could not be established for migration locking.');
 		}
 
-		if ($this->initialized) {
+		$lockName = $this->createLockName($name);
+		$result = $this->database->scalarQuery(
+			"SELECT GET_LOCK(" . $this->quote($lockName) . ", 0)"
+		);
+		$this->assertNoError('Could not acquire migration lock.');
+
+		if ((string) $result !== '1') {
+			return false;
+		}
+
+		$this->lockName = $lockName;
+		return true;
+	}
+
+	public function release(string $name): void {
+		if ($this->lockName === null) {
 			return;
 		}
 
-		$this->ensureTable();
-		$this->initialized = true;
+		$this->database->scalarQuery(
+			"SELECT RELEASE_LOCK(" . $this->quote($this->lockName) . ")"
+		);
+		$this->assertNoError('Could not release migration lock.');
+
+		$this->lockName = null;
 	}
 
-	private function ensureTable(): void {
-		$this->database->nonQuery(
-			"CREATE TABLE IF NOT EXISTS `base3_migration_locks` (
-				`name` VARCHAR(190) NOT NULL,
-				`token` VARCHAR(64) NOT NULL,
-				`acquired_at` INT NOT NULL,
-				`expires_at` INT NOT NULL,
-				PRIMARY KEY (`name`),
-				KEY `idx_expires_at` (`expires_at`)
-			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
-		);
-
-		$this->assertNoError('Could not create migration lock table.');
+	private function createLockName(string $name): string {
+		return 'base3.' . $name;
 	}
 
 	private function quote(string $value): string {
