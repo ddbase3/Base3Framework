@@ -41,7 +41,8 @@ final class DatabaseMigrationRunner implements IMigrationRunner {
 		private readonly IClassMap $classMap,
 		private readonly IDatabase $database,
 		?DatabaseMigrationRepository $repository = null,
-		?DatabaseMigrationLock $lock = null
+		?DatabaseMigrationLock $lock = null,
+		private readonly bool $failIfLockBusy = false
 	) {
 		$this->repository = $repository ?? new DatabaseMigrationRepository($database);
 		$this->lock = $lock ?? new DatabaseMigrationLock($database);
@@ -51,7 +52,11 @@ final class DatabaseMigrationRunner implements IMigrationRunner {
 		$this->repository->ensureReady();
 
 		if (!$this->lock->acquire(self::LOCK_NAME)) {
-			throw new MigrationException('Database migrations are already running.');
+			if ($this->failIfLockBusy) {
+				throw new MigrationException('Database migrations are already running.');
+			}
+
+			return;
 		}
 
 		try {
