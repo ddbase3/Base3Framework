@@ -163,37 +163,63 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		$app = $criteria['app'] ?? null;
 		$interface = $criteria['interface'] ?? null;
 		$name = $criteria['name'] ?? null;
+		$arguments = $criteria['arguments'] ?? [];
+		if (!is_array($arguments)) $arguments = [];
 
 		// app + interface + name
 		if ($app && $interface && $name) {
-			$inst = $this->getInstanceByAppInterfaceName($app, $interface, $name);
-			if ($inst) $instances[] = $inst;
+			$class = $this->findClassByAppInterfaceName($app, $interface, $name);
+			if (!$class) {
+				$this->generate(true);
+				$class = $this->findClassByAppInterfaceName($app, $interface, $name);
+			}
+			if ($class) $instances[] = $this->instantiateWith($class, $arguments);
 			return $instances;
 		}
 
 		// app + interface
 		if ($app && $interface) {
-			$instances = $this->getInstancesByAppInterface($app, $interface);
+			$classes = $this->findClassesByAppInterface($app, $interface);
+			if (empty($classes)) {
+				$this->generate(true);
+				$classes = $this->findClassesByAppInterface($app, $interface);
+			}
+			foreach ($classes as $c)
+				$instances[] = $this->instantiateWith($c, $arguments);
 			return $instances;
 		}
 
 		// app + name
 		if ($app && $name) {
-			$inst = $this->getInstanceByAppName($app, $name);
-			if ($inst) $instances[] = $inst;
+			$class = $this->findClassByAppName($app, $name);
+			if (!$class) {
+				$this->generate(true);
+				$class = $this->findClassByAppName($app, $name);
+			}
+			if ($class) $instances[] = $this->instantiateWith($class, $arguments);
 			return $instances;
 		}
 
 		// interface + name
 		if ($interface && $name) {
-			$inst = $this->getInstanceByInterfaceName($interface, $name);
-			if ($inst) $instances[] = $inst;
+			$class = $this->findClassByInterfaceName($interface, $name);
+			if (!$class) {
+				$this->generate(true);
+				$class = $this->findClassByInterfaceName($interface, $name);
+			}
+			if ($class) $instances[] = $this->instantiateWith($class, $arguments);
 			return $instances;
 		}
 
 		// interface
 		if ($interface) {
-			$instances = $this->getInstancesByInterface($interface);
+			$classes = $this->findClassesByInterface($interface);
+			if (empty($classes)) {
+				$this->generate(true);
+				$classes = $this->findClassesByInterface($interface);
+			}
+			foreach ($classes as $c)
+				$instances[] = $this->instantiateWith($c, $arguments);
 			return $instances;
 		}
 
@@ -203,7 +229,7 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 			foreach ($map as $app => $data) {
 				if (!isset($data['name'][$name])) continue;
 				$c = $data['name'][$name];
-				if (class_exists($c)) $instances[] = $this->instantiate($c);
+				if (class_exists($c)) $instances[] = $this->instantiateWith($c, $arguments);
 			}
 			return $instances;
 		}
@@ -213,7 +239,7 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		foreach ($map as $app => $data) {
 			if (!isset($data['name'])) continue;
 			foreach ($data['name'] as $c) {
-				if (class_exists($c)) $instances[] = $this->instantiate($c);
+				if (class_exists($c)) $instances[] = $this->instantiateWith($c, $arguments);
 			}
 		}
 
@@ -229,31 +255,45 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		return $instances;
 	}
 
-	public function &getInstancesByAppInterface($app, $interface, $retry = false) {
-		$map = $this->getMap();
-		$instances = [];
+	protected function findClassesByInterface($interface): array {
+		$classes = [];
 
-		if (isset($map[$app]['interface'][$interface])) {
-			foreach ($map[$app]['interface'][$interface] as $c)
-				$instances[] = $this->instantiate($c);
-			return $instances;
+		foreach ($this->getMap() as $app => $m) {
+			$classes = array_merge($classes, $this->findClassesByAppInterface($app, $interface));
 		}
 
-		if ($retry) return $instances;
+		return $classes;
+	}
+
+	public function &getInstancesByAppInterface($app, $interface, $retry = false) {
+		$instances = [];
+
+		foreach ($this->findClassesByAppInterface($app, $interface) as $c)
+			$instances[] = $this->instantiate($c);
+
+		if (!empty($instances) || $retry) return $instances;
 		$this->generate(true);
 		return $this->getInstancesByAppInterface($app, $interface, true);
 	}
 
-	public function &getInstanceByAppName($app, $name, $retry = false) {
+	protected function findClassesByAppInterface($app, $interface): array {
 		$map = $this->getMap();
-		$instance = null;
 
-		if (isset($map[$app]['name'][$name])) {
-			$c = $map[$app]['name'][$name];
-			if (class_exists($c)) {
-				$instance = $this->instantiate($c);
-				return $instance;
-			}
+		if (!isset($map[$app]['interface'][$interface])) return [];
+
+		return array_values(array_filter(
+			$map[$app]['interface'][$interface],
+			fn($c) => class_exists($c)
+		));
+	}
+
+	public function &getInstanceByAppName($app, $name, $retry = false) {
+		$instance = null;
+		$class = $this->findClassByAppName($app, $name);
+
+		if ($class) {
+			$instance = $this->instantiate($class);
+			return $instance;
 		}
 
 		if ($retry) return $instance;
@@ -261,18 +301,45 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		return $this->getInstanceByAppName($app, $name, true);
 	}
 
-	public function &getInstanceByInterfaceName($interface, $name, $retry = false) {
+	protected function findClassByAppName($app, $name): ?string {
 		$map = $this->getMap();
-		$instance = null;
+
+		if (!isset($map[$app]['name'][$name])) return null;
+
+		$class = $map[$app]['name'][$name];
+		return class_exists($class) ? $class : null;
+	}
+
+	public function getClassByInterfaceName(string $interface, string $name): ?string {
+		$class = $this->findClassByInterfaceName($interface, $name);
+		if ($class) return $class;
+
+		$this->generate(true);
+		return $this->findClassByInterfaceName($interface, $name);
+	}
+
+	protected function findClassByInterfaceName($interface, $name): ?string {
+		$map = $this->getMap();
 
 		foreach ($map as $appdata) {
 			if (!isset($appdata["name"])) continue;
 			foreach ($appdata["name"] as $n => $c) {
 				if ($n != $name || !class_exists($c)) continue;
 				if (!in_array($interface, class_implements($c))) continue;
-				$instance = $this->instantiate($c);
-				return $instance;
+				return $c;
 			}
+		}
+
+		return null;
+	}
+
+	public function &getInstanceByInterfaceName($interface, $name, $retry = false) {
+		$instance = null;
+		$class = $this->findClassByInterfaceName($interface, $name);
+
+		if ($class) {
+			$instance = $this->instantiate($class);
+			return $instance;
 		}
 
 		if ($retry) return $instance;
@@ -283,16 +350,12 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 	public function &getInstanceByAppInterfaceName($app, $interface, $name, $retry = false) {
 		if (!strlen($app)) return $this->getInstanceByInterfaceName($interface, $name);
 
-		$map = $this->getMap();
 		$instance = null;
+		$class = $this->findClassByAppInterfaceName($app, $interface, $name);
 
-		if (isset($map[$app]['name'][$name], $map[$app]['interface'][$interface])) {
-			$c = $map[$app]['name'][$name];
-			if (!in_array($c, $map[$app]['interface'][$interface])) return null;
-			if (class_exists($c)) {
-				$instance = $this->instantiate($c);
-				return $instance;
-			}
+		if ($class) {
+			$instance = $this->instantiate($class);
+			return $instance;
 		}
 
 		if ($retry) return $instance;
@@ -300,25 +363,40 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		return $this->getInstanceByAppInterfaceName($app, $interface, $name, true);
 	}
 
+	protected function findClassByAppInterfaceName($app, $interface, $name): ?string {
+		$map = $this->getMap();
+
+		if (!isset($map[$app]['name'][$name], $map[$app]['interface'][$interface])) return null;
+
+		$class = $map[$app]['name'][$name];
+		if (!in_array($class, $map[$app]['interface'][$interface])) return null;
+
+		return class_exists($class) ? $class : null;
+	}
+
 	public function instantiate(string $class) {
+		return $this->instantiateWith($class);
+	}
+
+	public function instantiateWith(string $class, array $arguments = []) {
 		try {
 			static $mem = [];
 
 			if (isset($mem[$class])) {
-				return $this->instantiateFromRecipe($class, $mem[$class]);
+				return $this->instantiateFromRecipe($class, $mem[$class], $arguments);
 			}
 
 			$cache = &$this->getCtorCache();
 			if (isset($cache[$class])) {
 				$mem[$class] = $cache[$class];
-				return $this->instantiateFromRecipe($class, $mem[$class]);
+				return $this->instantiateFromRecipe($class, $mem[$class], $arguments);
 			}
 
 			// No recipe available in request-time mode (build is expected to generate ctorcache.php)
 			// Fallback to Reflection for safety.
 			$recipe = $this->buildConstructorRecipe($class);
 			$mem[$class] = $recipe;
-			return $this->instantiateFromRecipe($class, $recipe);
+			return $this->instantiateFromRecipe($class, $recipe, $arguments);
 
 		} catch (\Throwable $e) {
 			echo $e->getMessage();
@@ -326,7 +404,7 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 		}
 	}
 
-	protected function instantiateFromRecipe(string $class, array $recipe) {
+	protected function instantiateFromRecipe(string $class, array $recipe, array $arguments = []) {
 		if (!empty($recipe['__abstract'])) return null;
 
 		if (empty($recipe['__ctor'])) {
@@ -342,9 +420,25 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 			$defaultValue = $p['dv'] ?? null;
 			$nullable = (bool) ($p['null'] ?? false);
 
+			if ($paramName !== '' && array_key_exists($paramName, $arguments)) {
+				$params[] = $arguments[$paramName];
+				continue;
+			}
+
+			if (isset($p['t']) && is_string($p['t']) && array_key_exists($p['t'], $arguments)) {
+				$params[] = $arguments[$p['t']];
+				continue;
+			}
+
 			if ($k === 'u') {
 				$resolved = false;
 				foreach (($p['t'] ?? []) as $dep) {
+					if (array_key_exists($dep, $arguments)) {
+						$params[] = $arguments[$dep];
+						$resolved = true;
+						break;
+					}
+
 					if ($this->container->has($dep)) {
 						$value = $this->container->get($dep);
 						if ($value instanceof \Closure) $value = $value();
@@ -364,6 +458,11 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 
 			if ($k === 'c') {
 				$dep = (string) ($p['t'] ?? '');
+
+				if (array_key_exists($dep, $arguments)) {
+					$params[] = $arguments[$dep];
+					continue;
+				}
 
 				// FIX: nullable + default must use the default (not always null).
 				if ($nullable) {
@@ -401,7 +500,9 @@ abstract class AbstractClassMap implements IClassMap, ICheck {
 			}
 
 			// untyped fallback
-			if ($hasDefault) {
+			if ($paramName !== '' && array_key_exists($paramName, $arguments)) {
+				$params[] = $arguments[$paramName];
+			} elseif ($hasDefault) {
 				$params[] = $defaultValue;
 			} elseif ($nullable) {
 				$params[] = null;

@@ -13,10 +13,11 @@ It is written for developers who want to understand:
 * how plugins become discoverable
 * how `IBase::getName()` fits into name-based selection
 * how automatic instantiation works
+* how `instantiateWith()` supports runtime constructor arguments
 * how constructor dependencies are resolved through the container
 * when to use the class map instead of factories
 * how class map caching works
-* how class map discovery affects hooks, plugins, outputs, jobs, checks, policies, and other extension points
+* how class map discovery affects hooks, plugins, outputs, jobs, checks, policies, configured components, and other extension points
 
 After reading this document, a developer should understand why the class map is one of the most important extension mechanisms in BASE3.
 
@@ -37,6 +38,7 @@ It answers questions like:
 * Which hook listeners are available?
 * Which plugins exist?
 * Can this class be instantiated with dependency injection?
+* Can this class be instantiated with explicit runtime arguments?
 
 A useful shortcut is:
 
@@ -78,14 +80,18 @@ The more important normal runtime implementation is:
 Base3\Core\PluginClassMap
 ```
 
-In the default bootstrap, `PluginClassMap` is registered as the `IClassMap` implementation.
+In the default bootstrap, `PluginClassMap` is registered as the `IClassMap` implementation. The configured component resolver is registered immediately after the class map because it depends on `IClassMap`.
 
 Conceptually:
 
 ```php id="c9v9fs"
 $container
 	->set('classmap', fn($c) => new PluginClassMap($c->get(IContainer::class)), IContainer::SHARED)
-	->set(IClassMap::class, 'classmap', IContainer::ALIAS);
+	->set(IClassMap::class, 'classmap', IContainer::ALIAS)
+	->set(IComponentResolver::class, fn($c) => new ComponentResolver(
+		$c->get(IContainer::class),
+		$c->get(IClassMap::class)
+	), IContainer::SHARED);
 ```
 
 That means normal plugin code receives `PluginClassMap` when it asks for:
@@ -348,6 +354,8 @@ interface IClassMap {
 
 	public function instantiate(string $class);
 
+	public function instantiateWith(string $class, array $arguments = []);
+
 	public function generate($regenerate = false): void;
 
 	public function getApps();
@@ -359,6 +367,8 @@ interface IClassMap {
 	public function &getInstancesByAppInterface($app, $interface, $retry = false);
 
 	public function &getInstanceByAppName($app, $name, $retry = false);
+
+	public function getClassByInterfaceName(string $interface, string $name): ?string;
 
 	public function &getInstanceByInterfaceName($interface, $name, $retry = false);
 
@@ -375,6 +385,8 @@ getInstancesByInterface()
 getInstanceByInterfaceName()
 getInstanceByAppInterfaceName()
 instantiate()
+instantiateWith()
+getClassByInterfaceName()
 getPlugins()
 ```
 
@@ -706,14 +718,15 @@ They are not needed just to reproduce class map lookup.
 
 The default bootstrap registers `PluginClassMap` early.
 
-Then it uses `IClassMap` to discover hook listeners and plugins.
+Then it registers `IComponentResolver` and uses `IClassMap` to discover hook listeners and plugins.
 
 Conceptual flow:
 
 ```mermaid id="jqubeb"
 flowchart TD
 	A[Bootstrap creates container] --> B[Register PluginClassMap as IClassMap]
-	B --> C[Discover IHookListener classes]
+	B --> R[Register IComponentResolver]
+	R --> C[Discover IHookListener classes]
 	C --> D[Register hook listeners]
 	D --> E[Dispatch bootstrap.init]
 	E --> F[Discover IPlugin classes]
@@ -1060,7 +1073,8 @@ Supported criteria:
 [
 	'app' => 'ExamplePlugin',
 	'interface' => IOutput::class,
-	'name' => 'dashboard'
+	'name' => 'dashboard',
+	'arguments' => []
 ]
 ```
 
@@ -1073,6 +1087,8 @@ Supported combinations:
 * interface
 * name
 * no criteria
+
+The optional `arguments` entry is passed to `instantiateWith()` and is useful when a caller needs constructor overrides for a configured runtime instance.
 
 Most plugin code should use the more explicit convenience methods.
 
@@ -1222,6 +1238,23 @@ Instead, it uses constructor recipes and resolves dependencies through the conta
 
 That allows discoverable plugin classes to use constructor injection without being manually registered as services.
 
+### `instantiateWith()`
+
+`instantiateWith()` creates an object from a known class name but allows explicit constructor argument overrides.
+
+```php id="m3r3fb"
+$instance = $classMap->instantiateWith(MyKnownClass::class, [
+	'config' => $config,
+	ComponentDefinition::class => $definition,
+]);
+```
+
+Overrides can be keyed by constructor parameter name or by fully qualified type name.
+
+This is useful when the class map should still perform normal autowiring, but one runtime instance needs definition-specific data.
+
+The configured component mechanism uses this to build multiple instances of one implementation class without turning the component resolver into a second container.
+
 ---
 
 ## 37. Constructor recipes
@@ -1259,6 +1292,36 @@ flowchart TD
 ## 38. Constructor dependency resolution
 
 When instantiating a class, the class map resolves constructor parameters.
+
+When `instantiateWith()` is used, explicit arguments are checked first:
+
+```text id="6qhp5i"
+1. argument by parameter name
+2. argument by type name
+3. container lookup by type
+4. container lookup by parameter name
+5. default value
+6. null when nullable
+7. otherwise not instantiable
+```
+
+### Explicit argument override
+
+An explicit argument by parameter name is useful for builtin values:
+
+```php id="x1bk0r"
+$classMap->instantiateWith(MyClass::class, [
+	'config' => ['mode' => 'internal']
+]);
+```
+
+An explicit argument by type name is useful for value objects:
+
+```php id="pc16mk"
+$classMap->instantiateWith(MyClass::class, [
+	ComponentDefinition::class => $definition
+]);
+```
 
 ### Class or interface type
 
@@ -1750,9 +1813,55 @@ Regenerate the class map when new classes are not discovered.
 
 Avoid constructor dependencies that are not available at the time the class is discovered.
 
+
 ---
 
-## 56. Summary
+## 56. Configured components
+
+Configured components are runtime instances of classmap-discovered implementation classes.
+
+They solve this case:
+
+```text id="4yp4op"
+One implementation class,
+multiple configured runtime instances.
+```
+
+Example:
+
+```text id="bxf5ex"
+RagTool::getName() = "rag"
+
+internal-rag
+  implementation: rag
+  config: internal vector database
+
+customer-rag
+  implementation: rag
+  config: customer vector database
+```
+
+The class map still owns implementation discovery and instantiation.
+
+The container still owns known services and parameters.
+
+`ComponentDefinition` values are stored in the container as parameters, and `ComponentResolver` reads those definitions and delegates object creation to `IClassMap::instantiateWith()`.
+
+The important naming distinction is:
+
+```text id="3ldw45"
+IBase::getName()
+  implementation name / classmap key
+
+IComponent::id()
+  configured runtime instance id
+```
+
+Read `docs/components.md` for the full configured component workflow.
+
+---
+
+## 57. Summary
 
 The BASE3 Class Map system discovers and instantiates framework and plugin classes.
 
@@ -1787,6 +1896,8 @@ getInstancesByAppInterface()
 getInstanceByInterfaceName()
 getInstanceByAppInterfaceName()
 instantiate()
+instantiateWith()
+getClassByInterfaceName()
 getPlugins()
 ```
 

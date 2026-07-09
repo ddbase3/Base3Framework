@@ -38,6 +38,15 @@ interface IClassMap {
 	public function instantiate(string $class);
 
 	/**
+	 * Instantiates the given class name with constructor argument overrides.
+	 *
+	 * @param string $class Fully qualified class name
+	 * @param array $arguments Constructor arguments by parameter name or type name
+	 * @return object|null Instance of the class, or null if not instantiable
+	 */
+	public function instantiateWith(string $class, array $arguments = []);
+
+	/**
 	 * (Re)generates the class map cache.
 	 *
 	 * @param bool $regenerate If true, force regeneration even if cache exists
@@ -59,6 +68,7 @@ interface IClassMap {
 	 * - 'app' (string)       Application identifier
 	 * - 'interface' (string) Fully qualified interface name
 	 * - 'name' (string)      Logical name as returned by getName()
+	 * - 'arguments' (array)  Constructor argument overrides for instantiateWith()
 	 *
 	 * @param array $criteria Associative filter array
 	 * @return array List of matching instances (may be empty)
@@ -92,6 +102,15 @@ interface IClassMap {
 	 * @return object|null
 	 */
 	public function &getInstanceByAppName($app, $name, $retry = false);
+
+	/**
+	 * Convenience: returns the class name by interface + logical name.
+	 *
+	 * @param string $interface Fully qualified interface name
+	 * @param string $name Logical name as returned by getName()
+	 * @return string|null Fully qualified class name
+	 */
+	public function getClassByInterfaceName(string $interface, string $name): ?string;
 
 	/**
 	 * Convenience: returns one instance by interface + logical name.

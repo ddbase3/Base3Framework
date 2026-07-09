@@ -107,9 +107,66 @@ The container is useful when the system asks:
 Give me the active implementation for this known service.
 ```
 
+
 ---
 
-## 4. Factory only for real runtime construction
+## 4. Configured components between container and class map
+
+Use configured components when one discovered implementation class needs multiple configured runtime instances.
+
+Example:
+
+```text
+RagTool::getName() = "rag"
+
+internal-rag
+  implementation: rag
+  vector_db: internal
+
+customer-rag
+  implementation: rag
+  vector_db: customer
+```
+
+This does not create a second container.
+
+The roles remain:
+
+```text
+Container
+  known services and parameters
+  ComponentDefinition values
+
+Class map
+  discovered implementations
+  autowired instantiation
+  instantiateWith() for explicit constructor arguments
+
+ComponentResolver
+  thin resolver from definitions to configured instances
+```
+
+The naming rule is:
+
+```text
+IBase::getName()
+  implementation name / classmap key
+
+IComponent::id()
+  configured runtime instance id
+```
+
+Use this when the system asks:
+
+```text
+Give me the configured instance internal-rag of this component interface.
+```
+
+Do not use it for ordinary shared services. Those belong directly in the container.
+
+---
+
+## 5. Factory only for real runtime construction
 
 Do not create factories that only duplicate class map lookup.
 
@@ -146,7 +203,7 @@ Use factories when they add real construction logic.
 
 ---
 
-## 5. Depend on interfaces
+## 6. Depend on interfaces
 
 Runtime classes should depend on interfaces whenever replacement is expected.
 
@@ -174,7 +231,7 @@ But service slots should use interfaces.
 
 ---
 
-## 6. Keep plugin dependencies intentional
+## 7. Keep plugin dependencies intentional
 
 Most plugins should only depend on:
 
@@ -205,7 +262,7 @@ For example, if a plugin exists only to extend another plugin and has no standal
 
 ---
 
-## 7. Foundation plugins define slots
+## 8. Foundation plugins define slots
 
 Foundation plugins define stable shared contracts.
 
@@ -235,7 +292,7 @@ That is a project decision.
 
 ---
 
-## 8. Project plugins wire final implementations
+## 9. Project plugins wire final implementations
 
 A project plugin is the composition layer.
 
@@ -258,7 +315,7 @@ Ordinary reusable plugins should avoid doing this unless they are explicit exten
 
 ---
 
-## 9. Use `NOOVERWRITE` for fallback defaults
+## 10. Use `NOOVERWRITE` for fallback defaults
 
 Reusable plugins may provide fallback services.
 
@@ -284,7 +341,7 @@ Do not use it when a service is required and must be wired deliberately.
 
 ---
 
-## 10. Keep plugin `init()` small
+## 11. Keep plugin `init()` small
 
 Plugin `init()` should be composition code.
 
@@ -310,7 +367,7 @@ Request behavior belongs in outputs, displays, jobs, middleware, controllers, or
 
 ---
 
-## 11. Runtime lifecycle
+## 12. Runtime lifecycle
 
 The normal lifecycle is:
 
@@ -320,6 +377,7 @@ Bootstrap
 Container
 Core service registration
 PluginClassMap
+ComponentResolver
 Hook listener discovery
 bootstrap.init
 Plugin discovery
@@ -349,6 +407,7 @@ sequenceDiagram
 	B->>C: create container
 	B->>C: register core services
 	B->>M: create PluginClassMap
+	B->>C: register IComponentResolver
 	B->>M: discover IHookListener
 	B->>H: register listeners
 	B->>H: dispatch bootstrap.init
@@ -365,7 +424,7 @@ sequenceDiagram
 
 ---
 
-## 12. Early discovery rule
+## 13. Early discovery rule
 
 Hook listeners are discovered before plugin `init()`.
 
@@ -380,6 +439,7 @@ IContainer
 IConfiguration
 IRequest
 IClassMap
+IComponentResolver
 IHookManager
 ISystemService
 ```
@@ -388,7 +448,7 @@ Plugin-specific services registered in `init()` are not available before `init()
 
 ---
 
-## 13. Request flow
+## 14. Request flow
 
 A typical web request follows this pattern:
 
@@ -425,7 +485,7 @@ It should render assigned values.
 
 ---
 
-## 14. Worker flow
+## 15. Worker flow
 
 A worker request or CLI trigger follows a different flow:
 
@@ -462,7 +522,7 @@ State such as last run timestamps should go into state storage or explicit runti
 
 ---
 
-## 15. Settings, state, and configuration boundaries
+## 16. Settings, state, and configuration boundaries
 
 Do not mix configuration, settings, and state.
 
@@ -521,7 +581,7 @@ configuration group/key
 
 ---
 
-## 16. Database migrations follow active composition
+## 17. Database migrations follow active composition
 
 Database migrations follow the same composition rule as other infrastructure.
 
@@ -546,7 +606,7 @@ This keeps schema ownership with the code that owns the data structure, while th
 
 ---
 
-## 17. Assets must be resolved
+## 18. Assets must be resolved
 
 Plugins should reference assets through logical plugin paths.
 
@@ -564,7 +624,7 @@ This keeps plugin templates portable.
 
 ---
 
-## 18. Hooks versus events
+## 19. Hooks versus events
 
 Use hooks for lifecycle extension points.
 
@@ -600,7 +660,7 @@ What happened during runtime behavior?
 
 ---
 
-## 19. Standalone versus embedded
+## 20. Standalone versus embedded
 
 BASE3 should not assume one runtime layout.
 
@@ -630,7 +690,7 @@ Use interfaces and resolvers.
 
 ---
 
-## 20. Local project files
+## 21. Local project files
 
 A project plugin may include a `local/` directory with project-specific configuration files, presets, prompts, schemas, or sample data.
 
@@ -655,7 +715,7 @@ Do not use `local/` as a replacement for proper storage when data is user-specif
 
 ---
 
-## 21. Documentation principle
+## 22. Documentation principle
 
 Subsystem documentation should explain two things:
 
@@ -674,13 +734,15 @@ Those conventions should be documented directly.
 
 ---
 
-## 22. Practical rules
+## 23. Practical rules
 
 Use constructor injection for runtime classes.
 
 Use the container for known services.
 
 Use `PluginClassMap` for discoverable components.
+
+Use configured components when one discovered implementation needs multiple runtime instance ids.
 
 Use foundation plugins for shared contracts.
 
@@ -710,7 +772,7 @@ Use workers for background execution.
 
 ---
 
-## 23. Summary
+## 24. Summary
 
 BASE3 architecture is built around separation of roles:
 
@@ -721,6 +783,7 @@ Feature plugins provide reusable behavior.
 Implementation plugins fill some contracts.
 Project plugins decide the final service graph.
 Custom bootstraps adapt the runtime.
+Configured components bridge discovered implementations and instance-specific configuration.
 ```
 
 The most important dependency rule is:

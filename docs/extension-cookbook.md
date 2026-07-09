@@ -1107,9 +1107,93 @@ final class Migration001CreateTables implements IDatabaseMigration {
 
 Do not run this from plugin `init()`. The configured migration runner runs after all plugins have initialized.
 
+
 ---
 
-## 28. Summary
+## 28. Add configured component instances
+
+Use this pattern when one discoverable implementation class should exist as multiple configured runtime instances.
+
+Example use cases:
+
+```text
+- two retrieval tools using different vector databases
+- several connector instances with different credentials
+- skill/module instances with different instruction sets
+```
+
+Create an implementation that implements a component interface:
+
+```php
+<?php declare(strict_types=1);
+
+namespace ExamplePlugin\Tool;
+
+use Base3\Api\IComponent;
+use Base3\Core\ComponentDefinition;
+
+interface IExampleTool extends IComponent {
+
+	public function name(): string;
+}
+
+final class RagTool implements IExampleTool {
+
+	public function __construct(
+		private readonly ComponentDefinition $definition,
+	) {}
+
+	public static function getName(): string {
+		return 'rag';
+	}
+
+	public function id(): string {
+		return $this->definition->id;
+	}
+
+	public function name(): string {
+		return $this->definition->metadata['toolName'] ?? $this->definition->id;
+	}
+}
+```
+
+Register the definitions in plugin `init()`:
+
+```php
+use Base3\Api\IContainer;
+use Base3\Core\ComponentDefinition;
+use ExamplePlugin\Tool\IExampleTool;
+
+$definition = new ComponentDefinition(
+	id: 'internal-rag',
+	interfaceName: IExampleTool::class,
+	implementationName: 'rag',
+	config: [
+		'vector_db' => 'internal',
+	],
+	metadata: [
+		'toolName' => 'rag_internal_search',
+	]
+);
+
+$this->container->set(
+	$definition->getServiceName(),
+	$definition,
+	IContainer::PARAMETER
+);
+```
+
+Resolve the configured component at runtime:
+
+```php
+$tool = $componentResolver->get(IExampleTool::class, 'internal-rag');
+```
+
+The component resolver reads definitions from the existing container and delegates construction to the class map. It is not a second container.
+
+---
+
+## 29. Summary
 
 BASE3 extension work follows a small set of patterns:
 
@@ -1119,7 +1203,8 @@ Foundation Plugin = contract package.
 Implementation Plugin = concrete behavior.
 Project Plugin = final wiring.
 PluginClassMap = discovery.
-Container = active services.
+Container = active services and parameters.
+ComponentResolver = configured component instances, registered as a normal core service.
 ```
 
 The most important practical rule is:
@@ -1133,6 +1218,3 @@ Use foundation interfaces for shared contracts.
 Use project plugins to decide which implementations are active.
 
 That is how BASE3 keeps plugins replaceable.
-
-```
-```

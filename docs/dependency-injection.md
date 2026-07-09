@@ -10,6 +10,7 @@ It is meant to answer practical questions such as:
 * How should my own classes declare dependencies?
 * How does BASE3 instantiate classes automatically?
 * When should I use the container, and when should I use the class map?
+* How do configured components fit between container and class map?
 * How does constructor autowiring behave in practice?
 
 This document is intentionally focused on plugin development. It is not a bootstrap document.
@@ -88,6 +89,8 @@ So the container is not something you explain to end users. It is the place wher
 A useful shortcut is:
 
 * **container = shared service registry**
+
+The container is also where `ComponentDefinition` values can be stored as parameters. Those definitions describe configured runtime components, but they do not turn the component resolver into a second container.
 
 ---
 
@@ -340,6 +343,8 @@ The most important methods for plugin developers are these:
 
 ```php
 public function instantiate(string $class);
+public function instantiateWith(string $class, array $arguments = []);
+public function getClassByInterfaceName(string $interface, string $name): ?string;
 public function getInstances(array $criteria = []);
 public function getInstancesByInterface($interface);
 public function getInstancesByAppInterface($app, $interface, $retry = false);
@@ -361,6 +366,8 @@ For plugin developers, that means:
 * constructor dependencies are resolved automatically
 
 So if the framework needs one of your connectors, exporters, handlers, providers, or other discovered classes, `instantiate()` is what makes that possible.
+
+`instantiateWith()` does the same thing, but accepts constructor argument overrides. That is useful when one implementation class must be instantiated more than once with different runtime configuration.
 
 ### Why that is useful
 
@@ -422,14 +429,27 @@ $connector = $classMap->instantiate(MyConnector::class);
 
 Use this when you know the class and want BASE3 to resolve its constructor dependencies.
 
+### Use case E: instantiate a known class with runtime arguments
+
+```php
+$connector = $classMap->instantiateWith(MyConnector::class, [
+	'config' => $config,
+	ComponentDefinition::class => $definition,
+]);
+```
+
+Use this when normal autowiring should still apply, but one specific runtime instance needs explicit constructor data.
+
 ```mermaid
 flowchart TD
 	A["IClassMap"] --> B["instantiate(class)"]
 	A --> C["getInstancesByInterface(interface)"]
 	A --> D["getInstanceByInterfaceName(interface, name)"]
+	A --> H["instantiateWith(class, arguments)"]
 	B --> E["One autowired instance"]
 	C --> F["Many autowired instances"]
 	D --> G["One selected autowired instance"]
+	H --> I["One configured instance"]
 ```
 
 ---
@@ -481,6 +501,7 @@ This distinction is one of the most useful things a plugin developer can underst
 * you want to expose a default implementation
 * you want to define a parameter or alias
 * you need a known service during setup
+* you want to store `ComponentDefinition` values as parameters
 
 ### Use the class map when...
 
@@ -488,19 +509,93 @@ This distinction is one of the most useful things a plugin developer can underst
 * you want all classes implementing a certain interface
 * you want one instance selected by interface or name
 * you want BASE3 to instantiate a class on demand with autowiring
+* you need `instantiateWith()` for explicit runtime constructor arguments
+
+### Use the component resolver when...
+
+* one implementation class should produce multiple configured runtime instances
+* those instances are described by `ComponentDefinition` values in the container
+* the implementation class should still be discovered and instantiated through the class map
 
 ```mermaid
 flowchart LR
 	A["Container"] --> A1["Register known services"]
 	A --> A2["Return shared services"]
+	A --> A3["Store ComponentDefinition parameters"]
 
 	B["Class map"] --> B1["Discover matching classes"]
 	B --> B2["Instantiate them with DI"]
+
+	C["ComponentResolver"] --> C1["Read definitions"]
+	C --> C2["Use class map instantiateWith"]
 ```
+
 
 ---
 
-## 14. A clean plugin structure for DI
+## 14. Configured components
+
+Configured components are useful when the class map can discover an implementation class, but the runtime needs more than one configured instance of that class.
+
+Example:
+
+```text
+RagTool::getName() = "rag"
+
+internal-rag
+  implementation: rag
+  vector_db: internal
+
+customer-rag
+  implementation: rag
+  vector_db: customer
+```
+
+The container stores the definitions:
+
+```php
+$definition = new ComponentDefinition(
+	id: 'internal-rag',
+	interfaceName: IExampleTool::class,
+	implementationName: 'rag',
+	config: [
+		'vector_db' => 'internal',
+	]
+);
+
+$container->set(
+	$definition->getServiceName(),
+	$definition,
+	IContainer::PARAMETER
+);
+```
+
+The default bootstrap registers the resolver as a normal shared service directly under its interface:
+
+```php
+$container->set(
+	IComponentResolver::class,
+	fn($c) => new ComponentResolver(
+		$c->get(IContainer::class),
+		$c->get(IClassMap::class)
+	),
+	IContainer::SHARED
+);
+```
+
+Runtime code asks the resolver for a configured component:
+
+```php
+$tool = $componentResolver->get(IExampleTool::class, 'internal-rag');
+```
+
+The resolver does not become a second container. It reads definitions from the existing container and asks the class map to instantiate the implementation with explicit constructor arguments.
+
+Read `docs/components.md` for the full configured component workflow.
+
+---
+
+## 15. A clean plugin structure for DI
 
 A good default structure is:
 
@@ -586,7 +681,7 @@ This is the style most plugin developers should aim for.
 
 ---
 
-## 15. What `DynamicMockFactory` means for plugin authors
+## 16. What `DynamicMockFactory` means for plugin authors
 
 There is also fallback logic for situations where the framework wants to inspect or probe classes before every real dependency is fully available.
 
@@ -608,7 +703,7 @@ If a class only works because probing used a placeholder, the real solution is u
 
 ---
 
-## 16. Migration runner wiring
+## 17. Migration runner wiring
 
 The migration runner is a good example of container-based composition.
 
@@ -639,7 +734,7 @@ The runner is a known service and therefore belongs in the container. Migration 
 
 ---
 
-## 17. Practical design rules
+## 18. Practical design rules
 
 ### Prefer interfaces when replacement matters
 
@@ -679,7 +774,7 @@ Not everything must be interface-based. Registries, small helpers, or internal u
 
 ---
 
-## 18. Common mistakes and better alternatives
+## 19. Common mistakes and better alternatives
 
 ### Mistake: manual container lookup inside business code
 
@@ -711,7 +806,7 @@ Better:
 
 ---
 
-## 19. A small checklist for every new plugin service
+## 20. A small checklist for every new plugin service
 
 Before adding a service, ask:
 
@@ -725,7 +820,7 @@ That is usually enough to keep BASE3 plugin DI clean.
 
 ---
 
-## 20. Summary
+## 21. Summary
 
 For plugin developers, BASE3 dependency injection can be reduced to a few practical rules:
 
@@ -736,13 +831,15 @@ For plugin developers, BASE3 dependency injection can be reduced to a few practi
 * inject dependencies into runtime classes through constructors
 * prefer type-based injection over parameter-name fallback
 * use `IClassMap` when you need discovery, bulk lookup, or on-demand instantiation
+* use `instantiateWith()` when one instantiation needs explicit runtime constructor arguments
+* use `IComponentResolver` when container-held definitions should become configured component instances
 * think of the container as the registry and the class map as discovery plus autowired instantiation
 
 If you follow these patterns, your plugin will fit naturally into BASE3 and remain easy to extend.
 
 ---
 
-## 21. Final checklist for plugin developers
+## 22. Final checklist for plugin developers
 
 Before shipping a plugin, check the following:
 
@@ -753,6 +850,7 @@ Before shipping a plugin, check the following:
 * are type hints explicit and meaningful?
 * are closures used when constructor dependencies exist?
 * are you using the class map where discovery or multiple implementations are needed?
+* are configured runtime instances modeled as `ComponentDefinition` values instead of a second container?
 * are you avoiding unnecessary direct container lookups in business code?
 
 If yes, your plugin uses BASE3 DI in a clean and maintainable way.

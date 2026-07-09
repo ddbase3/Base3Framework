@@ -20,12 +20,14 @@ namespace Base3\Core;
 
 use Base3\Api\IBootstrap;
 use Base3\Api\IClassMap;
+use Base3\Api\IComponentResolver;
 use Base3\Api\IContainer;
 use Base3\Api\IPlugin;
 use Base3\Api\IRequest;
 use Base3\Api\ISystemService;
 use Base3\Accesscontrol\Api\IAccesscontrol;
 use Base3\Accesscontrol\No\NoAccesscontrol;
+use Base3\Core\ComponentResolver;
 use Base3\Core\Request;
 use Base3\Core\ServiceLocator;
 use Base3\Core\SystemService;
@@ -57,6 +59,10 @@ class Bootstrap implements IBootstrap {
 			->set(IConfiguration::class, 'configuration', IContainer::ALIAS)
 			->set('classmap', fn($c) => new PluginClassMap($c->get(IContainer::class)), IContainer::SHARED)
 			->set(IClassMap::class, 'classmap', IContainer::ALIAS)
+			->set(IComponentResolver::class, fn($c) => new ComponentResolver(
+				$c->get(IContainer::class),
+				$c->get(IClassMap::class)
+			), IContainer::SHARED)
 			->set(IMigrationRunner::class, fn() => new NoMigrationRunner(), IContainer::SHARED)
 			->set('accesscontrol', fn($c) => new NoAccesscontrol(), IContainer::SHARED)
 			->set(IAccesscontrol::class, 'accesscontrol', IContainer::ALIAS)
