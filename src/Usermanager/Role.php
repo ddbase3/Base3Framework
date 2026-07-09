@@ -18,23 +18,30 @@
 
 namespace Base3\Usermanager;
 
-class Group {
+class Role {
 
 	public $id;
 	public $name;
+	public $label;
 	public $info;
 	public $archive;
-	public $roles = array();
+	public $permissions = array();
+
+	public static function named(string $name): self {
+		$role = new self();
+		$role->name = $name;
+		return $role;
+	}
 
 	public static function fromArray(array $data): self {
-		$group = new self();
+		$role = new self();
 
-		foreach (['id', 'name', 'info', 'archive', 'roles'] as $key) {
+		foreach (['id', 'name', 'label', 'info', 'archive', 'permissions'] as $key) {
 			if (array_key_exists($key, $data)) {
-				$group->$key = $data[$key];
+				$role->$key = $data[$key];
 			}
 		}
 
-		return $group;
+		return $role;
 	}
 }

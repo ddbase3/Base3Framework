@@ -18,23 +18,31 @@
 
 namespace Base3\Usermanager;
 
-class Group {
+class Permission {
 
 	public $id;
-	public $name;
+	public $scope;
+	public $permission;
+	public $label;
 	public $info;
 	public $archive;
-	public $roles = array();
+
+	public static function for(string $scope, string $permission): self {
+		$grant = new self();
+		$grant->scope = $scope;
+		$grant->permission = $permission;
+		return $grant;
+	}
 
 	public static function fromArray(array $data): self {
-		$group = new self();
+		$permission = new self();
 
-		foreach (['id', 'name', 'info', 'archive', 'roles'] as $key) {
+		foreach (['id', 'scope', 'permission', 'label', 'info', 'archive'] as $key) {
 			if (array_key_exists($key, $data)) {
-				$group->$key = $data[$key];
+				$permission->$key = $data[$key];
 			}
 		}
 
-		return $group;
+		return $permission;
 	}
 }

@@ -18,10 +18,13 @@
 
 namespace Base3\Usermanager\Api;
 
+use Base3\Usermanager\Permission;
+use Base3\Usermanager\Role;
+
 /**
  * Interface IUsermanager
  *
- * Defines user and group management operations including authentication, registration, and lookup.
+ * Defines user, group, role and permission management operations.
  */
 interface IUsermanager {
 
@@ -38,6 +41,30 @@ interface IUsermanager {
 	 * @return array List of group identifiers or group data
 	 */
 	public function getGroups();
+
+	/**
+	 * Returns the effective roles associated with the current user.
+	 *
+	 * @return array List of Role objects or role data
+	 */
+	public function getRoles();
+
+	/**
+	 * Returns the effective permissions associated with the current user.
+	 *
+	 * @return array List of Permission objects or permission data
+	 */
+	public function getPermissions();
+
+	/**
+	 * Checks whether the current user has the given role.
+	 */
+	public function hasRole(Role $role): bool;
+
+	/**
+	 * Checks whether the current user may perform the given permission.
+	 */
+	public function can(Permission $permission): bool;
 
 	/**
 	 * Registers a new user with the given ID, password, and optional additional data.
@@ -65,5 +92,55 @@ interface IUsermanager {
 	 */
 	public function getAllUsers();
 
-}
+	/**
+	 * Returns a list of all groups.
+	 *
+	 * @return array List of groups (format depends on implementation)
+	 */
+	public function getAllGroups();
 
+	/**
+	 * Returns a list of all roles.
+	 *
+	 * @return array List of roles (format depends on implementation)
+	 */
+	public function getAllRoles();
+
+	/**
+	 * Returns a list of all permissions.
+	 *
+	 * @return array List of permissions (format depends on implementation)
+	 */
+	public function getAllPermissions();
+
+	/**
+	 * Assigns a role to a user.
+	 */
+	public function assignRoleToUser($userid, Role $role): bool;
+
+	/**
+	 * Revokes a role from a user.
+	 */
+	public function revokeRoleFromUser($userid, Role $role): bool;
+
+	/**
+	 * Assigns a role to a group.
+	 */
+	public function assignRoleToGroup($groupid, Role $role): bool;
+
+	/**
+	 * Revokes a role from a group.
+	 */
+	public function revokeRoleFromGroup($groupid, Role $role): bool;
+
+	/**
+	 * Adds a permission to a role.
+	 */
+	public function addPermissionToRole(Role $role, Permission $permission): bool;
+
+	/**
+	 * Removes a permission from a role.
+	 */
+	public function removePermissionFromRole(Role $role, Permission $permission): bool;
+
+}

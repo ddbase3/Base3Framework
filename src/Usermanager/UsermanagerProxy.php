@@ -19,7 +19,6 @@
 namespace Base3\Usermanager;
 
 use Base3\Usermanager\Api\IUsermanager;
-use Base3\Usermanager\User;
 
 /**
  * Proxy usermanager with request-lifetime caching.
@@ -34,11 +33,26 @@ class UsermanagerProxy implements IUsermanager {
 	/** @var User|null */
 	private ?User $cachedUser = null;
 
-	/** @var User[]|null */
+	/** @var Group[]|null */
 	private ?array $cachedGroups = null;
+
+	/** @var Role[]|null */
+	private ?array $cachedRoles = null;
+
+	/** @var Permission[]|null */
+	private ?array $cachedPermissions = null;
 
 	/** @var array|null */
 	private ?array $cachedAllUsers = null;
+
+	/** @var array|null */
+	private ?array $cachedAllGroups = null;
+
+	/** @var array|null */
+	private ?array $cachedAllRoles = null;
+
+	/** @var array|null */
+	private ?array $cachedAllPermissions = null;
 
 	public function __construct($connector) {
 		$this->connector = $connector;
@@ -69,12 +83,58 @@ class UsermanagerProxy implements IUsermanager {
 		$groups = $this->connector->getGroups();
 
 		if (is_array($groups) && isset($groups[0]) && is_array($groups[0])) {
-			$this->cachedGroups = array_map(fn($g) => User::fromArray($g), $groups);
+			$this->cachedGroups = array_map(fn($g) => Group::fromArray($g), $groups);
 		} else {
 			$this->cachedGroups = $groups;
 		}
 
 		return $this->cachedGroups;
+	}
+
+	/**
+	 * Returns effective roles (cached).
+	 */
+	public function getRoles() {
+		if ($this->cachedRoles !== null) {
+			return $this->cachedRoles;
+		}
+
+		$roles = $this->connector->getRoles();
+
+		if (is_array($roles) && isset($roles[0]) && is_array($roles[0])) {
+			$this->cachedRoles = array_map(fn($r) => Role::fromArray($r), $roles);
+		} else {
+			$this->cachedRoles = $roles;
+		}
+
+		return $this->cachedRoles;
+	}
+
+	/**
+	 * Returns effective permissions (cached).
+	 */
+	public function getPermissions() {
+		if ($this->cachedPermissions !== null) {
+			return $this->cachedPermissions;
+		}
+
+		$permissions = $this->connector->getPermissions();
+
+		if (is_array($permissions) && isset($permissions[0]) && is_array($permissions[0])) {
+			$this->cachedPermissions = array_map(fn($p) => Permission::fromArray($p), $permissions);
+		} else {
+			$this->cachedPermissions = $permissions;
+		}
+
+		return $this->cachedPermissions;
+	}
+
+	public function hasRole(Role $role): bool {
+		return (bool) $this->connector->hasRole($role);
+	}
+
+	public function can(Permission $permission): bool {
+		return (bool) $this->connector->can($permission);
 	}
 
 	public function registUser($userid, $password, $data = null) {
@@ -103,5 +163,89 @@ class UsermanagerProxy implements IUsermanager {
 
 		return $this->cachedAllUsers;
 	}
-}
 
+	public function getAllGroups() {
+		if ($this->cachedAllGroups !== null) {
+			return $this->cachedAllGroups;
+		}
+
+		$groups = $this->connector->getAllGroups();
+
+		if (is_array($groups) && isset($groups[0]) && is_array($groups[0])) {
+			$this->cachedAllGroups = array_map(fn($g) => Group::fromArray($g), $groups);
+		} else {
+			$this->cachedAllGroups = $groups;
+		}
+
+		return $this->cachedAllGroups;
+	}
+
+	public function getAllRoles() {
+		if ($this->cachedAllRoles !== null) {
+			return $this->cachedAllRoles;
+		}
+
+		$roles = $this->connector->getAllRoles();
+
+		if (is_array($roles) && isset($roles[0]) && is_array($roles[0])) {
+			$this->cachedAllRoles = array_map(fn($r) => Role::fromArray($r), $roles);
+		} else {
+			$this->cachedAllRoles = $roles;
+		}
+
+		return $this->cachedAllRoles;
+	}
+
+	public function getAllPermissions() {
+		if ($this->cachedAllPermissions !== null) {
+			return $this->cachedAllPermissions;
+		}
+
+		$permissions = $this->connector->getAllPermissions();
+
+		if (is_array($permissions) && isset($permissions[0]) && is_array($permissions[0])) {
+			$this->cachedAllPermissions = array_map(fn($p) => Permission::fromArray($p), $permissions);
+		} else {
+			$this->cachedAllPermissions = $permissions;
+		}
+
+		return $this->cachedAllPermissions;
+	}
+
+	public function assignRoleToUser($userid, Role $role): bool {
+		$this->clearAuthorizationCache();
+		return (bool) $this->connector->assignRoleToUser($userid, $role);
+	}
+
+	public function revokeRoleFromUser($userid, Role $role): bool {
+		$this->clearAuthorizationCache();
+		return (bool) $this->connector->revokeRoleFromUser($userid, $role);
+	}
+
+	public function assignRoleToGroup($groupid, Role $role): bool {
+		$this->clearAuthorizationCache();
+		return (bool) $this->connector->assignRoleToGroup($groupid, $role);
+	}
+
+	public function revokeRoleFromGroup($groupid, Role $role): bool {
+		$this->clearAuthorizationCache();
+		return (bool) $this->connector->revokeRoleFromGroup($groupid, $role);
+	}
+
+	public function addPermissionToRole(Role $role, Permission $permission): bool {
+		$this->clearAuthorizationCache();
+		return (bool) $this->connector->addPermissionToRole($role, $permission);
+	}
+
+	public function removePermissionFromRole(Role $role, Permission $permission): bool {
+		$this->clearAuthorizationCache();
+		return (bool) $this->connector->removePermissionFromRole($role, $permission);
+	}
+
+	private function clearAuthorizationCache(): void {
+		$this->cachedRoles = null;
+		$this->cachedPermissions = null;
+		$this->cachedAllRoles = null;
+		$this->cachedAllPermissions = null;
+	}
+}

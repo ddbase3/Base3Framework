@@ -19,6 +19,8 @@
 namespace Base3\Usermanager\No;
 
 use Base3\Usermanager\Api\IUsermanager;
+use Base3\Usermanager\Permission;
+use Base3\Usermanager\Role;
 
 class NoUsermanager implements IUsermanager {
 
@@ -32,13 +34,67 @@ class NoUsermanager implements IUsermanager {
 		return array();
 	}
 
+	public function getRoles() {
+		return array();
+	}
+
+	public function getPermissions() {
+		return array();
+	}
+
+	public function hasRole(Role $role): bool {
+		return false;
+	}
+
+	public function can(Permission $permission): bool {
+		return false;
+	}
+
 	public function registUser($userid, $password, $data = null) {
+		return false;
 	}
 
 	public function changePassword($oldpassword, $newpassword) {
+		return false;
 	}
 
 	public function getAllUsers() {
 		return array();
+	}
+
+	public function getAllGroups() {
+		return array();
+	}
+
+	public function getAllRoles() {
+		return array();
+	}
+
+	public function getAllPermissions() {
+		return array();
+	}
+
+	public function assignRoleToUser($userid, Role $role): bool {
+		return false;
+	}
+
+	public function revokeRoleFromUser($userid, Role $role): bool {
+		return false;
+	}
+
+	public function assignRoleToGroup($groupid, Role $role): bool {
+		return false;
+	}
+
+	public function revokeRoleFromGroup($groupid, Role $role): bool {
+		return false;
+	}
+
+	public function addPermissionToRole(Role $role, Permission $permission): bool {
+		return false;
+	}
+
+	public function removePermissionFromRole(Role $role, Permission $permission): bool {
+		return false;
 	}
 }

@@ -21,15 +21,17 @@ namespace Base3\Usermanager;
 class User {
 
 	public $id;
+	public $userid;
 	public $name;
 	public $email;
-	public $lang;		// "de", "en", ...
-	public $role;		// "visit" | "member" | "admin"
+	public $lang;
+	public $role;        // Compatibility: "visit" | "member" | "admin"
+	public $roles = array();
 
 	public static function fromArray(array $data): self {
 		$user = new self();
 
-		foreach (['id', 'name', 'email', 'lang', 'role'] as $key) {
+		foreach (['id', 'userid', 'name', 'email', 'lang', 'role', 'roles'] as $key) {
 			if (array_key_exists($key, $data)) {
 				$user->$key = $data[$key];
 			}
