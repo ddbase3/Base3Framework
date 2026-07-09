@@ -114,38 +114,21 @@ class ClassMapStub implements IClassMap {
 			return $this->instancesByClass[$class];
 		}
 
-		if (!class_exists($class)) return null;
+		return $this->instantiateClass($class);
+	}
 
-		try {
-			$refClass = new \ReflectionClass($class);
-			if ($refClass->isAbstract()) return null;
+	public function instantiateWith(string $class, array $arguments = []) {
+		$this->calls[] = [
+			'method' => 'instantiateWith',
+			'class' => $class,
+			'arguments' => $arguments
+		];
 
-			$constructor = $refClass->getConstructor();
-			if (!$constructor || $constructor->getNumberOfRequiredParameters() === 0) {
-				return new $class();
-			}
-
-			// DI-free: only instantiate if all required params have defaults
-			$params = [];
-			foreach ($constructor->getParameters() as $param) {
-				if ($param->isDefaultValueAvailable()) {
-					$params[] = $param->getDefaultValue();
-					continue;
-				}
-
-				$type = $param->getType();
-				if ($type instanceof \ReflectionNamedType && $type->allowsNull()) {
-					$params[] = null;
-					continue;
-				}
-
-				return null;
-			}
-
-			return $refClass->newInstanceArgs($params);
-		} catch (\Throwable $e) {
-			return null;
+		if (isset($this->instancesByClass[$class])) {
+			return $this->instancesByClass[$class];
 		}
+
+		return $this->instantiateClass($class, $arguments);
 	}
 
 	public function generate($regenerate = false): void {
@@ -177,32 +160,63 @@ class ClassMapStub implements IClassMap {
 		$app = $criteria['app'] ?? null;
 		$interface = $criteria['interface'] ?? null;
 		$name = $criteria['name'] ?? null;
+		$arguments = $criteria['arguments'] ?? [];
 
 		if ($app && $interface && $name) {
-			$inst = $this->getInstanceByAppInterfaceName($app, $interface, $name);
-			if ($inst) $instances[] = $inst;
+			$class = $this->getClassByAppInterfaceName((string)$app, (string)$interface, (string)$name);
+			if ($class) {
+				$inst = $this->instantiateSelectedClass($class, $arguments);
+				if ($inst) $instances[] = $inst;
+			}
 			return $instances;
 		}
 
 		if ($app && $interface) {
-			$instances = $this->getInstancesByAppInterface($app, $interface);
+			if (empty($arguments)) {
+				$instances = $this->getInstancesByAppInterface($app, $interface);
+				return $instances;
+			}
+
+			if (isset($this->apps[$app]['interface'][$interface])) {
+				foreach ($this->apps[$app]['interface'][$interface] as $c) {
+					$inst = $this->instantiateSelectedClass($c, $arguments);
+					if ($inst) $instances[] = $inst;
+				}
+			}
 			return $instances;
 		}
 
 		if ($app && $name) {
-			$inst = $this->getInstanceByAppName($app, $name);
-			if ($inst) $instances[] = $inst;
+			if (isset($this->apps[$app]['name'][$name])) {
+				$c = $this->apps[$app]['name'][$name];
+				$inst = $this->instantiateSelectedClass($c, $arguments);
+				if ($inst) $instances[] = $inst;
+			}
 			return $instances;
 		}
 
 		if ($interface && $name) {
-			$inst = $this->getInstanceByInterfaceName($interface, $name);
-			if ($inst) $instances[] = $inst;
+			$class = $this->getClassByInterfaceName((string)$interface, (string)$name);
+			if ($class) {
+				$inst = $this->instantiateSelectedClass($class, $arguments);
+				if ($inst) $instances[] = $inst;
+			}
 			return $instances;
 		}
 
 		if ($interface) {
-			$instances = $this->getInstancesByInterface($interface);
+			if (empty($arguments)) {
+				$instances = $this->getInstancesByInterface($interface);
+				return $instances;
+			}
+
+			foreach ($this->apps as $appName => $data) {
+				if (!isset($data['interface'][$interface])) continue;
+				foreach ($data['interface'][$interface] as $c) {
+					$inst = $this->instantiateSelectedClass($c, $arguments);
+					if ($inst) $instances[] = $inst;
+				}
+			}
 			return $instances;
 		}
 
@@ -210,7 +224,7 @@ class ClassMapStub implements IClassMap {
 			foreach ($this->apps as $appName => $data) {
 				if (!isset($data['name'][$name])) continue;
 				$c = $data['name'][$name];
-				$inst = $this->instantiate($c);
+				$inst = $this->instantiateSelectedClass($c, $arguments);
 				if ($inst) $instances[] = $inst;
 			}
 			return $instances;
@@ -219,7 +233,7 @@ class ClassMapStub implements IClassMap {
 		foreach ($this->apps as $data) {
 			if (!isset($data['name'])) continue;
 			foreach ($data['name'] as $c) {
-				$inst = $this->instantiate($c);
+				$inst = $this->instantiateSelectedClass($c, $arguments);
 				if ($inst) $instances[] = $inst;
 			}
 		}
@@ -289,19 +303,10 @@ class ClassMapStub implements IClassMap {
 
 		$instance = null;
 
-		foreach ($this->apps as $app => $data) {
-			if (!isset($data['name'][$name])) continue;
-			if (!isset($data['interface'][$interface])) continue;
+		$class = $this->getClassByInterfaceName((string)$interface, (string)$name);
+		if (!$class) return $instance;
 
-			$c = $data['name'][$name];
-
-			// Registry-first: ensure class is part of the interface mapping for this app
-			if (!in_array($c, $data['interface'][$interface], true)) continue;
-
-			$instance = $this->instantiate($c);
-			return $instance;
-		}
-
+		$instance = $this->instantiate($class);
 		return $instance;
 	}
 
@@ -318,13 +323,130 @@ class ClassMapStub implements IClassMap {
 
 		$instance = null;
 
-		if (!isset($this->apps[$app]['name'][$name])) return $instance;
-		if (!isset($this->apps[$app]['interface'][$interface])) return $instance;
+		$class = $this->getClassByAppInterfaceName((string)$app, (string)$interface, (string)$name);
+		if (!$class) return $instance;
 
-		$c = $this->apps[$app]['name'][$name];
-		if (!in_array($c, $this->apps[$app]['interface'][$interface])) return $instance;
-
-		$instance = $this->instantiate($c);
+		$instance = $this->instantiate($class);
 		return $instance;
+	}
+
+	public function getClassByInterfaceName(string $interface, string $name): ?string {
+		$this->calls[] = [
+			'method' => 'getClassByInterfaceName',
+			'interface' => $interface,
+			'name' => $name
+		];
+
+		foreach ($this->apps as $app => $data) {
+			$class = $this->getClassByAppInterfaceName($app, $interface, $name);
+			if ($class) return $class;
+		}
+
+		return null;
+	}
+
+	private function getClassByAppInterfaceName(string $app, string $interface, string $name): ?string {
+		if (!isset($this->apps[$app]['name'][$name])) return null;
+		if (!isset($this->apps[$app]['interface'][$interface])) return null;
+
+		$class = $this->apps[$app]['name'][$name];
+
+		if (!in_array($class, $this->apps[$app]['interface'][$interface], true)) return null;
+
+		return $class;
+	}
+
+	private function instantiateSelectedClass(string $class, array $arguments = []) {
+		if (!empty($arguments)) return $this->instantiateWith($class, $arguments);
+		return $this->instantiate($class);
+	}
+
+	private function instantiateClass(string $class, array $arguments = []) {
+		if (!class_exists($class)) return null;
+
+		try {
+			$refClass = new \ReflectionClass($class);
+			if ($refClass->isAbstract()) return null;
+
+			$constructor = $refClass->getConstructor();
+			if (!$constructor) {
+				return new $class();
+			}
+
+			$params = [];
+			foreach ($constructor->getParameters() as $param) {
+				$paramName = $param->getName();
+
+				if ($paramName !== '' && array_key_exists($paramName, $arguments)) {
+					$params[] = $arguments[$paramName];
+					continue;
+				}
+
+				$type = $param->getType();
+
+				if ($type instanceof \ReflectionNamedType) {
+					$typeName = $type->getName();
+
+					if (array_key_exists($typeName, $arguments)) {
+						$params[] = $arguments[$typeName];
+						continue;
+					}
+
+					if ($param->isDefaultValueAvailable()) {
+						$params[] = $param->getDefaultValue();
+						continue;
+					}
+
+					if ($type->allowsNull()) {
+						$params[] = null;
+						continue;
+					}
+
+					return null;
+				}
+
+				if ($type instanceof \ReflectionUnionType) {
+					$resolved = false;
+
+					foreach ($type->getTypes() as $unionType) {
+						if (!$unionType instanceof \ReflectionNamedType) continue;
+
+						$typeName = $unionType->getName();
+						if ($typeName === 'null') continue;
+
+						if (array_key_exists($typeName, $arguments)) {
+							$params[] = $arguments[$typeName];
+							$resolved = true;
+							break;
+						}
+					}
+
+					if ($resolved) continue;
+
+					if ($param->isDefaultValueAvailable()) {
+						$params[] = $param->getDefaultValue();
+						continue;
+					}
+
+					if ($type->allowsNull()) {
+						$params[] = null;
+						continue;
+					}
+
+					return null;
+				}
+
+				if ($param->isDefaultValueAvailable()) {
+					$params[] = $param->getDefaultValue();
+					continue;
+				}
+
+				return null;
+			}
+
+			return $refClass->newInstanceArgs($params);
+		} catch (\Throwable $e) {
+			return null;
+		}
 	}
 }
