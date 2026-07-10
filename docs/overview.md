@@ -60,6 +60,7 @@ Foundation plugins
 Project plugins
 Service selector
 Outputs / Displays / MVC templates
+Usermanager / RBAC
 Settings / State / Configuration
 Database migrations
 Hooks / Events
@@ -501,6 +502,7 @@ Embedded setups may replace:
 * system service
 * request implementation
 * access control
+* usermanager / RBAC adapter
 * routing
 * configuration
 * settings store
@@ -535,6 +537,7 @@ worker.md
 assets.md
 request-data.md
 systemservice.md
+usermanager.md
 ```
 
 Not every project needs every subsystem immediately.
@@ -555,6 +558,7 @@ Plugins register services.
 Foundation plugins define contracts.
 Project plugins wire final implementations.
 Outputs and displays handle requests.
+Usermanager provides framework-level users, groups, roles, and permissions.
 Settings, state, and config are separated.
 Migrations update active database schemas before request handling.
 Hooks extend lifecycle.

@@ -20,6 +20,7 @@ This README will guide you through the installation and usage of the Base3Framew
 * **Worker & Cron System**: Register and schedule background jobs with priorities.
 * **Token System**: Secure, scoped tokens for time-limited operations (e.g. password reset, validation).
 * **Session & Authentication**: Manage session lifecycle and login/logout functionality.
+* **Usermanager & RBAC**: Framework-level users, groups, roles, and permissions via `IUsermanager`.
 * **Logging & Configuration**: Central services for storing logs and configuration data.
 
 ## Requirements
@@ -160,6 +161,27 @@ Create, check, and delete scoped tokens using `IToken` (e.g. for secure links, c
 * `ISession` for checking session state
 * `IAuthentication` for login/logout
 * `IAccesscontrol` for user ID access
+
+### Usermanager & RBAC
+
+Use `Base3\Usermanager\Api\IUsermanager` for framework-level user, group, role, and permission checks. The Usermanager exposes the current user, effective groups, effective roles, effective permissions, and role/permission assignment operations. New code should prefer `Role::named()` and `Permission::for()` over hardcoded compatibility checks against `User::$role`.
+
+Example:
+
+```php
+use Base3\Usermanager\Permission;
+use Base3\Usermanager\Role;
+
+if ($usermanager->hasRole(Role::named('admin'))) {
+    // admin UI
+}
+
+if ($usermanager->can(Permission::for('entry', 'admin'))) {
+    // entry ACL admin bypass
+}
+```
+
+See `docs/usermanager.md` for the full Usermanager and RBAC guide.
 
 ### Language System
 
