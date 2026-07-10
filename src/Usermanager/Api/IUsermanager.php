@@ -50,7 +50,9 @@ interface IUsermanager {
 	public function getRoles();
 
 	/**
-	 * Returns the effective permissions associated with the current user.
+	 * Returns the effective global permissions associated with the current user.
+	 *
+	 * Target-specific permissions are normally checked through can().
 	 *
 	 * @return array List of Permission objects or permission data
 	 */
@@ -63,6 +65,10 @@ interface IUsermanager {
 
 	/**
 	 * Checks whether the current user may perform the given permission.
+	 *
+	 * Permission objects consist of scope, permission and target.
+	 * Global permissions use target null. Target-specific adapters may
+	 * require a concrete target, for example an external object ID.
 	 */
 	public function can(Permission $permission): bool;
 

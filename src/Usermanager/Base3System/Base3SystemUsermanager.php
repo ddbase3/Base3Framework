@@ -186,7 +186,7 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		if ($this->permissions) return $this->permissions;
 
 		if ($userid == "internal") {
-			$this->permissions = array(Permission::for("system", "admin"));
+			$this->permissions = array(Permission::for("system", "admin", null));
 			return $this->permissions;
 		}
 
@@ -240,18 +240,17 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		$userid = $this->accesscontrol->getUserId();
 		if ($userid == "internal") return true;
 
-		$hasSystemAdmin = false;
 		foreach ($this->getPermissions() as $currentPermission) {
-			if ($currentPermission->scope == "system" && $currentPermission->permission == "admin") {
-				$hasSystemAdmin = true;
+			if ($this->isSystemAdminPermission($currentPermission)) {
+				return true;
 			}
 
-			if ($currentPermission->scope == $permission->scope && $currentPermission->permission == $permission->permission) {
+			if ($this->permissionCovers($currentPermission, $permission)) {
 				return true;
 			}
 		}
 
-		return $hasSystemAdmin;
+		return false;
 	}
 
 	public function registUser($userid, $password, $data = null) {
@@ -574,6 +573,7 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 	private function resolvePermissionId(Permission $permission) {
 		if (isset($permission->id) && $permission->id !== null && $permission->id !== "") return (int)$permission->id;
 		if (!isset($permission->scope, $permission->permission) || !$permission->scope || !$permission->permission) return null;
+		if ($this->normalizePermissionTarget($permission) !== null) return null;
 
 		$this->database->connect();
 
@@ -584,6 +584,32 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 
 		$row = $this->database->singleQuery($sql);
 		return $row && isset($row["id"]) ? (int)$row["id"] : null;
+	}
+
+	private function isSystemAdminPermission(Permission $permission): bool {
+		return (string)$permission->scope === "system"
+			&& (string)$permission->permission === "admin"
+			&& $this->normalizePermissionTarget($permission) === null;
+	}
+
+	private function permissionCovers(Permission $available, Permission $requested): bool {
+		if ((string)$available->scope !== (string)$requested->scope) return false;
+
+		$availableTarget = $this->normalizePermissionTarget($available);
+		$requestedTarget = $this->normalizePermissionTarget($requested);
+
+		if ($availableTarget !== null && $availableTarget !== $requestedTarget) return false;
+
+		if ((string)$available->permission === (string)$requested->permission) return true;
+		if ((string)$available->permission === "admin") return true;
+
+		return false;
+	}
+
+	private function normalizePermissionTarget(Permission $permission): ?string {
+		if (!isset($permission->target) || $permission->target === null || $permission->target === "") return null;
+
+		return (string)$permission->target;
 	}
 
 	private function clearAuthorizationCache(): void {

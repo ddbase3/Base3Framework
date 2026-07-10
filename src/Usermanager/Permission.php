@@ -23,21 +23,23 @@ class Permission {
 	public $id;
 	public $scope;
 	public $permission;
+	public $target;
 	public $label;
 	public $info;
 	public $archive;
 
-	public static function for(string $scope, string $permission): self {
+	public static function for(string $scope, string $permission, int|string|null $target): self {
 		$grant = new self();
 		$grant->scope = $scope;
 		$grant->permission = $permission;
+		$grant->target = $target;
 		return $grant;
 	}
 
 	public static function fromArray(array $data): self {
 		$permission = new self();
 
-		foreach (['id', 'scope', 'permission', 'label', 'info', 'archive'] as $key) {
+		foreach (['id', 'scope', 'permission', 'target', 'label', 'info', 'archive'] as $key) {
 			if (array_key_exists($key, $data)) {
 				$permission->$key = $data[$key];
 			}
