@@ -20,6 +20,7 @@ namespace Base3\Usermanager\Api;
 
 use Base3\Usermanager\Permission;
 use Base3\Usermanager\Role;
+use Base3\Usermanager\User;
 
 /**
  * Interface IUsermanager
@@ -29,11 +30,18 @@ use Base3\Usermanager\Role;
 interface IUsermanager {
 
 	/**
-	 * Returns the current user data or identifier.
+	 * Returns the current user.
 	 *
-	 * @return mixed User object, array, or ID depending on implementation
+	 * @return User|null Current user, or null when no user is active
 	 */
 	public function getUser();
+
+	/**
+	 * Returns a user by its backend-specific technical ID.
+	 *
+	 * The ID corresponds to User::$id, not User::$userid.
+	 */
+	public function getUserById(int|string $id): ?User;
 
 	/**
 	 * Returns the groups associated with the current user.

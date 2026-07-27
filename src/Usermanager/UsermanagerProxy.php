@@ -33,6 +33,9 @@ class UsermanagerProxy implements IUsermanager {
 	/** @var User|null */
 	private ?User $cachedUser = null;
 
+	/** @var array<string,User|null> */
+	private array $cachedUsersById = array();
+
 	/** @var Group[]|null */
 	private ?array $cachedGroups = null;
 
@@ -66,10 +69,25 @@ class UsermanagerProxy implements IUsermanager {
 			return $this->cachedUser;
 		}
 
-		$user = $this->connector->getUser();
-		$this->cachedUser = is_array($user) ? User::fromArray($user) : $user;
+		$this->cachedUser = $this->hydrateUser($this->connector->getUser());
 
 		return $this->cachedUser;
+	}
+
+	/**
+	 * Returns a user by technical ID (cached).
+	 */
+	public function getUserById(int|string $id): ?User {
+		$cacheKey = (string)$id;
+
+		if (array_key_exists($cacheKey, $this->cachedUsersById)) {
+			return $this->cachedUsersById[$cacheKey];
+		}
+
+		$user = $this->hydrateUser($this->connector->getUserById($id));
+		$this->cachedUsersById[$cacheKey] = $user;
+
+		return $user;
 	}
 
 	/**
@@ -138,7 +156,13 @@ class UsermanagerProxy implements IUsermanager {
 	}
 
 	public function registUser($userid, $password, $data = null) {
-		return $this->connector->registUser($userid, $password, $data);
+		$result = $this->connector->registUser($userid, $password, $data);
+
+		if ($result) {
+			$this->clearUserCache();
+		}
+
+		return $result;
 	}
 
 	public function changePassword($oldpassword, $newpassword) {
@@ -242,7 +266,22 @@ class UsermanagerProxy implements IUsermanager {
 		return (bool) $this->connector->removePermissionFromRole($role, $permission);
 	}
 
+	private function hydrateUser($user): ?User {
+		if ($user === null) return null;
+		if (is_array($user)) return User::fromArray($user);
+		if ($user instanceof User) return $user;
+
+		return null;
+	}
+
+	private function clearUserCache(): void {
+		$this->cachedUser = null;
+		$this->cachedUsersById = array();
+		$this->cachedAllUsers = null;
+	}
+
 	private function clearAuthorizationCache(): void {
+		$this->clearUserCache();
 		$this->cachedRoles = null;
 		$this->cachedPermissions = null;
 		$this->cachedAllRoles = null;

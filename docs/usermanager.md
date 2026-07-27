@@ -60,7 +60,7 @@ Role
   a named responsibility or authorization profile
 
 Permission
-  a concrete capability expressed as scope + permission
+  a concrete capability expressed as scope + permission + optional target
 ```
 
 Typical relationship graph:
@@ -163,10 +163,13 @@ namespace Base3\Usermanager\Api;
 
 use Base3\Usermanager\Permission;
 use Base3\Usermanager\Role;
+use Base3\Usermanager\User;
 
 interface IUsermanager {
 
     public function getUser();
+
+    public function getUserById(int|string $id): ?User;
 
     public function getGroups();
 
@@ -320,11 +323,16 @@ class Permission {
     public $id;
     public $scope;
     public $permission;
+    public $target;
     public $label;
     public $info;
     public $archive;
 
-    public static function for(string $scope, string $permission): self;
+    public static function for(
+        string $scope,
+        string $permission,
+        int|string|null $target = null
+    ): self;
 }
 ```
 
@@ -336,11 +344,13 @@ A permission answers:
 May the user do this specific thing?
 ```
 
-The permission key is:
+The permission identity is:
 
 ```text
-scope + permission
+scope + permission + optional target
 ```
+
+Global permissions use `target = null`. Host adapters may use a concrete target for object-specific checks, such as an ILIAS `ref_id`.
 
 Examples:
 
@@ -444,7 +454,7 @@ base3system_sysrolepermission
 Typical responsibilities:
 
 ```text
-syspermission       permission records using scope + permission
+syspermission       global permission records using scope + permission
 sysrolepermission   role -> permission assignments
 ```
 
@@ -679,6 +689,20 @@ A typical returned user may look like this:
 
 The concrete object is usually a `Base3\Usermanager\User`, but proxy or host implementations may internally normalize arrays into the same model.
 
+### Looking up a user by technical ID
+
+Use `getUserById()` when a service needs a specific user rather than the currently authenticated user.
+
+```php
+$user = $usermanager->getUserById(42);
+
+if ($user === null) {
+    return 'User not found.';
+}
+```
+
+The argument addresses `User::$id`. It does not address the login name in `User::$userid`. Implementations return `null` for unknown or unsupported IDs.
+
 ---
 
 ## 14. Checking a role
@@ -740,6 +764,16 @@ if (!$usermanager->can(Permission::for('user', 'manage'))) {
     return 'Access denied';
 }
 ```
+
+Object-specific adapters may use the optional target:
+
+```php
+if (!$usermanager->can(Permission::for('ilias', 'read', $refId))) {
+    return 'Access denied';
+}
+```
+
+The target is part of the requested permission context. It does not replace the global two-argument form.
 
 ---
 
@@ -830,7 +864,7 @@ $usermanager->removePermissionFromRole(
 );
 ```
 
-The implementation should resolve the role by `name` and the permission by `scope + permission`.
+The default database implementation resolves the role by `name` and the global permission by `scope + permission`. A permission with a non-null target is request context and is not assigned to a role in the default schema.
 
 ---
 
@@ -1327,7 +1361,8 @@ role with no permissions
 role with multiple permissions
 archived role
 archived permission
-permission check by scope + permission
+global permission check by scope + permission
+target-specific permission check
 role check by name
 unsupported write operation
 ```
@@ -1362,7 +1397,7 @@ Base3\Usermanager\Api\IUsermanager
 and should check behavior with:
 
 ```php
-Permission::for($scope, $permission)
+Permission::for($scope, $permission, $target = null)
 ```
 
 The compatibility `User::$role` value remains available, but new framework and plugin code should prefer roles and permissions.

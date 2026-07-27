@@ -28,7 +28,7 @@ class Permission {
 	public $info;
 	public $archive;
 
-	public static function for(string $scope, string $permission, int|string|null $target): self {
+	public static function for(string $scope, string $permission, int|string|null $target = null): self {
 		$grant = new self();
 		$grant->scope = $scope;
 		$grant->permission = $permission;

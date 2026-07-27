@@ -21,12 +21,17 @@ namespace Base3\Usermanager\No;
 use Base3\Usermanager\Api\IUsermanager;
 use Base3\Usermanager\Permission;
 use Base3\Usermanager\Role;
+use Base3\Usermanager\User;
 
 class NoUsermanager implements IUsermanager {
 
 	// Implementation of IUsermanager
 
 	public function getUser() {
+		return null;
+	}
+
+	public function getUserById(int|string $id): ?User {
 		return null;
 	}
 

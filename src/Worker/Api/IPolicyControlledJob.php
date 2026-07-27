@@ -30,14 +30,25 @@ interface IPolicyControlledJob extends IJob {
 	 *
 	 * Example:
 	 * [
-	 *     'policy' => 'dailyfromtimepolicy',
+	 *     'policy' => 'dailywindowjobpolicy',
 	 *     'data' => [
-	 *         'time' => '02:00'
+	 *         'from' => '02:00',
+	 *         'to' => '04:00'
 	 *     ]
 	 * ]
 	 *
 	 * @return array Policy definition
 	 */
 	public function getPolicyDefinition(): array;
+
+	/**
+	 * Provides the resolved policy instance for this execution.
+	 */
+	public function setExecutionPolicy(IJobExecutionPolicy $policy): void;
+
+	/**
+	 * Marks the current execution as completed for the active policy.
+	 */
+	public function markRun(): void;
 
 }

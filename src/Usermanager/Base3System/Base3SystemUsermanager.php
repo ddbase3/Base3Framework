@@ -69,31 +69,12 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		if (!$userid) return null;
 
 		if ($userid == "internal") {
-
-			$this->user = new User;
-			$this->user->id = "internal";
-			$this->user->userid = "internal";
-			$this->user->name = "internal";
-			$this->user->role = "admin";
-			$this->user->roles = $this->getRoles();
-
+			$this->user = $this->createInternalUser($this->getRoles());
 		} else {
-
 			$row = $this->getCurrentUserRow();
 			if ($row == null) return null;
 
-			$legacyRoles = array(0 => "visit", 1 => "member", 2 => "admin");
-
-			$this->user = new User;
-			$this->user->id = $row["id"];
-			$this->user->userid = $row["userid"];
-			$this->user->name = $row["fullname"];
-			$this->user->email = $row["email"];
-			$this->user->lang = $row["lang"];
-			$this->user->role = $legacyRoles[(int)$row["mode"]] ?? "visit";
-			$this->user->roles = $this->getRoles();
-			$this->user->role = $this->resolveCompatibilityRole($this->user->roles, $this->user->role);
-
+			$this->user = $this->createUserFromRow($row, $this->getRoles());
 		}
 
 		if ($this->session && $this->session->started()) {
@@ -101,6 +82,24 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		}
 
 		return $this->user;
+	}
+
+	public function getUserById(int|string $id): ?User {
+		if ((string)$id === "internal") {
+			return $this->createInternalUser();
+		}
+
+		if (!is_numeric($id) || (int)$id <= 0) return null;
+
+		$userId = (int)$id;
+		if ($this->user instanceof User && (int)$this->user->id === $userId) {
+			return $this->user;
+		}
+
+		$row = $this->getUserRowById($userId);
+		if ($row == null) return null;
+
+		return $this->createUserFromRow($row);
 	}
 
 	public function getGroups() {
@@ -284,20 +283,9 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 			ORDER BY u.`fullname`";
 		$rows = $this->database->multiQuery($sql);
 
-		$legacyRoles = array(0 => "visit", 1 => "member", 2 => "admin");
-
 		$users = array();
 		foreach ($rows as $row) {
-			$user = new User;
-			$user->id = $row["id"];
-			$user->userid = $row["userid"];
-			$user->name = $row["fullname"];
-			$user->email = $row["email"];
-			$user->lang = $row["lang"];
-			$user->role = $legacyRoles[(int)$row["mode"]] ?? "visit";
-			$user->roles = $this->getRolesForUserId((int)$row["id"]);
-			$user->role = $this->resolveCompatibilityRole($user->roles, $user->role);
-			$users[] = $user;
+			$users[] = $this->createUserFromRow($row);
 		}
 
 		return $users;
@@ -459,6 +447,46 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		return array(
 			"depending_services" => $this->database == null || $this->accesscontrol == null ? "Fail" : "Ok"
 		);
+	}
+
+	private function createInternalUser(?array $roles = null): User {
+		$user = new User;
+		$user->id = "internal";
+		$user->userid = "internal";
+		$user->name = "internal";
+		$user->role = "admin";
+		$user->roles = $roles ?? array(Role::named("admin"));
+
+		return $user;
+	}
+
+	private function createUserFromRow(array $row, ?array $roles = null): User {
+		$legacyRoles = array(0 => "visit", 1 => "member", 2 => "admin");
+
+		$user = new User;
+		$user->id = $row["id"];
+		$user->userid = $row["userid"];
+		$user->name = $row["fullname"];
+		$user->email = $row["email"];
+		$user->lang = $row["lang"];
+		$user->role = $legacyRoles[(int)$row["mode"]] ?? "visit";
+		$user->roles = $roles ?? $this->getRolesForUserId((int)$row["id"]);
+		$user->role = $this->resolveCompatibilityRole($user->roles, $user->role);
+
+		return $user;
+	}
+
+	private function getUserRowById(int $userId) {
+		if ($userId <= 0) return null;
+
+		$this->database->connect();
+
+		$sql = "SELECT u.`id`, u.`name` AS `userid`, u.`fullname`, u.`email`, u.`mode`, l.`short` AS `lang`
+			FROM `base3system_sysuser` u
+			INNER JOIN `base3system_syslang` l ON u.`lang_id` = l.`id`
+			WHERE u.`id` = " . $userId;
+
+		return $this->database->singleQuery($sql);
 	}
 
 	private function getCurrentUserRow() {
