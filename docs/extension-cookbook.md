@@ -510,7 +510,7 @@ Create a class implementing `IHookListener`.
 
 namespace ExamplePlugin\Hook;
 
-use Base3\Hook\IHookListener;
+use Base3\Hook\Api\IHookListener;
 
 final class ExampleBootstrapHookListener implements IHookListener {
 
@@ -1190,6 +1190,72 @@ $tool = $componentResolver->get(IExampleTool::class, 'internal-rag');
 ```
 
 The component resolver reads definitions from the existing container and delegates construction to the class map. It is not a second container.
+
+---
+
+## 28.1 Add a page
+
+A page extends `IOutput` with a public URL:
+
+```php
+<?php declare(strict_types=1);
+
+namespace ExamplePlugin\Page;
+
+use Base3\Page\Api\IPage;
+
+final class ExamplePage implements IPage {
+
+	public static function getName(): string {
+		return 'example';
+	}
+
+	public function getUrl() {
+		return '/example.html';
+	}
+
+	public function getOutput(string $out = 'html', bool $final = false): string {
+		return '<h1>Example</h1>';
+	}
+}
+```
+
+Add `IHelp` separately when the page should expose help information.
+
+See `pages.md` and `routing.md`.
+
+---
+
+## 28.2 Add multiple named instances of one service
+
+When a project deliberately has several active instances of one service interface, compose a `DefaultServiceRegistry` instead of building another lookup layer around the class map.
+
+```php
+$registry = new DefaultServiceRegistry(
+	IExampleService::class,
+	'default',
+	[
+		'default' => fn() => new DefaultExampleService(),
+		'archive' => fn() => new ArchiveExampleService(),
+	]
+);
+```
+
+Use this only for explicit named service families. Ordinary known services still belong directly in the container. Configured discoverable runtime instances belong to `IComponentResolver`.
+
+See `service-registry.md`.
+
+---
+
+## 28.3 Add authentication to a project
+
+Authentication composition is a project choice.
+
+A project can bind `IAccesscontrol` to `SelectedAccesscontrol` with the exact ordered authentication strategies it wants to run. Runtime consumers continue to depend only on `IAccesscontrol`.
+
+When session-backed authentication is used, order middleware so `SessionMiddleware` runs before `AccesscontrolMiddleware`.
+
+See `accesscontrol-authentication.md` and `sessions.md`.
 
 ---
 

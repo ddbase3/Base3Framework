@@ -166,6 +166,32 @@ Do not use it for ordinary shared services. Those belong directly in the contain
 
 ---
 
+## 4.1 Service registries for explicit named service families
+
+Use `IServiceRegistry` when one service interface has several explicitly composed named instances and consumers need name-based selection plus a configured default.
+
+Keep the responsibilities distinct:
+
+```text
+Container
+  known active service bindings
+
+Class map
+  discovered implementation classes
+
+Component resolver
+  configured runtime instances of discovered implementations
+
+Service registry
+  explicit named lazy service instances produced by factories
+```
+
+Do not stack these mechanisms as fallback layers for the same responsibility.
+
+See `service-registry.md`.
+
+---
+
 ## 5. Factory only for real runtime construction
 
 Do not create factories that only duplicate class map lookup.
@@ -769,6 +795,11 @@ Use hooks for lifecycle.
 Use events for runtime notifications.
 
 Use workers for background execution.
+Use `IAccesscontrol` for request identity and `IUsermanager` for roles and permissions.
+Use `ISession` for runtime session state.
+Use `ILanguage` for active language and `ITranslation` for translated text.
+Use `IToken` for temporary scoped tokens.
+Use `IServiceRegistry` only for explicitly named active service families.
 
 ---
 

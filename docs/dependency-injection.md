@@ -517,6 +517,15 @@ This distinction is one of the most useful things a plugin developer can underst
 * those instances are described by `ComponentDefinition` values in the container
 * the implementation class should still be discovered and instantiated through the class map
 
+### Use a service registry when...
+
+* one service interface has several explicitly composed named instances
+* consumers select an instance by stable runtime name
+* the project wants a configured default instance
+* lazy factories and per-name instance caching are useful
+
+A service registry is not a replacement for the container, class map, or component resolver. It solves the narrower case of an explicitly named service family.
+
 ```mermaid
 flowchart LR
 	A["Container"] --> A1["Register known services"]
@@ -528,7 +537,12 @@ flowchart LR
 
 	C["ComponentResolver"] --> C1["Read definitions"]
 	C --> C2["Use class map instantiateWith"]
+
+	D["ServiceRegistry"] --> D1["Select explicit named service"]
+	D --> D2["Create and cache through factory"]
 ```
+
+See `service-registry.md` for the exact boundary.
 
 
 ---

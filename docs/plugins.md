@@ -198,7 +198,9 @@ ExamplePlugin/
 ├── lang/
 ├── LICENSE
 ├── local/
+├── publicfiles/
 ├── README.md
+├── rootfiles/
 ├── src/
 ├── test/
 ├── tpl/
@@ -423,7 +425,45 @@ Large runtime data should usually live in proper data storage, not in plugin sou
 
 ---
 
-## 6.9 `VERSION`
+## 6.9 `rootfiles/`
+
+Optional build-time files under:
+
+```text
+plugin/<PluginName>/rootfiles/
+```
+
+are copied into the project root by:
+
+```bash
+make rootfiles
+```
+
+Use this only when a plugin deliberately needs files installed at project-root level.
+
+---
+
+## 6.10 `publicfiles/`
+
+Optional build-time files under:
+
+```text
+plugin/<PluginName>/publicfiles/
+```
+
+are copied into the project's `public/` directory by:
+
+```bash
+make publicfiles
+```
+
+This is separate from ordinary plugin assets. `assets/` are published below `public/assets/<PluginName>/` by the asset build.
+
+See `developer-tooling.md`.
+
+---
+
+## 6.11 `VERSION`
 
 Contains the plugin version.
 
@@ -437,7 +477,7 @@ This allows plugin tooling, diagnostics, or admin screens to show plugin version
 
 ---
 
-## 6.10 `README.md` and `LICENSE`
+## 6.12 `README.md` and `LICENSE`
 
 These document the plugin and its license.
 

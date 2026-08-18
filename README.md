@@ -16,7 +16,6 @@ This README will guide you through the installation and usage of the Base3Framew
 * **Multilingual**: Support for runtime language selection and language-specific views.
 * **Event & Hook System**: Register listeners and dispatch events or hooks with prioritization.
 * **Page Modules**: Pluggable page components (header, footer, content, etc.) with priorities and dependencies.
-* **XRM System**: Extended Relationship Management with tagging, relations, filters, and access control.
 * **Worker & Cron System**: Register and schedule background jobs with priorities.
 * **Token System**: Secure, scoped tokens for time-limited operations (e.g. password reset, validation).
 * **Session & Authentication**: Manage session lifecycle and login/logout functionality.
@@ -42,60 +41,47 @@ Some settings might need to be adjusted to suit your environment. You can config
 
 ## Composer (optional)
 
-If you want to use Composer to manage dependencies in plugins, follow these steps. This setup ensures that Composer is only used within the plugin scope, and not in the core framework.
+Composer is optional for the BASE3 runtime, but the repository tooling can build one project-level dependency graph from `composer.base.json` and opted-in plugin Composer files.
 
-### 1. Install Dependencies for Plugins
-
-```bash
-composer --working-dir=plugin init
-```
-
-Example composer.json:
+A plugin participates in the merge when its `composer.json` contains:
 
 ```json
 {
-    "require": {
-        "monolog/monolog": "^3.0",
-        "guzzlehttp/guzzle": "^7.0"
-    }
+  "_base3": {
+    "merge": true
+  }
 }
 ```
 
-```bash
-composer --working-dir=plugin install
-```
-
-Optional merging of plugin composer files:
+Generate the root `composer.json` with:
 
 ```bash
 php tools/setup/merge-composer.php
-composer --working-dir=plugin install
 ```
 
-### 2. Autoloading Composer Dependencies
+or use the normal build target:
 
-Composer autoloading is automatically detected inside plugins.
-
-### 3. Using Composer Packages in Your Plugins
-
-Example:
-
-```php
-use Monolog\Logger;
-use GuzzleHttp\Client;
-
-$logger = new Logger('plugin');
-$client = new Client();
+```bash
+make install
 ```
+
+The generated root `composer.json` is disposable. `composer.base.json` is the stable root input.
+
+See `docs/developer-tooling.md` for dependency merging and build details.
 
 ## Using the Makefile
 
 ```bash
-make           # Merge all plugin composer.json files and install dependencies
-make install   # Same as above
-make update    # Merge and update all dependencies
-make clean     # Remove merged composer.json and vendor directory
-make doc       # Create documentation
+make install      # Merge Composer config, install dependencies, build plugin files
+make update       # Merge Composer config, update dependencies, build plugin files
+make rootfiles    # Copy plugin rootfiles into the project root
+make publicfiles  # Copy plugin publicfiles into public/
+make assets       # Copy plugin assets into public/assets/<PluginName>/
+make test         # Run PHPUnit
+make coverage     # Build docs/coverage
+make stan         # Run PHPStan
+make doc          # Build docs/phpdoc
+make clean        # Remove vendor/ and generated composer.json
 ```
 
 ## Framework Components
@@ -140,13 +126,6 @@ Pages implement `IPage`, `IPageCatchall`, `IPagePostDataProcessor`. Views and mo
 
 * Use `IEventManager`, `IStoppableEvent`
 * Hook-based extensibility via `IHookListener` and `IHookManager`
-
-### XRM (Extended Relationship Management)
-
-* Entry handling via `IXrm`
-* Tagging, allocation, app linking
-* Filtering with `IXrmFilterModule`
-* Access control and user assignment
 
 ### Workers & Cron
 
@@ -205,19 +184,82 @@ Manage structured configuration data using `IConfiguration`.
 use Base3\Page\Api\IPage;
 
 class HelloController implements IPage {
-    public function getOutput(string $out = 'html', bool $final = false): string {
-        return '<h1>Hello, World!</h1>';
+    public static function getName(): string {
+        return 'hello';
     }
 
-    public function getName(): string {
-        return 'hello';
+    public function getUrl() {
+        return '/hello.html';
+    }
+
+    public function getOutput(string $out = 'html', bool $final = false): string {
+        return '<h1>Hello, World!</h1>';
     }
 }
 ```
 
-2. Register the page module or route in the service selector or router.
+2. Place the class below a source tree scanned by the active `IClassMap`.
 
-3. Visit `/hello.php` and you will see the rendered output.
+3. Request it through the active routing style, for example `?name=hello&out=html` or the configured pretty URL `/hello.html`.
+
+## Developer Documentation
+
+The curated framework documentation lives in `docs/`.
+
+Start with:
+
+```text
+docs/overview.md
+docs/architecture-principles.md
+docs/bootstrap.md
+docs/dependency-injection.md
+docs/classmap.md
+docs/plugins.md
+docs/coding-conventions.md
+docs/foundation-plugins.md
+docs/components.md
+docs/extension-cookbook.md
+```
+
+Subsystem guides include:
+
+```text
+docs/routing.md
+docs/pages.md
+docs/mvc.md
+docs/middlewares.md
+docs/accesscontrol-authentication.md
+docs/sessions.md
+docs/language-translation.md
+docs/microservices.md
+docs/configuration.md
+docs/configvalue.md
+docs/settingsstore.md
+docs/statestore.md
+docs/databases.md
+docs/migrations.md
+docs/logging.md
+docs/hooks.md
+docs/events.md
+docs/worker.md
+docs/assets.md
+docs/tokens.md
+docs/cryptography.md
+docs/cache.md
+docs/knowledge.md
+docs/service-registry.md
+docs/core-contracts.md
+docs/checks-diagnostics.md
+docs/request-data.md
+docs/systemservice.md
+docs/usermanager.md
+docs/developer-tooling.md
+docs/utilities.md
+```
+
+Generated PHPDoc and coverage output are separate from the curated Markdown guides.
+
+---
 
 ## 🔌 Available BASE3 Plugins
 
@@ -274,7 +316,7 @@ The BASE3 Framework can be extended through numerous plugins that add modular fu
 
 ## Contributing
 
-Contributions are welcome. Please follow PSR-12 and document new interfaces clearly.
+Contributions are welcome. Follow `docs/coding-conventions.md` and document new public interfaces clearly.
 
 ## Example Projects Using BASE3
 
@@ -285,9 +327,15 @@ Contributions are welcome. Please follow PSR-12 and document new interfaces clea
 
 Base3Framework is licensed under the GPL 3.0 License. See the LICENSE file for more details.
 
-## Documentation
+## Generated API Documentation
 
-For more detailed documentation, please visit the official website or check the API reference.
+Run:
+
+```bash
+make doc
+```
+
+to generate PHPDoc under `docs/phpdoc/`. The curated developer guides remain the Markdown files listed above.
 
 ## Links
 

@@ -1107,6 +1107,43 @@ Base3Framework/src/Worker
 └── MasterWorker.php
 ```
 
+## Additional built-in worker classes
+
+### `DelegateWorkerMicroservice`
+
+`Base3\Worker\DelegateWorkerMicroservice` extends `AbstractMicroservice` and implements `IWorker`.
+
+It creates a normal `DelegateWorker` from `IClassMap` and `IConfiguration` and forwards:
+
+```text
+isActive
+getPriority
+getJobs
+doJob
+```
+
+It exposes the existing worker behavior through the BASE3 microservice transport. It does not define another job model.
+
+See `microservices.md`.
+
+### `TestJob`
+
+`Base3\Worker\TestJob` is an `IOutput` named `testjob`. It reads the requested job name, resolves an `IJob` through `IClassMap`, and calls `go()` directly.
+
+It is a manual/developer execution helper. It does not run the complete `DelegateWorker` policy and scheduling decision path before invoking the job.
+
+Use normal worker execution when execution policies must be enforced.
+
+### `AbstractSyncJob`
+
+`AbstractSyncJob` is an older compatibility base class implementing `ICron` and a fixed synchronization workflow.
+
+New background work should prefer the normal `IJob` or `IPolicyControlledJob` model and explicit constructor-injected services documented here.
+
+Its legacy implementation details should not be copied as the default architecture for new synchronization features.
+
+---
+
 ## Design Rules
 
 1. Jobs do work.

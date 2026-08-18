@@ -989,7 +989,7 @@ If your project uses a different database dialect, you may need:
 
 ## 23. Operational recommendations
 
-## 22.1 Always namespace keys
+## 23.1 Always namespace keys
 
 Bad:
 
@@ -1009,7 +1009,7 @@ sync.shop.orders.cursor
 
 ---
 
-## 22.2 Prefer small values
+## 23.2 Prefer small values
 
 Good:
 
@@ -1029,7 +1029,7 @@ Avoid:
 
 ---
 
-## 22.3 Use TTL for locks
+## 23.3 Use TTL for locks
 
 Bad:
 
@@ -1047,7 +1047,7 @@ TTL protects you against stale locks after crashes.
 
 ---
 
-## 22.4 Use `try` and `finally` for lock release
+## 23.4 Use `try` and `finally` for lock release
 
 ```php
 if (!$stateStore->setIfNotExists('locks.jobs.cleanup', time(), 300)) {
@@ -1065,7 +1065,7 @@ This should be your default pattern.
 
 ---
 
-## 22.5 Do not use the state store as configuration
+## 23.5 Do not use the state store as configuration
 
 Wrong use:
 
@@ -1085,7 +1085,7 @@ A useful rule is:
 
 ---
 
-## 22.6 Do not use `listKeys()` as a data model
+## 23.6 Do not use `listKeys()` as a data model
 
 Wrong idea:
 
@@ -1301,7 +1301,35 @@ If those semantics are preserved, consumers can usually switch implementations w
 
 ---
 
-## 28. Summary
+## 28. `NoStateStore`
+
+The framework includes the null-object implementation:
+
+```php
+Base3\State\No\NoStateStore
+```
+
+Its behavior is:
+
+```text
+get(key, default) -> default
+has(key) -> false
+set(...) -> no-op
+delete(key) -> false
+setIfNotExists(...) -> true
+listKeys(prefix) -> []
+flush() -> no-op
+```
+
+`setIfNotExists()` returns `true` because this backend always considers the key absent, even though it deliberately persists nothing.
+
+`NoStateStore` is an explicit project choice for runtimes where a valid `IStateStore` service is useful but persistence is intentionally disabled.
+
+Do not use it for workflows that require durable locks, cursors, checkpoints, or last-run markers. Successful no-op calls are not persistence.
+
+---
+
+## 29. Summary
 
 The BASE3 state store is a small but very important infrastructure component.
 
@@ -1321,7 +1349,7 @@ When used correctly, the state store becomes the natural home for scheduling mar
 
 ---
 
-## 29. Practical takeaway
+## 30. Practical takeaway
 
 If you are building a plugin and need to remember something that the system learned while running, ask yourself:
 

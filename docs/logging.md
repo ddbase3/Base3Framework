@@ -1566,7 +1566,32 @@ That makes the logging system easy to adopt, easy to extend, and predictable acr
 
 ---
 
-## 23. Quick reference
+## 23. `LoggerProxy`
+
+The framework also contains:
+
+```php
+Base3\Logger\LoggerProxy
+```
+
+`LoggerProxy` implements both `ILogger` and `ICheck` and forwards the complete logging API to an injected underlying logger.
+
+That includes:
+
+* all level-specific methods
+* `logLevel()`
+* legacy `log()`
+* scope listing and log retrieval
+
+For dependency checks, it forwards `checkDependencies()` only when the underlying logger also implements `ICheck`; otherwise it returns an empty result.
+
+`LoggerProxy` does not introduce a second logging model. It is a forwarding boundary for cases where the active logger is deliberately proxied.
+
+Normal runtime services should still depend on `ILogger`.
+
+---
+
+## 24. Quick reference
 
 ### Typical write calls
 

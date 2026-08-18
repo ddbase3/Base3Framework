@@ -357,6 +357,11 @@ $container
 	->set(IConfiguration::class, 'configuration', IContainer::ALIAS)
 	->set('classmap', fn($c) => new PluginClassMap($c->get(IContainer::class)), IContainer::SHARED)
 	->set(IClassMap::class, 'classmap', IContainer::ALIAS)
+	->set(IComponentResolver::class, fn($c) => new ComponentResolver(
+		$c->get(IContainer::class),
+		$c->get(IClassMap::class)
+	), IContainer::SHARED)
+	->set(IMigrationRunner::class, fn() => new NoMigrationRunner(), IContainer::SHARED)
 	->set('accesscontrol', fn($c) => new NoAccesscontrol(), IContainer::SHARED)
 	->set(IAccesscontrol::class, 'accesscontrol', IContainer::ALIAS)
 	->set(IServiceSelector::class, fn($c) => new StandardServiceSelector($c), IContainer::SHARED)
@@ -486,7 +491,21 @@ Later, other systems use it to discover outputs, jobs, policies, checks, and oth
 
 ---
 
-## 11.8 `IAccesscontrol`
+## 11.8 `IComponentResolver`
+
+```php
+IComponentResolver::class => ComponentResolver
+```
+
+The configured component resolver is registered as a shared core service immediately after `IClassMap` because it depends on both the container and class map.
+
+It reads `ComponentDefinition` values from the existing container and delegates implementation construction to the class map. It is not a second container.
+
+See `components.md`.
+
+---
+
+## 11.9 `IAccesscontrol`
 
 ```php id="1o1r32"
 'accesscontrol' => NoAccesscontrol
@@ -503,7 +522,7 @@ A host-specific bootstrap is the right place to do that.
 
 ---
 
-## 11.9 `IMigrationRunner`
+## 11.10 `IMigrationRunner`
 
 The default bootstrap registers a no-op migration runner.
 
@@ -523,7 +542,7 @@ The bootstrap calls `migrate()` after `bootstrap.start` and before the service s
 
 ---
 
-## 11.10 `IServiceSelector`
+## 11.11 `IServiceSelector`
 
 ```php id="tkt97r"
 IServiceSelector::class => StandardServiceSelector
@@ -537,7 +556,7 @@ A project can replace this with a route-based selector or host-specific selector
 
 ---
 
-## 11.11 `middlewares`
+## 11.12 `middlewares`
 
 ```php id="rm8wpw"
 'middlewares' => []
@@ -601,11 +620,12 @@ This means a listener can react to `bootstrap.init` even before plugin `init()` 
 
 ## 14. Bootstrap lifecycle hooks
 
-The default bootstrap dispatches three lifecycle hooks.
+The default bootstrap dispatches four lifecycle hooks.
 
 ```text id="r0ir6k"
 bootstrap.init
 bootstrap.start
+bootstrap.migrated
 bootstrap.finish
 ```
 
@@ -647,6 +667,23 @@ Typical use cases:
 * validation of final service bindings
 * route or middleware inspection
 * request preparation before output execution
+
+---
+
+### `bootstrap.migrated`
+
+Dispatched after:
+
+* `IMigrationRunner::migrate()` has completed
+
+Dispatched before:
+
+* request execution through the service selector
+
+Typical use cases:
+
+* diagnostics that require the final migrated schema state
+* post-migration initialization that must not run before migrations
 
 ---
 

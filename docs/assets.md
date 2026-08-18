@@ -1134,6 +1134,77 @@ Before publishing a BASE3 plugin, check the following:
 
 ---
 
+## Built-in resolver implementations and asset build
+
+The current framework contains two built-in resolver implementations:
+
+```text
+Base3\Core\AssetResolver
+Base3\Core\BaseAssetResolver
+```
+
+### `AssetResolver`
+
+`AssetResolver` recognizes logical paths in this form:
+
+```text
+plugin/<PluginName>/assets/<subpath>
+```
+
+and maps them to:
+
+```text
+assets/<PluginName>/<subpath>?t=<hash>
+```
+
+The hash is derived from the source file when available and acts as simple cache busting.
+
+Paths that do not match the plugin asset convention are returned unchanged.
+
+### `BaseAssetResolver`
+
+`BaseAssetResolver` is a minimal base resolver. It:
+
+* trims the supplied path
+* preserves empty, absolute, scheme-based, fragment, protocol-relative, `./`, and `../` addresses
+* prefixes other relative paths with `./`
+
+It does not perform the plugin-to-public asset mapping used by `AssetResolver`.
+
+Projects and embedded hosts may provide their own `IAssetResolver` implementation when their public layout differs.
+
+### Physical asset build
+
+Repository tooling provides:
+
+```text
+tools/setup/build-assets.php
+```
+
+and the Makefile target:
+
+```bash
+make assets
+```
+
+When the project has a `public/` directory, this build copies:
+
+```text
+plugin/<PluginName>/assets/**
+```
+
+to:
+
+```text
+public/assets/<PluginName>/**
+```
+
+Physical publication does not change the coding rule. Plugin code should still use logical asset addresses and resolve the public URL through `IAssetResolver` at the rendering boundary.
+
+See `developer-tooling.md` for the related `assets`, `rootfiles`, and `publicfiles` targets.
+
+---
+
 ## Summary
 
 BASE3 asset handling is based on one strong architectural decision:

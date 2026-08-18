@@ -1861,7 +1861,35 @@ Read `docs/components.md` for the full configured component workflow.
 
 ---
 
-## 57. Summary
+## 57. `ComposerClassMap`
+
+The framework also contains:
+
+```php
+Base3\Core\ComposerClassMap
+```
+
+`ComposerClassMap` extends `AbstractClassMap` and can populate the BASE3 map from Composer's generated `vendor/composer/autoload_classmap.php`.
+
+It reads Composer's class map, loads mapped concrete classes when necessary, indexes implemented interfaces, and records `IBase::getName()` values for discoverable classes.
+
+Its filesystem scan target list is empty because its source of discovery is Composer's class map.
+
+This is an alternative `IClassMap` implementation. It should not be stacked in front of `PluginClassMap` as an additional discovery fallback.
+
+The rest of the framework should continue to depend on:
+
+```php
+IClassMap
+```
+
+so the project bootstrap can choose the intended discovery implementation at the composition boundary.
+
+The default standalone bootstrap continues to use `PluginClassMap`.
+
+---
+
+## 58. Summary
 
 The BASE3 Class Map system discovers and instantiates framework and plugin classes.
 

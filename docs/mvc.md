@@ -310,14 +310,14 @@ namespace AcmeDemoWebsite\Content;
 
 use Base3\Api\IMvcView;
 use Base3\Api\IOutput;
-use Base3\AccessControl\Api\IAccessControl;
+use Base3\Accesscontrol\Api\IAccesscontrol;
 use Base3\LinkTarget\Api\ILinkTargetService;
 
 class UserMenu implements IOutput {
 
 	public function __construct(
 		private readonly IMvcView $view,
-		private readonly IAccessControl $accesscontrol,
+		private readonly IAccesscontrol $accesscontrol,
 		private readonly ILinkTargetService $linktargetservice
 	) {}
 

@@ -375,6 +375,7 @@ ILogger::class
 ISettingsStore::class
 IStateStore::class
 IEventManager::class
+IComponentResolver::class
 IMigrationRunner::class
 ```
 

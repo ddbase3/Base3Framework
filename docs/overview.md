@@ -65,6 +65,14 @@ Settings / State / Configuration
 Database migrations
 Hooks / Events
 Workers / Jobs
+Access control / Authentication
+Sessions
+Language / Translation
+Tokens / Cryptography
+Microservices
+Pages / Page Modules
+Checks / Diagnostics
+Service registries
 ```
 
 The most important rule is:
@@ -523,21 +531,41 @@ bootstrap.md
 dependency-injection.md
 classmap.md
 plugins.md
+coding-conventions.md
+foundation-plugins.md
+components.md
 migrations.md
 extension-cookbook.md
 routing.md
+pages.md
 mvc.md
+middlewares.md
+accesscontrol-authentication.md
+sessions.md
+language-translation.md
+microservices.md
 configuration.md
 configvalue.md
 settingsstore.md
 statestore.md
+databases.md
+logging.md
 hooks.md
 events.md
 worker.md
 assets.md
+tokens.md
+cryptography.md
+cache.md
+knowledge.md
+service-registry.md
+core-contracts.md
+checks-diagnostics.md
 request-data.md
 systemservice.md
 usermanager.md
+developer-tooling.md
+utilities.md
 ```
 
 Not every project needs every subsystem immediately.
@@ -564,6 +592,13 @@ Migrations update active database schemas before request handling.
 Hooks extend lifecycle.
 Events announce runtime behavior.
 Workers run background jobs.
+Access control establishes request identity.
+Sessions manage runtime session state.
+Language selection and translation remain separate services.
+Microservices expose selected framework behavior through the current transport layer.
+Pages and page modules provide page-oriented output contracts.
+Tokens and cryptography provide narrow security-related service boundaries.
+Checks expose diagnostics without replacing runtime validation.
 ```
 
 The most important practical distinction is:

@@ -58,7 +58,6 @@ A routable output implements `IOutput`.
 ```php
 interface IOutput extends IBase {
 	public function getOutput(string $out = 'html', bool $final = false): string;
-	public function getHelp(): string;
 }
 ```
 
@@ -66,6 +65,18 @@ This means a class is routable when:
 
 * it has a globally unique technical name via `getName()`
 * it can render itself via `getOutput()`
+
+Help is an optional capability provided separately through:
+
+```php
+interface IHelp {
+	public function getHelp(): string;
+}
+```
+
+The classic service selector only calls `getHelp()` when the resolved output also implements `IHelp` and debug mode is enabled.
+
+This separation means normal outputs are not forced to provide a help endpoint.
 
 This is the most important routing convention in BASE3.
 
@@ -142,7 +153,7 @@ flowchart TD
 	E --> G["Selected route dispatches request"]
 	G --> F
 	F --> H["IOutput instance"]
-	H --> I["getOutput or getHelp"]
+	H --> I["getOutput or optional IHelp"]
 	I --> J["Response body"]
 ```
 
@@ -168,7 +179,7 @@ It reads the request directly from the query parameters and resolves an output i
 3. optionally redirect authenticated users from `index`
 4. call `handleLanguage($data)`
 5. resolve the output instance through the class map
-6. return `getHelp()` or call `getOutput($out, true)`
+6. for `out=help`, require `IHelp` in debug mode; otherwise call `getOutput($out, true)`
 
 ### Flow
 
@@ -187,7 +198,7 @@ flowchart TD
 	J -->|"No"| K["404"]
 	J -->|"Yes"| L["Use instance"]
 	L --> M{"out == help?"}
-	M -->|"Yes"| N["getHelp"]
+	M -->|"Yes"| N["DEBUG + IHelp -> getHelp, otherwise empty"]
 	M -->|"No"| O["getOutput(out, final=true)"]
 ```
 
@@ -697,10 +708,11 @@ The following minimal example shows two `IOutput` classes. `page1` generates a l
 
 namespace Example\Content;
 
+use Base3\Api\IHelp;
 use Base3\Api\IOutput;
 use Base3\LinkTarget\Api\ILinkTargetService;
 
-class Page1 implements IOutput {
+class Page1 implements IOutput, IHelp {
 
 	public function __construct(
 		private readonly ILinkTargetService $linktargetservice
@@ -757,10 +769,6 @@ class Page2 implements IOutput {
 			. '<p>You have reached page 2.</p>'
 			. '</body>'
 			. '</html>';
-	}
-
-	public function getHelp(): string {
-		return 'Help of Page2' . "\n";
 	}
 
 }
@@ -1004,7 +1012,28 @@ Projects can:
 
 ---
 
-## 17. Out of scope for this document
+## 17. Help routing in the current implementations
+
+The classic `AbstractServiceSelector` handles help as an optional capability:
+
+```text
+out=help
+  -> require DEBUG
+  -> require instance instanceof IHelp
+  -> call getHelp()
+```
+
+`GenericOutputRoute` still calls `getHelp()` directly for its `help` path without checking `IHelp`. That is a current implementation inconsistency, not a different `IOutput` contract. New output classes should follow the interfaces: implement `IHelp` when help is supported.
+
+The route implementations also differ in how they pass the `final` flag. The classic selector calls `getOutput($out, true)`, while `GenericOutputRoute` and `CliRoute` currently call `getOutput($out)`.
+
+These differences belong to the routing implementation boundary. Consumers should not add compatibility routers around output classes to hide them.
+
+See `core-contracts.md` for the current `IOutput` and `IHelp` contracts.
+
+---
+
+## 18. Out of scope for this document
 
 The following related topics are intentionally left for separate documentation:
 

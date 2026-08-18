@@ -1044,7 +1044,76 @@ The project plugin should decide which configuration implementation is active. I
 
 ---
 
-## 19. Configuration file structure and naming guidance
+## 19. Built-in `DatabaseConfiguration`
+
+The framework includes a concrete database-backed implementation:
+
+```php
+Base3\Configuration\Database\DatabaseConfiguration
+```
+
+It extends `AbstractConfiguration` and stores individual configuration values in:
+
+```text
+base3_configuration
+```
+
+The storage model is:
+
+```text
+group
+name
+type
+value
+```
+
+with a composite primary key over `group` and `name`.
+
+### Persisted value types
+
+The implementation records an explicit type for each value:
+
+```text
+string
+int
+float
+bool
+array
+null
+```
+
+Arrays and objects are JSON-encoded and loaded back as arrays. Invalid stored JSON raises a `RuntimeException` rather than being silently replaced.
+
+### Whole-state save
+
+`saveData()` synchronizes the table to the current complete configuration state:
+
+* desired values are inserted or updated
+* rows no longer present in the current configuration are deleted
+
+### `persistValue()`
+
+`persistValue()` updates the in-memory configuration and writes one `group/key` value directly without requiring a complete `save()` cycle.
+
+### Bootstrap table creation
+
+`DatabaseConfiguration` uses an internal `CREATE TABLE IF NOT EXISTS` step because its own private persistence table must exist before that backend can load configuration from it.
+
+This fits the migration rule for private technical bootstrap tables. Versioned schema changes still belong in immutable migrations when the schema evolves.
+
+### Current SQL dialect constraint
+
+Although its constructor depends on `IDatabase`, the current implementation uses MySQL-specific SQL syntax, including backtick identifiers, `LONGTEXT`, and `ON DUPLICATE KEY UPDATE`.
+
+The current `DatabaseConfiguration` is therefore not made PostgreSQL-compatible merely by injecting `PostgresDatabase`.
+
+This is an implementation-boundary constraint. Portability should be corrected in the database configuration backend itself rather than hidden behind a consumer-side compatibility path.
+
+See `databases.md` and `migrations.md`.
+
+---
+
+## 20. Configuration file structure and naming guidance
 
 BASE3 itself does not force a strict global naming scheme beyond the group/key structure, but plugin authors should still be disciplined.
 
@@ -1085,7 +1154,7 @@ Once a plugin is used in real installations, changing group or key names careles
 
 ---
 
-## 20. Example: plugin settings form save flow
+## 21. Example: plugin settings form save flow
 
 A common real-world scenario is an admin form that edits plugin settings.
 
@@ -1128,7 +1197,7 @@ This keeps configuration handling centralized and testable.
 
 ---
 
-## 21. Testing code that depends on configuration
+## 22. Testing code that depends on configuration
 
 One of the biggest advantages of the interface-based design is testability.
 
@@ -1166,7 +1235,7 @@ For plugin authors, this is often the fastest path to reliable unit tests.
 
 ---
 
-## 22. Operational behavior and reloads
+## 23. Operational behavior and reloads
 
 Most web requests are short-lived, but some processes are not.
 
@@ -1208,7 +1277,7 @@ Without reload support, long-running processes might keep using stale settings i
 
 ---
 
-## 23. Error handling and save behavior
+## 24. Error handling and save behavior
 
 The configuration API intentionally keeps `save()` for backwards compatibility, even though it does not expose a return value.
 
@@ -1250,7 +1319,7 @@ The interface standardizes behavior, but a plugin that cares deeply about save d
 
 ---
 
-## 24. Recommended usage patterns for plugin authors
+## 25. Recommended usage patterns for plugin authors
 
 ### Prefer this
 
@@ -1287,7 +1356,7 @@ That decision belongs to project wiring and container setup.
 
 ---
 
-## 25. Anti-patterns
+## 26. Anti-patterns
 
 ### 1. Depending on a concrete backend without need
 
@@ -1354,7 +1423,7 @@ Prefer either:
 
 ---
 
-## 26. End-to-end example
+## 27. End-to-end example
 
 The following example shows a small but realistic plugin service using configuration through DI.
 
@@ -1418,7 +1487,7 @@ This is the typical BASE3 style:
 
 ---
 
-## 27. Summary
+## 28. Summary
 
 BASE3 configuration is built around one central abstraction: `IConfiguration`.
 
@@ -1442,7 +1511,7 @@ If you follow those rules, your plugin configuration will remain portable, testa
 
 ---
 
-## 28. Quick reference
+## 29. Quick reference
 
 ### Read operations
 

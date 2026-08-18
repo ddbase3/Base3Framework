@@ -15,6 +15,7 @@ The focus is on:
 * transactions
 * escaping and safe SQL construction
 * MySQL-specific behavior of `MysqlDatabase`
+* PostgreSQL-specific behavior of `PostgresDatabase`
 * practical usage patterns and pitfalls
 
 The goal is that after reading this document, a plugin developer can immediately start using the database service in a clean and framework-consistent way.
@@ -26,7 +27,7 @@ The goal is that after reading this document, a plugin developer can immediately
 BASE3 uses a small and explicit database abstraction:
 
 * plugin and framework code depend on `Base3\Database\Api\IDatabase`
-* concrete implementations such as `MysqlDatabase` provide the actual backend-specific behavior
+* concrete implementations such as `MysqlDatabase` and `PostgresDatabase` provide the actual backend-specific behavior
 * consumers are expected to work against the interface, not against `mysqli` directly
 
 This keeps application code portable, testable, and consistent.
@@ -46,7 +47,7 @@ That gives you:
 flowchart TD
     A[Plugin / Service / Controller] --> B[IDatabase]
     B --> C[MysqlDatabase]
-    B --> D[Future PostgresDatabase]
+    B --> D[PostgresDatabase]
     C --> E[(MySQL / MariaDB)]
     D --> F[(PostgreSQL)]
 ```
@@ -101,7 +102,17 @@ classDiagram
         -name: string|null
     }
 
+    class PostgresDatabase {
+        -connection: mixed
+        -connected: bool
+        -host: string|null
+        -user: string|null
+        -pass: string|null
+        -name: string|null
+    }
+
     IDatabase <|.. MysqlDatabase
+    IDatabase <|.. PostgresDatabase
 ```
 
 ### Key design decision: explicit lazy connection
@@ -1194,7 +1205,82 @@ What this example demonstrates:
 
 ---
 
-## 17. Summary
+## 17. PostgreSQL implementation
+
+The framework currently includes:
+
+```php
+Base3\Database\Postgres\PostgresDatabase
+```
+
+It implements both `IDatabase` and `ICheck` and reads the same logical `database` configuration keys as `MysqlDatabase`:
+
+```text
+host
+user
+pass
+name
+```
+
+Like the MySQL implementation, `connect()` is idempotent and leaves the instance disconnected when required configuration is missing or `pg_connect()` fails.
+
+### Query behavior
+
+`PostgresDatabase` implements the normal `IDatabase` query methods with the PHP `pg_*` extension:
+
+```text
+nonQuery
+scalarQuery
+singleQuery
+listQuery
+multiQuery
+```
+
+Unlike the current MySQL implementation, its query methods throw `RuntimeException` when a query is attempted without an available connection or when `pg_query()` fails.
+
+### Transactions
+
+`beginTransaction()`, `commit()`, and `rollback()` issue explicit PostgreSQL transaction statements and throw when the operation fails.
+
+### `affectedRows()`
+
+The current implementation returns:
+
+```text
+0
+```
+
+It does not retain the PostgreSQL result handle needed by `pg_affected_rows()` through the current `IDatabase` method shape.
+
+Consumers that require an accurate affected-row count should therefore not infer it from this method when using the current PostgreSQL backend.
+
+### `insertId()`
+
+The implementation uses:
+
+```sql
+SELECT LASTVAL()
+```
+
+This has meaningful semantics only when a sequence value was generated in the current PostgreSQL session.
+
+### Error information
+
+`errorNumber()` currently returns `0` because this adapter does not expose a matching numeric PostgreSQL error value.
+
+`errorMessage()` returns the last PostgreSQL error string or `Not connected`.
+
+### SQL dialect portability
+
+`IDatabase` provides a common execution API. It is not a SQL dialect abstraction.
+
+SQL written with MySQL-specific quoting or syntax is not made PostgreSQL-compatible merely because the consumer depends on `IDatabase`.
+
+Keep backend-specific SQL in the implementation that owns it, or use a higher-level query/compiler abstraction where the domain provides one.
+
+---
+
+## 18. Summary
 
 The BASE3 database layer is intentionally straightforward.
 
@@ -1216,7 +1302,7 @@ Once that convention is internalized, the rest of the API becomes very easy to u
 
 ---
 
-## 18. Quick reference
+## 19. Quick reference
 
 | Task                           | Method                                           |
 | ------------------------------ | ------------------------------------------------ |
@@ -1238,7 +1324,7 @@ Once that convention is internalized, the rest of the API becomes very easy to u
 
 ---
 
-## 19. Final rule of thumb
+## 20. Final rule of thumb
 
 When building a BASE3 plugin, a safe default repository method usually looks like this:
 

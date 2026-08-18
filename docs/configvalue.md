@@ -333,6 +333,15 @@ interface IConfigValueModeResolver extends IBase, ISchemaProvider {
 
 Mode resolvers are discoverable BASE3 components.
 
+The built-in resolver classes are:
+
+```text
+Base3\ConfigValue\Mode\FixedConfigValueModeResolver
+Base3\ConfigValue\Mode\ConfigurationConfigValueModeResolver
+Base3\ConfigValue\Mode\EnvConfigValueModeResolver
+Base3\ConfigValue\Mode\FileConfigValueModeResolver
+```
+
 They implement `IBase`, so they also have a technical `getName()`.
 
 ---

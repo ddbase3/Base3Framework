@@ -59,7 +59,7 @@ The manager is responsible for:
 ```php
 <?php declare(strict_types=1);
 
-namespace Base3\Hook;
+namespace Base3\Hook\Api;
 
 interface IHookManager {
 
@@ -117,7 +117,7 @@ A hook listener is any class implementing `IHookListener`.
 ```php
 <?php declare(strict_types=1);
 
-namespace Base3\Hook;
+namespace Base3\Hook\Api;
 
 interface IHookListener {
 
@@ -169,6 +169,7 @@ namespace Base3\Core;
 
 use Base3\Api\IBootstrap;
 use Base3\Api\IClassMap;
+use Base3\Api\IComponentResolver;
 use Base3\Api\IContainer;
 use Base3\Api\IPlugin;
 use Base3\Api\IRequest;
@@ -177,13 +178,16 @@ use Base3\Accesscontrol\Api\IAccesscontrol;
 use Base3\Accesscontrol\No\NoAccesscontrol;
 use Base3\Configuration\Api\IConfiguration;
 use Base3\Configuration\ConfigFile\ConfigFile;
+use Base3\Core\ComponentResolver;
 use Base3\Core\PluginClassMap;
 use Base3\Core\Request;
 use Base3\Core\ServiceLocator;
 use Base3\Core\SystemService;
 use Base3\Hook\HookManager;
-use Base3\Hook\IHookListener;
-use Base3\Hook\IHookManager;
+use Base3\Hook\Api\IHookListener;
+use Base3\Hook\Api\IHookManager;
+use Base3\Migration\Api\IMigrationRunner;
+use Base3\Migration\No\NoMigrationRunner;
 use Base3\ServiceSelector\Api\IServiceSelector;
 use Base3\ServiceSelector\Standard\StandardServiceSelector;
 
@@ -203,6 +207,11 @@ class Bootstrap implements IBootstrap {
 			->set(IConfiguration::class, 'configuration', IContainer::ALIAS)
 			->set('classmap', fn($c) => new PluginClassMap($c->get(IContainer::class)), IContainer::SHARED)
 			->set(IClassMap::class, 'classmap', IContainer::ALIAS)
+			->set(IComponentResolver::class, fn($c) => new ComponentResolver(
+				$c->get(IContainer::class),
+				$c->get(IClassMap::class)
+			), IContainer::SHARED)
+			->set(IMigrationRunner::class, fn() => new NoMigrationRunner(), IContainer::SHARED)
 			->set('accesscontrol', fn() => new NoAccesscontrol(), IContainer::SHARED)
 			->set(IAccesscontrol::class, 'accesscontrol', IContainer::ALIAS)
 			->set(IServiceSelector::class, fn($c) => new StandardServiceSelector($c), IContainer::SHARED)
@@ -220,6 +229,9 @@ class Bootstrap implements IBootstrap {
 			$plugin->init();
 		}
 		$hookManager->dispatch('bootstrap.start');
+
+		$container->get(IMigrationRunner::class)->migrate();
+		$hookManager->dispatch('bootstrap.migrated');
 
 		echo $container->get(IServiceSelector::class)->go();
 		$hookManager->dispatch('bootstrap.finish');
@@ -241,7 +253,7 @@ That means a listener class inside a plugin can participate in early lifecycle h
 
 ## 4. Bootstrap lifecycle hooks
 
-The current bootstrap code dispatches three framework lifecycle hooks:
+The current bootstrap code dispatches four framework lifecycle hooks:
 
 * `bootstrap.init`
 * `bootstrap.start`
@@ -508,7 +520,7 @@ It logs bootstrap phases only when a config flag is enabled.
 namespace ExamplePlugin\Hook;
 
 use Base3\Configuration\Api\IConfiguration;
-use Base3\Hook\IHookListener;
+use Base3\Hook\Api\IHookListener;
 
 class BootstrapDiagnosticsHookListener implements IHookListener {
 
@@ -599,7 +611,7 @@ The only thing needed is access to `IHookManager`, which is available from the c
 
 namespace ExamplePlugin\Service;
 
-use Base3\Hook\IHookManager;
+use Base3\Hook\Api\IHookManager;
 
 class ReportBuilder {
 
@@ -659,7 +671,7 @@ Once a plugin exposes hook points, another plugin can subscribe to them like any
 
 namespace AnalyticsPlugin\Hook;
 
-use Base3\Hook\IHookListener;
+use Base3\Hook\Api\IHookListener;
 
 class ReportHookListener implements IHookListener {
 
@@ -866,7 +878,7 @@ Below is a small but complete conceptual example.
 
 namespace ShopPlugin\Service;
 
-use Base3\Hook\IHookManager;
+use Base3\Hook\Api\IHookManager;
 use ShopPlugin\Model\Order;
 
 class OrderService {
@@ -893,7 +905,7 @@ class OrderService {
 
 namespace AuditPlugin\Hook;
 
-use Base3\Hook\IHookListener;
+use Base3\Hook\Api\IHookListener;
 use ShopPlugin\Model\Order;
 
 class OrderAuditHookListener implements IHookListener {
@@ -1098,7 +1110,7 @@ When creating a new custom hook point, the following pattern is usually enough:
 
 namespace ExamplePlugin\Service;
 
-use Base3\Hook\IHookManager;
+use Base3\Hook\Api\IHookManager;
 
 class ExampleProcessor {
 
@@ -1129,7 +1141,7 @@ And a listener:
 
 namespace ExampleExtension\Hook;
 
-use Base3\Hook\IHookListener;
+use Base3\Hook\Api\IHookListener;
 
 class ExampleProcessorHookListener implements IHookListener {
 
