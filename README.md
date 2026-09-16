@@ -206,6 +206,10 @@ class HelloController implements IPage {
 
 The curated framework documentation lives in `docs/`.
 
+Frequently asked questions: [docs/faq.md](docs/faq.md)
+
+Privacy and data processing notes: [PRIVACY.md](PRIVACY.md)
+
 Start with:
 
 ```text
