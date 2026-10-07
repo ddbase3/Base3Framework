@@ -89,7 +89,7 @@ Base3Framework/
 ├── tpl/
 ├── userfiles/
 ├── vendor/
-└── VERSION
+└── base3.json
 ```
 
 The `plugin` directory contains one directory per plugin:
@@ -204,7 +204,7 @@ ExamplePlugin/
 ├── src/
 ├── test/
 ├── tpl/
-└── VERSION
+└── base3.json
 ```
 
 Not every plugin needs every directory.
@@ -213,9 +213,9 @@ A small plugin may only contain:
 
 ```text id="ujk6p1"
 ExamplePlugin/
+├── base3.json
 ├── src/
-├── tpl/
-└── VERSION
+└── tpl/
 ```
 
 A larger plugin may contain documentation, assets, tests, local sample data, install scripts, and many source subdomains.
@@ -463,17 +463,26 @@ See `developer-tooling.md`.
 
 ---
 
-## 6.11 `VERSION`
+## 6.11 `base3.json`
 
-Contains the plugin version.
+Every BASE3 module has a manifest at its module root.
 
-Example:
+Minimal example:
 
-```text id="p1jggy"
-1.0.0
+```json id="p1jggy"
+{
+    "manifestVersion": 1,
+    "name": "ExamplePlugin",
+    "namespace": "ExamplePlugin",
+    "version": "1.0.0"
+}
 ```
 
-This allows plugin tooling, diagnostics, or admin screens to show plugin versions.
+The manifest identifies the module independently of its physical location, provides its module-specific version, and can declare hard dependencies on other BASE3 modules. Embedded integrations may use the presence of `base3.json` as the module discovery marker.
+
+Optional manifest metadata can include description, license, maintainers, repository, and dependencies.
+
+See `base3-manifest.md` for the complete manifest contract.
 
 ---
 
@@ -1162,27 +1171,36 @@ Use this for:
 
 ---
 
-## 26. Plugin version
+## 26. Plugin manifest and version
 
-A plugin can include:
+A plugin declares its identity and module version in:
 
 ```text id="y6a4cv"
-VERSION
+base3.json
 ```
 
-with a simple version string:
+Example:
 
-```text id="ay34lp"
-1.0.0
+```json id="ay34lp"
+{
+    "manifestVersion": 1,
+    "name": "ExamplePlugin",
+    "namespace": "ExamplePlugin",
+    "version": "1.0.0"
+}
 ```
 
-This can be used by:
+The module version can be used by:
 
 * diagnostics
 * admin screens
 * update tools
 * compatibility checks
 * deployment scripts
+
+The manifest may also describe maintainers, the repository, and hard BASE3 module dependencies.
+
+The manifest allows tooling and embedded integrations to identify the module without relying on a fixed physical directory layout.
 
 ---
 
@@ -1439,31 +1457,31 @@ Use the container directly mainly in plugin `init()` and bootstrap composition c
 
 ## 35. Plugin dependencies
 
-A plugin can depend on services or other plugins.
+A plugin can depend on services or other BASE3 modules.
 
-When doing so, document the dependency.
+Hard module dependencies belong in `base3.json`:
 
-Possible dependency styles:
-
-* require another plugin to register a service
-* require a specific interface binding
-* check for availability through `ICheck`
-* use `NOOVERWRITE` for optional fallback services
-* fail early when a required service is missing
-
-Example dependency check:
-
-```php id="j2hu2t"
-public function checkDependencies() {
-	return [
-		'example_dependency_available' => $this->container->has(IExampleDependency::class)
-			? 'Ok'
-			: 'IExampleDependency not registered'
-	];
+```json
+{
+    "dependencies": {
+        "Base3Framework": ">=4.10.0",
+        "AssistantFoundation": ">=2.1.0"
+    }
 }
 ```
 
-If the container does not support `has()` in the local API style, use the framework's available container inspection method.
+Dependency keys are exact BASE3 module names. Dependency values are version constraints. See `base3-manifest.md` for the manifest contract.
+
+Only hard module dependencies belong in the manifest. Optional implementations selected through DI should not become module dependencies merely because they may be present at runtime.
+
+The normal architectural dependency rules still apply:
+
+* reusable plugins should usually depend only on BASE3 framework APIs, their own classes, Foundation APIs, and explicit extension targets
+* unrelated normal plugins should not create direct dependencies on each other
+* project plugins may depend on concrete normal plugins for final composition
+* extension plugins may depend on the plugin they explicitly extend
+
+Runtime service availability and module dependency declaration are related but separate concerns. A required module can declare the structural dependency in `base3.json`, while service wiring continues to use the container and the existing BASE3 DI rules.
 
 ---
 
@@ -1560,14 +1578,14 @@ A minimal plugin can look like this:
 ```text id="tf2rnm"
 plugin/
 └── ExamplePlugin/
+    ├── base3.json
     ├── src/
     │   ├── ExamplePlugin.php
     │   └── Content/
     │       └── ExampleDisplay.php
-    ├── tpl/
-    │   └── Content/
-    │       └── ExampleDisplay.php
-    └── VERSION
+    └── tpl/
+        └── Content/
+            └── ExampleDisplay.php
 ```
 
 `ExamplePlugin.php` registers services.
@@ -1576,7 +1594,7 @@ plugin/
 
 The template renders the display.
 
-`VERSION` identifies the plugin version.
+`base3.json` identifies the BASE3 module and contains its module version.
 
 ---
 
@@ -1615,7 +1633,7 @@ ExamplePlugin/
 ├── tpl/
 │   ├── Content/
 │   └── Display/
-└── VERSION
+└── base3.json
 ```
 
 This structure keeps different concerns separate while staying discoverable.
@@ -1741,7 +1759,7 @@ name
 
 A plugin becomes active when its main class implements `IPlugin`, is discovered by the class map, and its `init()` method is called by the bootstrap.
 
-A plugin may include source code, templates, assets, language files, tests, documentation, local sample data, install notes, and a version file.
+A plugin may include source code, templates, assets, language files, tests, documentation, local sample data, install notes, and a `base3.json` module manifest.
 
 The main development pattern is:
 

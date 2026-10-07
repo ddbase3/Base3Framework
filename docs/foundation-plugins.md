@@ -197,7 +197,7 @@ ResourceFoundation/
 │   ├── Dto/
 │   ├── Proxy/
 │   └── ResourceFoundationPluginTest.php
-└── VERSION
+└── base3.json
 ```
 
 The important directories are:

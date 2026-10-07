@@ -284,10 +284,10 @@ Both version methods read the BASE3 version from the same source.
 
 ## 9. Default version lookup
 
-The default implementation reads the BASE3 version from a file named:
+The default implementation reads the BASE3 module version from the framework module manifest:
 
 ```text id="o28952"
-VERSION
+base3.json
 ```
 
 under:
@@ -299,19 +299,22 @@ DIR_ROOT
 Conceptual path:
 
 ```text id="vl9i6k"
-DIR_ROOT/VERSION
+DIR_ROOT/base3.json
 ```
+
+The value comes from the manifest's `version` field.
 
 The lookup rules are intentionally defensive:
 
 * if `DIR_ROOT` is not defined, return `""`
-* if the file does not exist, return `""`
-* if the file is not readable, return `""`
-* if the file cannot be read, return `""`
-* if the trimmed content is empty, return `""`
-* if the file contains multiple lines, use the first non-empty trimmed line where possible
+* if the manifest does not exist, return `""`
+* if the manifest is not readable, return `""`
+* if the manifest cannot be decoded, return `""`
+* if the `version` field is missing or empty, return `""`
 
 The default implementation should not emit warnings and should not throw exceptions for missing version metadata.
+
+See `base3-manifest.md` for the manifest contract.
 
 ---
 
@@ -441,7 +444,7 @@ final class HostSystemService implements ISystemService {
 	}
 
 	private function readEmbeddedVersion(): string {
-		// Read from BASE3 VERSION file or project-specific metadata.
+		// Read from the BASE3 module manifest or project-specific metadata.
 		return '';
 	}
 }

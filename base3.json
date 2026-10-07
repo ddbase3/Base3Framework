@@ -1,0 +1,16 @@
+{
+	"manifestVersion": 1,
+	"name": "Base3Framework",
+	"namespace": "Base3",
+	"version": "4.10.0",
+	"description": "BASE3 core framework.",
+	"license": "GPL-3.0-or-later",
+	"maintainers": [
+		{
+			"name": "Daniel Dahme",
+			"url": "https://www.base3.de",
+			"email": "info@base3.de"
+		}
+	],
+	"repository": "https://github.com/ddbase3/Base3Framework"
+}

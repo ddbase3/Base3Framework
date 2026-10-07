@@ -39,7 +39,7 @@ plugin/
     │   └── ExamplePlugin.php
     ├── test/
     ├── tpl/
-    └── VERSION
+    └── base3.json
 ```
 
 Minimal structure:
@@ -49,8 +49,36 @@ plugin/
 └── ExamplePlugin/
     ├── src/
     │   └── ExamplePlugin.php
-    └── VERSION
+    └── base3.json
 ```
+
+The module root also contains `base3.json`:
+
+```json
+{
+    "manifestVersion": 1,
+    "name": "ExamplePlugin",
+    "namespace": "ExamplePlugin",
+    "version": "1.0.0"
+}
+```
+
+If the plugin has hard dependencies on other BASE3 modules, declare them in the same manifest:
+
+```json
+{
+    "manifestVersion": 1,
+    "name": "ExamplePlugin",
+    "namespace": "ExamplePlugin",
+    "version": "1.0.0",
+    "dependencies": {
+        "Base3Framework": ">=4.10.0",
+        "ExampleFoundation": ">=1.0.0"
+    }
+}
+```
+
+Do not declare optional implementations or unrelated normal plugins as hard dependencies.
 
 The plugin class:
 
@@ -733,7 +761,7 @@ ExampleFoundation/
 │   ├── Proxy/
 │   └── ExampleFoundationPlugin.php
 ├── test/
-└── VERSION
+└── base3.json
 ```
 
 Use it to define:
@@ -769,7 +797,7 @@ SearchFoundation/
 │   │   ├── SearchUnavailableException.php
 │   │   └── SearchValidationException.php
 │   └── SearchFoundationPlugin.php
-└── VERSION
+└── base3.json
 ```
 
 A consumer plugin depends on:

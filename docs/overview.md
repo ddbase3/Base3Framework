@@ -101,7 +101,7 @@ Base3Framework/
 ├── tmp/
 ├── userfiles/
 ├── vendor/
-└── VERSION
+└── base3.json
 ```
 
 The framework source lives in:
@@ -129,12 +129,16 @@ plugin/<PluginName>/
 ├── src/
 ├── test/
 ├── tpl/
-└── VERSION
+└── base3.json
 ```
 
 Only `src/` is scanned by the default plugin class map for PHP classes.
 
+Each BASE3 module has a `base3.json` manifest at its module root. The manifest carries the module name, namespace, version, and optional metadata. In embedded systems, host-specific discovery can use this manifest to locate BASE3 modules independently of their physical directory depth.
+
 Templates, assets, language files, local files, tests, and docs are supporting files and are loaded by their respective systems.
+
+See `base3-manifest.md` for the manifest contract.
 
 ---
 

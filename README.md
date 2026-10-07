@@ -219,6 +219,7 @@ docs/bootstrap.md
 docs/dependency-injection.md
 docs/classmap.md
 docs/plugins.md
+docs/base3-manifest.md
 docs/coding-conventions.md
 docs/foundation-plugins.md
 docs/components.md
