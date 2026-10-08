@@ -1567,7 +1567,7 @@ protected function getScanTargets(): array {
 
 The plugin contract does not require the physical directory to be exactly the standalone directory.
 
-It requires the active class map to find the plugin classes.
+It requires the active class map to find the plugin classes. Code that needs its own templates, language files, configuration files, or other packaged resources should resolve them relative to its own module root rather than reconstructing that root from `DIR_PLUGIN`. Code that intentionally needs another module's physical root should depend on `IModuleRegistry`; normal functional cross-plugin collaboration should continue through services and foundation contracts.
 
 ---
 

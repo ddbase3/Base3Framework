@@ -282,6 +282,8 @@ The standard standalone BASE3 layout may continue to scan the configured plugin 
 
 Embedded host integrations may use `base3.json` as the discovery marker. A host integration can recursively search its allowed module area, treat each directory containing `base3.json` as a module root, and register the declared namespace and source path with its class map and autoloader.
 
+The active runtime also exposes `Base3\Api\IModuleRegistry` as the service for resolving a logical BASE3 module name to its physical module root. The default standalone implementation reads the framework root plus direct modules below `DIR_PLUGIN`. Embedded runtimes may replace that implementation with their own manifest discovery while consumers continue to depend only on `IModuleRegistry`.
+
 The discovery scope itself is host-specific. For example, an ILIAS integration can search below `components/` while excluding host-owned areas such as `components/ILIAS` that should not be explored.
 
 BASE3 core code should not contain a fixed list of host vendors or product names.

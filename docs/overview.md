@@ -210,6 +210,7 @@ IMigrationRunner
 ILogger
 IEventManager
 IAssetResolver
+IModuleRegistry
 ```
 
 A class should receive known dependencies through constructor injection.
