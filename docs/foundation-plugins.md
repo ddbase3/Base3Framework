@@ -1161,6 +1161,12 @@ Risky changes:
 
 Treat Foundation Plugin APIs as public contracts.
 
+### Stability, reuse, and review before changes
+
+Existing framework and foundation interfaces must remain stable because consumers across the ecosystem rely on their signatures and semantics. Never change them or make substantial architectural changes without prior agreement. Feature-plugin interfaces may change only when all dependent code is available for a coordinated update.
+
+Before adding a new foundation interface, DTO, proxy, service slot, or helper, inspect the existing framework and relevant foundations and implementations for equivalent or overlapping responsibilities. Do not duplicate code or create parallel contracts or bridging/fallback structures to work around an imperfect existing abstraction. Report any overlap and agree whether to reuse, refactor/extend, or exceptionally create a new structure. Prefer refactoring at the owning architectural boundary for a clearer and more maintainable design.
+
 ---
 
 ## 38. Documentation responsibility

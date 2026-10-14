@@ -41,6 +41,13 @@ The main rule is:
 Write code so that DI, PluginClassMap discovery, and plugin replacement continue to work.
 ```
 
+### Mandatory review before implementation
+
+* Inspect the available codebase and the relevant BASE3/foundation APIs comprehensively before adding or changing code. Search for existing implementations, shared helpers, interfaces, and similar logic. If essential dependent source is unavailable, report the gap instead of assuming there is no existing solution.
+* Do not duplicate logic or add a second structure, adapter, bridge, fallback mode, or alternative code path to compensate for an unsuitable existing implementation. Modify or refactor the responsible code instead. Clarity and maintainability justify refactoring.
+* If similar functionality exists, explain the overlap and agree on reuse, adaptation/refactoring, or an exceptionally necessary new structure **before implementing**.
+* Obtain approval for substantial architectural changes. Keep existing framework and foundation interfaces stable due to their broad use. Change feature-plugin interfaces only when all dependent code is available and can be updated consistently.
+
 ---
 
 ## 2. PHP file header
@@ -284,47 +291,41 @@ Implementation-specific low-level exceptions should stay in the implementation p
 
 ## 9. Technical names with `getName()`
 
-Discoverable BASE3 components need globally unique, stable technical names. The class name itself must already distinguish the component from implementations in other plugins and apps. Uniqueness only within one plugin or app is not sufficient.
-
-Rules for every class implementing `IBase` and discovered through `IClassMap`:
-
-* Use a globally unique class name with a clear plugin or component prefix, such as `PulseCorePlayFeature` instead of `PlayFeature`.
-* `getName()` must return the complete class name **without its namespace**, converted to lowercase. Do not remove the prefix, abbreviate the name, or choose an independent identifier.
-* Keep both the class name and its technical name stable once other code or configuration references them.
-* Use technical names only: no spaces, display labels, or translated text.
-* Apply the same rule to all discoverable component types, including features, groups, assignment rules, outputs, displays, jobs, policies, and providers.
+Many BASE3 components use a static technical name.
 
 Example:
 
-```php
-<?php declare(strict_types=1);
-
-namespace PulseCore\Feature;
-
-use Base3\Api\IBase;
-
-final class PulseCorePlayFeature implements IBase {
-
-	public static function getName(): string {
-		return 'pulsecoreplayfeature';
-	}
+```php id="mjrcc0"
+public static function getName(): string {
+	return 'connectionconfigdisplay';
 }
 ```
 
-Additional naming examples:
+Rules for `getName()`:
 
-| Class name | `getName()` |
-| --- | --- |
-| `PulseCorePlayFeature` | `pulsecoreplayfeature` |
-| `OtherGamePlayFeature` | `othergameplayfeature` |
-| `KimSearchFeature` | `kimsearchfeature` |
-| `KimChatbotFeature` | `kimchatbotfeature` |
-| `Base3AuthenticatedGroup` | `base3authenticatedgroup` |
-| `PulseCorePlayerAssignmentRule` | `pulsecoreplayerassignmentrule` |
+* for discoverable BASE3 classes, return the class name without namespace, converted to lowercase
+* choose sufficiently descriptive, specific class names to ensure global uniqueness across the entire BASE3 ecosystem
+* use a stable technical identifier
+* do not use display labels
+* do not use translated text
+* do not include spaces
+* avoid project-specific names in generic reusable classes
 
-**Incorrect:** A class called `PlayFeature` with `getName() = 'playfeature'` is not acceptable merely because it lives in the `PulseCore` namespace. Another game could use the same class name and technical name.
+Good:
 
-Resolve naming collisions by naming the class correctly in the owning plugin or component. Do not introduce additional feature IDs, composite namespace-based identifiers, or special ClassMap collision handling.
+```php id="drq3nt"
+public static function getName(): string {
+	return 'mailimportjob';
+}
+```
+
+Bad:
+
+```php id="jwz8rg"
+public static function getName(): string {
+	return 'Mail Import Job';
+}
+```
 
 Human-readable labels belong in language files, schemas, settings, or dedicated label methods.
 
@@ -381,7 +382,6 @@ ILogger::class
 ISettingsStore::class
 IStateStore::class
 IEventManager::class
-IComponentResolver::class
 IMigrationRunner::class
 ```
 
@@ -1276,13 +1276,15 @@ Rules:
 * do not run migrations in plugin `init()`
 * let the configured `IMigrationRunner` execute migrations after plugin initialization
 
-Good migration name:
+Good migration name (class `ExamplePluginMigration002AddStatusIndex`):
 
 ```php
 public static function getName(): string {
-	return 'exampleplugin_002_add_status_index';
+	return 'examplepluginmigration002addstatusindex';
 }
 ```
+
+Do not rename technical identifiers of already released migration steps. Their identity must remain immutable; if older identifiers conflict with a new naming convention, clarify the compatibility implications before making changes.
 
 Bad migration name:
 

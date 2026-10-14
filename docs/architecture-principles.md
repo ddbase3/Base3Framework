@@ -39,6 +39,16 @@ Final bindings live in project plugins or custom bootstraps.
 
 This keeps plugins reusable across different projects.
 
+### Reuse, clarity, and architectural change control
+
+Before implementing, inspect the full available codebase and relevant framework and foundation contracts, not only the immediately affected class. Identify any existing or similar responsibility, implementation, interface, helper, or integration path. If the necessary sources are missing, make this explicit instead of assuming no existing solution exists.
+
+Duplicated logic and parallel structures are not acceptable. Do not introduce a second service, code path, adapter, bridge, fallback mode, or compensating layer merely because the existing implementation does not fit well. Correct and, when necessary, refactor the structure that owns the responsibility. Prefer architectural clarity, consistency, and maintainability over avoiding refactoring.
+
+When a similar structure exists, report the overlap and agree with the project owner **before implementation** whether to reuse the existing structure, adapt/refactor it, or, if genuinely justified, add a separate structure. Substantial architectural changes also require prior agreement and must never be made silently.
+
+Existing BASE3 framework and foundation interfaces are broadly used public contracts and must remain stable unless a change is explicitly agreed. Interfaces inside feature plugins may be changed when the full dependent code is available and can be updated coherently.
+
 ---
 
 ## 2. Container for known services
@@ -163,32 +173,6 @@ Give me the configured instance internal-rag of this component interface.
 ```
 
 Do not use it for ordinary shared services. Those belong directly in the container.
-
----
-
-## 4.1 Service registries for explicit named service families
-
-Use `IServiceRegistry` when one service interface has several explicitly composed named instances and consumers need name-based selection plus a configured default.
-
-Keep the responsibilities distinct:
-
-```text
-Container
-  known active service bindings
-
-Class map
-  discovered implementation classes
-
-Component resolver
-  configured runtime instances of discovered implementations
-
-Service registry
-  explicit named lazy service instances produced by factories
-```
-
-Do not stack these mechanisms as fallback layers for the same responsibility.
-
-See `service-registry.md`.
 
 ---
 
@@ -795,11 +779,6 @@ Use hooks for lifecycle.
 Use events for runtime notifications.
 
 Use workers for background execution.
-Use `IAccesscontrol` for request identity and `IUsermanager` for roles and permissions.
-Use `ISession` for runtime session state.
-Use `ILanguage` for active language and `ITranslation` for translated text.
-Use `IToken` for temporary scoped tokens.
-Use `IServiceRegistry` only for explicitly named active service families.
 
 ---
 
