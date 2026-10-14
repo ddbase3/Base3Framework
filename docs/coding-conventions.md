@@ -47,6 +47,13 @@ Write code so that DI, PluginClassMap discovery, and plugin replacement continue
 * Do not duplicate logic or add a second structure, adapter, bridge, fallback mode, or alternative code path to compensate for an unsuitable existing implementation. Modify or refactor the responsible code instead. Clarity and maintainability justify refactoring.
 * If similar functionality exists, explain the overlap and agree on reuse, adaptation/refactoring, or an exceptionally necessary new structure **before implementing**.
 * Obtain approval for substantial architectural changes. Keep existing framework and foundation interfaces stable due to their broad use. Change feature-plugin interfaces only when all dependent code is available and can be updated consistently.
+* Complete every change holistically in the same patch: code, affected interfaces/PHPDoc, tests, README and Markdown docs, configuration, migrations, examples, templates and dependent files. Update existing artifacts rather than creating duplicates. Do not postpone necessary consistency work until the user asks again. If required sources or semantics are missing, report them rather than silently claiming completion.
+
+### Mandatory privacy and accessibility completeness
+
+For any changed data flow or user interface, apply [`privacy-accessibility.md`](privacy-accessibility.md) as a release gate. Every repository MUST maintain a root `PRIVACY.md` with verified technical data processing, persistence, retention, deletion, recipient, security and deployment facts, updated in the SAME patch as relevant code, interfaces, tests, migrations, README and other documentation. Do not claim legal compliance or absence of storage from interface-level assumptions.
+
+BASE3 user interfaces MUST meet WCAG 2.2 AA as the internal minimum, including forms, administration, AJAX, keyboard/focus behavior, screen-reader announcements, charts and interactive agent components. Comply additionally with the laws applicable to the real deployment, including GDPR (EU) 2016/679, ePrivacy 2002/58/EC, EAA (EU) 2019/882, WAD (EU) 2016/2102, national transpositions and the legally applicable EN 301 549 standard. Include automated and manual accessibility checks; a passing scanner alone is not sufficient.
 
 ---
 
@@ -187,6 +194,16 @@ Example:
 ```php id="wy9hmm"
 interface IExampleService {
 
+	/**
+	 * Trim whitespace at the beginning and end of the input.
+	 *
+	 * Implementations MUST preserve letter case and internal whitespace.
+	 * Empty or whitespace-only input MUST yield an empty string.
+	 * This operation MUST NOT change persistent state.
+	 *
+	 * @param string $input Raw text, including possibly an empty string.
+	 * @return string Trimmed text, or an empty string if no content remains.
+	 */
 	public function doSomething(string $input): string;
 }
 ```
@@ -199,6 +216,18 @@ Interfaces should be:
 * implementation-neutral
 * easy to mock
 * free of project-specific assumptions
+
+### Mandatory method-level contract documentation
+
+Every interface method MUST have complete PHPDoc directly on its declaration, even when PHP already declares native parameter and return types. An interface is an authoritative implementation specification, not just a list of signatures. Document all of the following as applicable:
+
+* Purpose, required observable behavior, preconditions, invariants and implementation obligations (use MUST for mandatory rules).
+* An `@param` entry for **every parameter**, with its type, meaning, allowed values and relevant formats, units, defaults, null/empty semantics and validation rules.
+* An `@return` entry describing the exact meaning and shape of the result, including null/empty/no-result behavior; document `void` explicitly.
+* Failure behavior, validation failures, exceptions via `@throws`, and whether errors are returned or thrown.
+* Edge cases, ordering, side effects, state changes, idempotency, concurrency and compatibility constraints where relevant.
+
+These semantics MUST be stated in the interface itself, not exclusively in implementations, tests or external Markdown/README files. Documentation must be precise enough for another developer or AI to implement the interface unambiguously. Verify existing behavior and dependent implementations before adding or altering contract documentation; do not invent undocumented semantics or silently redefine stable framework/foundation contracts. Clarify genuine ambiguities.
 
 Avoid broad interfaces such as:
 
@@ -1014,7 +1043,7 @@ Policy-controlled jobs should expose clear policy definitions.
 
 ## 33. Comments and PHPDoc
 
-Use comments where they explain intent, constraints, or non-obvious behavior.
+Use comments where they explain intent, constraints, or non-obvious behavior. Interface-method PHPDoc is always mandatory and must meet the complete contract requirements in section 6, regardless of whether the behavior seems obvious.
 
 Do not comment obvious code.
 
@@ -1068,6 +1097,9 @@ Test:
 * service wiring when important
 * plugin `init()` when it registers important services
 * class map discoverable names when they are part of the public plugin API
+* interface contract behavior, including specified edge cases, return/error semantics and side effects
+
+When behavior changes, update existing relevant tests and accompanying documentation in the same patch as the code.
 
 Use fakes for foundation interfaces when testing consumer plugins.
 

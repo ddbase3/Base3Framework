@@ -49,6 +49,18 @@ When a similar structure exists, report the overlap and agree with the project o
 
 Existing BASE3 framework and foundation interfaces are broadly used public contracts and must remain stable unless a change is explicitly agreed. Interfaces inside feature plugins may be changed when the full dependent code is available and can be updated coherently.
 
+### End-to-end implementation consistency
+
+Treat every implementation as one coherent change across code, contracts, documentation and verification. In the same patch, update all affected interfaces and in-code PHPDoc, tests, README and other Markdown documentation, configuration, migration steps where appropriate, examples, templates and dependent code. Keep published behavior, documentation and test expectations consistent, even when the user requested only the functional code change. Never defer known related updates to another prompt. Disclose unavailable dependencies or unresolved contractual details instead of silently omitting necessary work.
+
+An interface must describe its behavior completely at its source. Every method needs normative PHPDoc specifying its purpose, `@param` and `@return` semantics, required implementation behavior and relevant preconditions, edge cases, failure/exception behavior, side effects and invariants. An implementer must be able to fulfill the contract from the interface alone, without guessing or relying on the concrete implementation.
+
+### Privacy and accessibility are architectural release constraints
+
+The binding requirements in [`privacy-accessibility.md`](privacy-accessibility.md) apply to every relevant code change, standalone and embedded. The repository root MUST maintain an accurate, source-backed `PRIVACY.md`; changes to data processing, storage, retention, deletion, recipients, security, or rights handling MUST update it in the same patch. Never confuse configurable framework abstractions with verified deployment behavior or a legal privacy notice.
+
+All BASE3-provided interactive interfaces MUST meet WCAG 2.2 AA as the project baseline and all additional applicable EU/national duties. Relevant legal regimes include GDPR Regulation (EU) 2016/679, ePrivacy Directive 2002/58/EC, European Accessibility Act Directive (EU) 2019/882, Web Accessibility Directive (EU) 2016/2102, and the applicable version of EN 301 549. Legal applicability must be assessed for the actual deployment; accessibility and privacy defects cannot be deferred to a later task.
+
 ---
 
 ## 2. Container for known services

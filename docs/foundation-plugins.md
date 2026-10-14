@@ -243,6 +243,8 @@ They should be:
 * easy to mock
 * clear about input and output types
 
+Every method in a foundation interface MUST include comprehensive in-code PHPDoc, sufficient to implement it without reading any concrete class. Document its purpose and required behavior, `@param`/`@return` semantics (including null/empty and result shapes), preconditions, validation, edge cases, errors/`@throws`, side effects, invariants and compatibility constraints where relevant. Do not rely on native PHP types or external README documentation alone. Resolve ambiguous behavior before publishing a contract and keep released contract semantics stable.
+
 A Foundation Plugin should not define an interface only because a class exists.
 
 It should define an interface when replacement is intended.
@@ -1173,7 +1175,7 @@ Before adding a new foundation interface, DTO, proxy, service slot, or helper, i
 
 A Foundation Plugin should document its contracts.
 
-For each important interface, document:
+For **every method of every interface**, document directly on the interface declaration (external docs are supplementary):
 
 * purpose
 * expected inputs
@@ -1183,8 +1185,13 @@ For each important interface, document:
 * whether implementations should be idempotent
 * which exceptions may be thrown
 * whether return DTOs are immutable or mutable
+* mandatory behavior, preconditions, validation, return/null/empty semantics, edge cases and invariants
 
-A Foundation Plugin without contract documentation becomes hard to implement correctly.
+An interface must be usable as an unambiguous specification by another developer or AI without consulting an implementation. PHPDoc and all affected READMEs, guides, tests, examples and consumer documentation must be updated together with any approved contract change, in the same patch. Do not defer consistency work. A Foundation Plugin without contract documentation becomes hard to implement correctly. Without complete in-code method contracts, it is not ready to implement.
+
+---
+
+Foundation contracts that exchange personal data MUST document relevant privacy semantics, such as identifiers, purposes encoded in the contract, authorisation expectations, data ownership, return scope, and deletion/export guarantees when they are intrinsic to the contract. Foundation interfaces MUST NOT invent an operator-specific legal basis, retention period, or concrete backend. Accessible UI-facing contracts must state their normative accessible behavior where applicable. Follow [`privacy-accessibility.md`](privacy-accessibility.md); the implementation plugin owns its concrete storage/processing evidence in root `PRIVACY.md`.
 
 ---
 

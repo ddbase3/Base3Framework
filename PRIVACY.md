@@ -1,236 +1,271 @@
-# Privacy and Data Processing in the BASE3 Framework
+# BASE3 Framework Privacy and Data Processing
 
-> This document describes the technical data processing capabilities of the BASE3 Framework component. It is not a legal privacy notice for a specific application or installation. The data actually processed depends on the active runtime composition, enabled plugins, configuration, and the application built on BASE3.
+> **Technical transparency document for the BASE3 framework repository.** This file MUST remain in the repository root and MUST be updated with every code change that alters data processing, storage, retention, deletion, access, logging, or external communication.
+>
+> **Documentation review:** 2026-10-14. **Evidence status:** architecture and interfaces were available for this draft; the complete implementation repository, its effective runtime configuration, concrete host deployments, and provider contracts were not supplied for a code-level inventory. Sections marked **VERIFY AGAINST SOURCE** are unresolved and MUST be completed before claiming a comprehensive source-backed inventory.
+>
+> This document describes technical behavior and verification requirements. It is **not** a legal privacy notice under GDPR Articles 12 to 14, a controller/processor agreement, a record of processing activities, or a statement that any particular deployment is compliant.
 
 ## 1. Scope
 
-The BASE3 Framework is a technical runtime and extension platform. It provides bootstrap and runtime composition, request abstraction, a service container, dependency injection, class map discovery, routing, MVC support, plugins, sessions, authentication, user and authorization abstractions, configuration, settings, state, logging, database access, tokens, cache, workers, and microservice communication.
+BASE3 is a modular PHP framework that can run standalone or be embedded in other PHP applications.
+The framework provides service interfaces and infrastructure for configuration, settings, state, request handling, routing, users, plugins, class-map discovery, assets, logging, events, hooks, migrations, and workers.
+Concrete storage and processing depend on the selected implementations and the host environment.
+Feature and foundation plugins may contribute additional data processing; they MUST publish their own source-backed privacy documentation where appropriate.
 
-The framework therefore defines technical processing paths, but it does not define one uniform business purpose for data processing. The controller or other responsible party, legal basis, retention periods, data subject rights, and concrete recipients must be determined for each application or installation.
+See [privacy and accessibility engineering policy](docs/privacy-accessibility.md) for binding development rules, statutory references, and the complete review workflow.
 
-## 2. Privacy-relevant properties of the default bootstrap
+## 2. Boundaries and responsibility
 
-The supplied default bootstrap registers services including `IRequest`, `IConfiguration`, `IClassMap`, `IComponentResolver`, `IHookManager`, `IMigrationRunner`, `IAccesscontrol`, and `IServiceSelector`.
+BASE3 alone does not determine the legal controller, processor, lawful basis, or retention obligations of every installation.
+The host application or deployment operator determines the processing purposes and selects final services.
+A project plugin or custom bootstrap can replace database, settings, state, user, session, logging, and other implementations.
+A third-party service can act as a recipient or processor depending on contracts and actual data flow.
 
-Important default properties include:
+**Operator documentation required:** identify the controller, processor roles, relevant contracts, privacy notice, applicable legal basis and rights contacts for the real installation.
 
-- `IAccesscontrol` uses `NoAccesscontrol` by default.
-- `IMigrationRunner` uses `NoMigrationRunner` by default.
-- A database is not required for the framework to start.
-- No session implementation is bound automatically by the default bootstrap.
-- No Usermanager is bound automatically by the default bootstrap.
-- No framework logger is bound automatically by the default bootstrap.
-- No external telemetry or analytics service is registered by the default bootstrap.
+## 3. Available source and verification boundary
+
+This draft is grounded in project architecture documentation and the uploaded `framework-api.zip` contracts.
+It does NOT establish what every concrete framework implementation stores or how long it retains it.
+It does NOT establish which plugins, background jobs, loggers, remote providers, or host features are enabled in production.
+It does NOT import MissionBay-specific tables, audit behavior, or provider choices into BASE3.
 
-Additional processing occurs only when an application enables corresponding services, middleware, plugins, or implementations.
+Before release, the framework repository owner MUST inspect actual implementation sources, migration steps, data schemas, and tests, then replace all material unresolved entries with verified statements and evidence.
 
-## 3. Incoming request data
+## 4. Potential personal data categories
 
-The default `Base3\Core\Request` implementation copies data from PHP input sources into the framework request abstraction. These sources can include:
+Depending on runtime composition, BASE3 and integrations may process:
 
-- GET parameters,
-- POST data,
-- cookies,
-- existing session data,
-- server and request metadata from `$_SERVER`,
-- upload metadata from `$_FILES`,
-- JSON request bodies,
-- supported command-line arguments during CLI execution.
+- authenticated identity and user-related metadata;
+- users, groups, roles, permissions, and access-control context;
+- session identifiers, request parameters, headers, IP addresses, and browser metadata;
+- messages, emails, names, and other application-defined values carried in services or events;
+- configuration and settings that embed identifiers, endpoints, or credentials;
+- state keys and values containing user- or tenant-scoped identifiers;
+- log, audit, diagnostic, timing, and error metadata;
+- files, attachments, or external service payloads transmitted through plugins;
+- derived or pseudonymous values that remain linkable to individuals.
 
-Depending on the request, these sources can contain personal data. Server data can, for example, include network and client metadata. Uploads can contain personal content. The framework itself does not decide which business parameters an application accepts or how long an application retains them.
+This is a risk-based list of **possible** categories, not a claim that every item is collected or persisted by default.
 
-`IRequest` is initially an access layer for data belonging to the current request. Access through `IRequest` alone does not create persistent storage.
+## 5. Typical technical flows
 
-## 4. Sessions and cookies
+The general framework architecture supports this conceptual flow:
 
-BASE3 defines `ISession` and provides multiple session implementations. PHP-based implementations store runtime values in the active PHP session. The concrete server-side storage and lifetime of session data depend on the PHP and project configuration.
+```text
+HTTP/CLI/host request
+  -> active bootstrap and project composition
+  -> request / identity / access boundary
+  -> selected application output, controller, service or worker
+  -> injected settings, state, session, persistence or other backends
+  -> optional plugin hooks, events, logging and external services
+  -> response, persistent state and/or asynchronous follow-up
+```
 
-`SessionAuth` can use the current user identifier and additional authentication information in the session. The database-backed BASE3 Usermanager implementation can additionally cache the user object, groups, roles, and permissions below the session area `authentication`.
+This illustrates possible boundaries, not a trace of every real request.
+A concrete installation MUST document which branches actually execute and which fields they process.
 
-The framework also contains `CookieAuth`. When this authentication strategy is selected, it can set a cookie named `authentication`. The cookie contains a user identifier and a token. The built-in implementation uses a validity period of seven days.
+## 6. Runtime-composition inventory
 
-Whether session or authentication cookies are actually used depends on the project composition. Cookie domain, lifetime, transport security, SameSite behavior, and other cookie properties must be reviewed and documented for the concrete application.
+| Architecture area | Possible data handling | Verified persistence? | Required follow-up |
+| --- | --- | --- | --- |
+| `IRequest` / routing / middleware | Request identifiers, parameters, cookies, headers | Not established here | Review concrete request and server/host logs |
+| `IUsermanager` | Identity, group membership, roles, permissions | Implementation dependent | Inspect active user backend, tables and retention |
+| `ISettingsStore` | Grouped editable settings, possibly secrets or identifiers | Backend dependent | Enumerate groups, fields and masking behavior |
+| `IStateStore` | Locks, cursors, operational markers and optional payloads | Backend dependent | Inspect key prefixes, TTL and deletion semantics |
+| `IConfiguration` | Static/deployment values; possible paths/secrets | Backend dependent | Review config files, environment and access |
+| `ConfigValueResolver` | Resolution of values including credentials | Depends on mode | Review secret handling and diagnostic exposure |
+| Logger infrastructure | Exceptions, operational identifiers, messages | Backend dependent | Identify sink, field filtering, rotation and expiry |
+| Session services | Session-scoped user or app data | Host/implementation dependent | Inspect session backend, lifetime and invalidation |
+| Workers / jobs | Operational data, jobs, logs and possible external calls | Job dependent | Enumerate active jobs and their datasets |
+| Migrations / database | Database schemas and domain/backend tables | Optional | Inspect actual migrations and on-demand tables |
+| Hooks / events | Data in emitted payloads and listeners | Listener dependent | Inventory listeners and side effects |
+| Assets / browser | Web requests, remote assets, client-side storage | Host/template dependent | Inspect bundled assets, external URLs and scripts |
+| Feature plugins | Domain-specific data, caches and external processing | Plugin dependent | See each plugin's root `PRIVACY.md` |
 
-## 5. Authentication and access control
+**VERIFY AGAINST SOURCE:** Replace each "implementation dependent" entry with source-backed details for every shipped default implementation and active deployment configuration.
 
-BASE3 provides `IAccesscontrol` and multiple `IAuthentication` strategies. These include session, cookie, internal HMAC, single sign-on, and other authentication mechanisms.
+## 7. User data and RBAC
 
-Depending on the selected implementation, these mechanisms can process technical or personal identifiers. The default bootstrap does not enable a concrete user login mechanism and instead uses `NoAccesscontrol`.
+`IUsermanager` is a stable framework API; a concrete implementation may use local persistence or host-managed identity.
+Groups and roles can express access relationships, and permissions express capabilities.
+Identifiers and role assignment histories may be personal data.
 
-For a production application, at least the following should be documented:
+Before describing actual collection or retention, inspect the active implementation and any host adapter.
+Do not assume that changing a UI role automatically deletes corresponding user identity records or audit events.
+Do not assume an access-control interface itself enforces every resource-specific ACL.
 
-- the active authentication strategy,
-- the identifiers being processed,
-- cookies or session values that are created,
-- any external identity or host systems involved,
-- logout, expiration, and revocation behavior.
+## 8. Settings
 
-## 6. Users, groups, roles, and permissions
+`ISettingsStore` handles editable grouped runtime settings.
+Settings may include provider endpoints, service configuration, identity references, or credentials depending on the consumer.
+The current storage implementation must be identified separately.
+For secret-bearing settings, document masking, access, backup retention, rotation, and deletion.
+**VERIFY AGAINST SOURCE:** list actual shipped default settings groups and locations.
 
-`IUsermanager` defines a framework contract for user and RBAC data. When explicitly wired by a project, the supplied `Base3SystemUsermanager` implementation can read data from BASE3 system tables and modify assignments.
+## 9. Operational state
 
-The data structures supported by this implementation include, among other fields:
+`IStateStore` handles operational runtime state such as locks, cursors, and last-run markers.
+State values may be personal data if they contain account or session identifiers or cached results.
+Expiry depends on actual backend and caller behavior; do not assert an automatic TTL universally.
+**VERIFY AGAINST SOURCE:** list shipped key prefixes, types, expiration handling, and disposal.
 
-- internal user ID,
-- user identifier,
-- display name,
-- email address,
-- language identifier,
-- groups,
-- roles,
-- permissions,
-- assignments between users, groups, roles, and permissions.
+## 10. Configuration and secrets
 
-This implementation is not enabled automatically by the default bootstrap. If it is used, the concrete application must define the storage location, retention, maintenance, and deletion rules for user and authorization data.
+`IConfiguration` holds static/deployment configuration.
+`ConfigValueResolver` resolves values using configured modes.
+Possible secrets include credentials, API keys, file references, and environment variable values.
+Resolved secrets MUST be protected from client responses, error traces, and ordinary log messages.
+**VERIFY AGAINST SOURCE:** identify secrets held by default implementations and their redaction behavior.
 
-## 7. Configuration, settings, and runtime state
+## 11. Sessions and request processing
 
-BASE3 separates several storage purposes.
+The host and selected runtime services determine session persistence and transport cookie behavior.
+Session cookies and browser storage can trigger ePrivacy/national terminal-access requirements depending on purpose and necessity.
+Request URLs and headers can be recorded independently by reverse proxies, hosts, and APM infrastructure.
+**VERIFY AGAINST SOURCE/DEPLOYMENT:** describe concrete cookie names, purposes, lifetimes, session stores, and host access logs.
 
-### 7.1 Configuration
+## 12. Logging, diagnostics, and errors
 
-`IConfiguration` is intended for static or deployment-oriented configuration. The default bootstrap uses `ConfigFile`, which reads `cnf/config.ini` by default. Configuration can contain technical credentials or other sensitive values if an application stores them there.
+Logging may expose user identifiers, resource IDs, IP addresses, parameter values, exception messages, or confidential technical details.
+The installed logger implementation and infrastructure determine storage, access, and retention.
+Operational logs MUST be minimised and restricted; secrets must not be logged.
+**VERIFY AGAINST SOURCE:** list actual logged fields, sinks, retention and any cleanup jobs.
 
-A database-backed `DatabaseConfiguration` implementation is also available.
+## 13. Hooks, events, and workers
 
-Configuration files and database tables must be protected against unauthorized access according to the sensitivity of their actual contents.
+Hooks support framework lifecycle extension; events communicate runtime domain notifications; jobs support background execution.
+These mechanisms are not inherently persistent, but listeners and jobs may write records or transmit data.
+**VERIFY AGAINST SOURCE:** list sensitive event payloads and enabled listeners/jobs with data handling consequences.
 
-### 7.2 Settings Store
+## 14. Databases, schemas, and migrations
 
-`ISettingsStore` stores grouped and named settings datasets. Depending on the application, these datasets can contain personal or confidential information.
+BASE3 is designed to run without a database.
+The default bootstrap concept uses a no-op migration runner, while project composition may enable database migrations.
+Each schema belongs to its feature/backend owner, not to the project plugin merely because it selects the implementation.
+**VERIFY AGAINST SOURCE:** list exact tables, columns, indexes, retention rules, cascades and cleanup mechanisms for each shipped persistence implementation.
 
-The supplied JSON implementation stores data in `cnf/settings.json` below a configured data directory. The database implementation stores the settings arrays as JSON in `base3_settingsstore`.
+## 15. File, object, and cache storage
 
-### 7.3 State Store
+Feature and host implementations may persist files, cached values, or derived data.
+Deleting a primary database row does not by itself prove all files, cache copies, vector points, or external objects are removed.
+**VERIFY AGAINST SOURCE:** list backends, object keys, namespaces, cache TTLs and propagation paths.
 
-`IStateStore` is intended for operational runtime state such as locks, cursors, and last-run markers. `DatabaseStateStore` stores keys and JSON-encoded values with an optional expiration timestamp in a database table.
+## 16. External services and international transfers
 
-State values should contain only the data required for their technical purpose. Personal data should be stored there only when necessary for the concrete operational purpose and when that use is documented.
+The framework's generic interfaces cannot establish which third-party providers receive personal data.
+A plugin may send data through HTTP, APIs, MCP, model providers, parsers, email, or other communication backends.
+For each active external service the operator MUST document recipient, categories, purposes, region, contract, retention, subprocessors, and relevant transfer mechanism.
+EU regional hosting alone does not establish that all processing and access remain in the EEA.
+**VERIFY AGAINST DEPLOYMENT:** list active recipients and contract/transfer evidence.
 
-## 8. Logging and error logs
+## 17. Security and authorisation
 
-BASE3 provides `ILogger` together with file-backed and database-backed logger implementations. Log messages are determined by the calling application. Logs can therefore contain personal data if such data is explicitly written into a log message.
+The required safeguards depend on the configured environment and risks.
+Controls may include authenticated transport, least-privilege service accounts, per-tenant authorisation, encryption, secret redaction, request-integrity protection, and secured administrator access.
+Source and deployment review MUST confirm actual protections rather than presume they exist.
+**VERIFY AGAINST SOURCE/DEPLOYMENT:** enumerate default mechanisms and required host protections.
 
-The built-in `FileLogger` stores log files under `local/FileLogger`. Database loggers store log text and technical metadata in database tables.
+## 18. Retention inventory
 
-Separately, the supplied `index.php` configures PHP error logging to `tmp/php-error.log`. The content written there depends on occurring PHP errors and the runtime configuration.
+| Data category | Owner | Retention start | Duration/criterion | Cleanup implementation | Status |
+| --- | --- | --- | --- | --- | --- |
+| User/role/group records | Active user backend | To verify | To verify | To verify | Unverified |
+| Session data | Active session/host backend | To verify | To verify | To verify | Unverified |
+| Settings | Active settings backend | To verify | To verify | To verify | Unverified |
+| State entries | Active state backend | To verify | To verify | To verify | Unverified |
+| Logs | Active logger/host | To verify | To verify | To verify | Unverified |
+| Persistent feature records | Owning plugin/backend | To verify | To verify | To verify | Unverified |
+| Backups | Deployment infrastructure | To verify | To verify | To verify | Unverified |
 
-For production installations, at least the following should be defined:
+**Release constraint:** Where a newly introduced feature stores personal data, its actual row MUST be completed before release. This table is not evidence of compliant retention.
 
-- active log levels and scopes,
-- whether user identifiers, request data, network addresses, or business content are logged,
-- who can access logs,
-- how logs are rotated and deleted,
-- whether error output to end users is disabled.
+## 19. Deletion and lifecycle
 
-Complete request payloads, passwords, tokens, and other secrets should not be logged without a specific and documented operational purpose.
+The right to erasure under GDPR Article 17 is not unconditional; the controller must assess the applicable conditions and exceptions.
+Where deletion is required, the responsible backend should remove or restrict records as appropriate and propagate the result to relevant derived copies.
+The concrete operation must distinguish logical from physical deletion.
+Backups and recipient-controlled records require separate lifecycle analysis.
 
-## 9. Databases
+**VERIFY AGAINST SOURCE:** document the actual methods, jobs and cascades for each owned dataset.
 
-`IDatabase` abstracts database access. The framework contains concrete MySQL and PostgreSQL implementations. The tables and data that actually exist depend on the active services and plugins.
+## 20. Data-subject access, correction and export
 
-Several framework services have optional database-backed implementations, including Configuration, Settings Store, State Store, Logging, and Usermanager. The framework core itself does not require a database.
+A concrete operator is responsible for identity verification, rights decisions, response times, and necessary disclosures.
+BASE3 owners must provide technical routes to identify, retrieve, correct, export, restrict or erase their data as legally required.
+An `IUsermanager` interface alone does not prove that the selected user backend implements every privacy-right operation.
+**VERIFY AGAINST SOURCE:** document supported operations and any operator workflow dependencies.
 
-Database security, infrastructure-level encryption, backups, replication, administrative access, and retention periods are outside the generic framework contracts and must be defined in the concrete operating environment.
+## 21. Backups and restoration
 
-## 10. Tokens
+Document the actual backup providers and snapshot schedules.
+Document which categories are backed up, how they are secured, when copies expire, and how deletions are re-applied on restore.
+A live deletion MUST NOT be described as deletion from immutable backups without verification.
+**VERIFY AGAINST DEPLOYMENT:** provide actual retention and restore process.
 
-BASE3 defines `IToken` and includes the file-backed `FileToken` implementation.
+## 22. Optional features and default processing
 
-`FileToken` does not store the returned plaintext token. It stores a SHA-1 hash of the token together with an expiration timestamp. The files are stored under `local/FileToken`. The filename contains the sanitized scope and an MD5 value derived from the corresponding ID.
+The class map may discover capabilities that are not active in a deployment.
+Optional implementation plugins are not evidence that their network calls or storage are enabled.
+Document default-enabled and opt-in behavior separately.
+Re-evaluate inventory when the project plugin changes selected implementations.
 
-Expired entries are removed by this implementation during certain token operations. A concrete deployment should review the token purposes in use, their lifetimes, and when associated files are cleaned up.
+## 23. Privacy and accessibility overlap
 
-## 11. Cache and local files
+Privacy settings, consent screens, data export, account deletion, and privacy notices must themselves be accessible.
+All BASE3-owned interactive UI follows WCAG 2.2 AA as an internal engineering baseline, with additional legal standards where applicable.
+An inaccessible privacy or rights-control interface can prevent users from exercising their rights effectively.
+See [privacy and accessibility policy](docs/privacy-accessibility.md).
 
-The framework contains a `FileCache` implementation which, when used, can retrieve external content and store it under `userfiles/cache/`. Metadata for these cache entries is managed through a database.
+## 24. Operator-specific facts not determined by this document
 
-The consuming application decides which content is cached. If source content contains personal data, the corresponding protection, access control, retention, and deletion requirements also apply to the cached copy.
+The following MUST be completed by the actual deployment operator:
 
-The framework core also contains the directories `local/`, `tmp/`, and `userfiles/` as technical storage locations. Any additional data stored there is determined by the concrete application and active components.
+- controller, processor, DPO, supervisory authority and contact details where applicable;
+- purpose and legal basis per processing activity;
+- appropriate Article 9 grounds for special-category processing where applicable;
+- actual data categories, data subjects, and enabled backend implementations;
+- physical storage locations and storage providers;
+- recipients, subprocessors, international transfers and safeguards;
+- actual retention periods, cleanup ownership and deletion procedures;
+- available rights-request routes and response procedures;
+- audit/logging systems, security controls, incidents and breach workflow;
+- cookies and other terminal-equipment storage/access behavior;
+- statutory accessibility scope and operator accessibility statement where required.
 
-## 12. Microservice communication and external transfers
+## 25. Known gaps and mandatory next verification
 
-BASE3 contains an optional microservice system for HTTP-based remote calls. When used, an `AbstractMicroserviceConnector` transfers the method name and JSON-encoded method parameters to a configured endpoint.
+At the current documentation evidence boundary, there is **no verified full framework storage/table inventory**.
+There is **no verified complete set of default logger/session/user/settings/state backend retention periods**.
+There is **no verified map of every file or derived cache deletion path**.
+There is **no verified inventory of deployed endpoints or data-processing contracts**.
+These gaps are not evidence that no data is stored or transferred.
+They MUST be resolved from the actual repository and deployment before making corresponding public claims.
 
-Technical headers are used for internal transport authentication. When the connector is not operated with `INTERNALONLY`, the currently authenticated user identifier can additionally be forwarded to the remote BASE3 endpoint in the `auth` header.
+## 26. Maintainer procedure
 
-Microservice communication is not enabled automatically by the default bootstrap. Once an application uses remote endpoints, at least the following should be documented:
+When code changes processing behavior:
 
-- target system and operator,
-- transferred method parameters and returned data,
-- possible user identifiers,
-- transport encryption,
-- retention and logging on the remote side,
-- roles and responsibilities of the systems involved.
+1. Inspect all relevant owners, interfaces, backend implementations, and active integration points.
+2. Identify new or modified personal-data categories and entry/exit paths.
+3. Update the table/file/cache/log/provider inventory based on exact source evidence.
+4. Document retention, cleanup implementation and derived-copy deletion.
+5. Update tests, contracts, README links and relevant subsystem docs in the same patch.
+6. Record the review date, source revision and outstanding factual limits.
+7. Do not approve release of new undocumented personal-data storage or inaccessible rights controls.
 
-## 13. External telemetry and analytics
+## 27. Applicable law and official references
 
-The default bootstrap does not register an external telemetry or analytics service. The framework does not send request data to an external analytics provider solely as a result of its default initialization.
+- GDPR, Regulation (EU) 2016/679: <https://eur-lex.europa.eu/legal-content/DE/TXT/?uri=CELEX:32016R0679>.
+- ePrivacy Directive 2002/58/EC: <https://eur-lex.europa.eu/eli/dir/2002/58/oj>.
+- European Accessibility Act, Directive (EU) 2019/882: <https://eur-lex.europa.eu/eli/dir/2019/882/oj>.
+- Web Accessibility Directive (EU) 2016/2102: <https://eur-lex.europa.eu/eli/dir/2016/2102/oj>.
+- WCAG 2.2: <https://www.w3.org/TR/WCAG22/>.
+- EU privacy by design guidance: <https://www.edpb.europa.eu/documents/guideline/guidelines-42019-on-article-25-data-protection-by-design-and-by-default_en>.
 
-Explicitly configured functions such as microservice connectors or application-specific plugins are separate from this default behavior. Their data flows must be documented for the corresponding installation.
+## 28. Document history
 
-## 14. Workers, jobs, hooks, and events
-
-Workers, jobs, hooks, and events define execution and notification mechanisms. They do not automatically store a specific category of personal data. The actual job, listener, or service implementation being executed can, however, read, modify, transfer, or log data.
-
-Privacy requirements must therefore be evaluated at the actual business or technical implementation boundary, not only at the generic worker, hook, or event mechanism.
-
-## 15. Data minimization and access protection
-
-From a technical perspective, applications built on BASE3 should in particular:
-
-- store only the request, session, settings, state, and log data required for their purpose,
-- keep secrets out of logs and publicly accessible files,
-- apply appropriate file permissions to `cnf/`, `local/`, `tmp/`, and other data directories,
-- restrict database permissions to the required scope,
-- enforce user and authorization checks at the responsible service or data access boundary,
-- perform external transfers only through deliberately configured integrations,
-- define lifecycles for temporary data, cache data, tokens, and logs.
-
-The framework cannot make these decisions uniformly for every application built on top of it.
-
-## 16. Retention and deletion
-
-BASE3 does not define one global retention period for all data categories. Lifecycles differ by storage type and selected implementation.
-
-A production application should review at least the following areas:
-
-- PHP sessions and session files or alternative session backends,
-- authentication cookies,
-- user, group, role, and permission data,
-- configuration and settings data,
-- state entries and TTL values,
-- file and database logs,
-- PHP error logs,
-- token files,
-- cache files and cache metadata,
-- uploaded or application-specific files,
-- data on remote microservice systems,
-- database backups and file backups.
-
-Deletion of business data must be implemented by the application or the backend service responsible for that data. The generic framework does not provide an automatic, complete user-data or privacy deletion workflow.
-
-## 17. Production readiness checklist
-
-Before operating an application based on BASE3 in production, at least the following should be documented and reviewed for the concrete installation:
-
-- active bootstrap and plugin composition,
-- active database and persistence services,
-- active session and authentication mechanisms,
-- cookies in use and their properties,
-- active Usermanager and authorization implementation,
-- stored settings and state datasets,
-- logging and error logging configuration,
-- token and cache usage,
-- upload and file storage locations,
-- external microservice or other network connections,
-- recipients and data categories of external transfers,
-- technical and organizational access rights,
-- retention and deletion periods,
-- backup and restore procedures,
-- procedures for access, correction, export, and deletion where the concrete application stores personal data.
-
-## 18. Component boundary
-
-This document describes only the technical capabilities and supplied implementations of the BASE3 Framework. Plugins, host systems, and applications can add further data processing and should document those processing activities separately for their own components.
+| Date | Change | Basis |
+| --- | --- | --- |
+| 2026-10-14 | Initial BASE3 privacy inventory and evidence requirements | Architecture documentation and framework interface archive; full implementation verification outstanding |

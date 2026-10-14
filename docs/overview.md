@@ -210,7 +210,6 @@ IMigrationRunner
 ILogger
 IEventManager
 IAssetResolver
-IModuleRegistry
 ```
 
 A class should receive known dependencies through constructor injection.
@@ -537,6 +536,7 @@ dependency-injection.md
 classmap.md
 plugins.md
 coding-conventions.md
+privacy-accessibility.md
 foundation-plugins.md
 components.md
 migrations.md
@@ -575,7 +575,7 @@ utilities.md
 
 Not every project needs every subsystem immediately.
 
-But the first eight documents explain the mental model.
+But the first architectural documents explain the mental model. `privacy-accessibility.md` is mandatory for all development; the repository-root `PRIVACY.md` records verified data processing, storage, deletion and deployment boundaries.
 
 ---
 
