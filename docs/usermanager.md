@@ -961,10 +961,6 @@ final class AdminPage implements IOutput {
 
         return '<h1>Administration</h1>';
     }
-
-    public function getHelp(): string {
-        return 'Shows an admin-only page.';
-    }
 }
 ```
 

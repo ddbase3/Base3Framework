@@ -897,10 +897,6 @@ final class SystemInfoOutput implements IOutput {
 			]
 		], JSON_PRETTY_PRINT);
 	}
-
-	public function getHelp(): string {
-		return 'Shows system runtime information.';
-	}
 }
 ```
 

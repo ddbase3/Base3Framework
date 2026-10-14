@@ -227,10 +227,6 @@ final class ExampleDisplay implements IDisplay {
 
 		return $this->view->loadTemplate();
 	}
-
-	public function getHelp(): string {
-		return 'Shows the example display.';
-	}
 }
 ```
 

@@ -310,14 +310,14 @@ namespace AcmeDemoWebsite\Content;
 
 use Base3\Api\IMvcView;
 use Base3\Api\IOutput;
-use Base3\Accesscontrol\Api\IAccesscontrol;
+use Base3\AccessControl\Api\IAccessControl;
 use Base3\LinkTarget\Api\ILinkTargetService;
 
 class UserMenu implements IOutput {
 
 	public function __construct(
 		private readonly IMvcView $view,
-		private readonly IAccesscontrol $accesscontrol,
+		private readonly IAccessControl $accesscontrol,
 		private readonly ILinkTargetService $linktargetservice
 	) {}
 
@@ -356,10 +356,6 @@ class UserMenu implements IOutput {
 		$this->view->assign('formatRole', fn(string $value): string => strtoupper($value));
 
 		return $this->view->loadTemplate();
-	}
-
-	public function getHelp(): string {
-		return 'Renders the user menu.' . "\n";
 	}
 }
 ```
@@ -1066,10 +1062,6 @@ class HelloWorld implements IOutput {
 
 		return $this->view->loadTemplate();
 	}
-
-	public function getHelp(): string {
-		return 'Renders a minimal hello world template.' . "\n";
-	}
 }
 ```
 
@@ -1142,10 +1134,6 @@ class ProjectList implements IOutput {
 		});
 
 		return $this->view->loadTemplate();
-	}
-
-	public function getHelp(): string {
-		return 'Renders a project list.' . "\n";
 	}
 }
 ```

@@ -61,12 +61,7 @@ interface IOutput extends IBase {
 }
 ```
 
-This means a class is routable when:
-
-* it has a globally unique technical name via `getName()`
-* it can render itself via `getOutput()`
-
-Help is an optional capability provided separately through:
+Optional help information belongs to the separate `Base3\Api\IHelp` interface:
 
 ```php
 interface IHelp {
@@ -74,9 +69,12 @@ interface IHelp {
 }
 ```
 
-The classic service selector only calls `getHelp()` when the resolved output also implements `IHelp` and debug mode is enabled.
+`IOutput` does not extend `IHelp`. A class may implement both interfaces explicitly, but routing and other consumers must not assume that every `IOutput` also provides `getHelp()`. The request flows below describe regular rendering through `IOutput`.
 
-This separation means normal outputs are not forced to provide a help endpoint.
+This means a class is routable when:
+
+* it has a globally unique technical name via `getName()`
+* it can render itself via `getOutput()`
 
 This is the most important routing convention in BASE3.
 
@@ -111,7 +109,7 @@ In BASE3, `IOutput` classes act as routable controllers. Routing is centered on 
 A request typically resolves to:
 
 * a technical output name, for example `index`, `navigation`, `imprint`, `chatsync`
-* an output format, for example `html`, `json`, `xml`, `help`
+* an output format, for example `html`, `json`, `xml`
 * optional extra context, such as language in `data`
 
 The central routing question is therefore:
@@ -153,7 +151,7 @@ flowchart TD
 	E --> G["Selected route dispatches request"]
 	G --> F
 	F --> H["IOutput instance"]
-	H --> I["getOutput or optional IHelp"]
+	H --> I["getOutput(out, final)"]
 	I --> J["Response body"]
 ```
 
@@ -179,7 +177,7 @@ It reads the request directly from the query parameters and resolves an output i
 3. optionally redirect authenticated users from `index`
 4. call `handleLanguage($data)`
 5. resolve the output instance through the class map
-6. for `out=help`, require `IHelp` in debug mode; otherwise call `getOutput($out, true)`
+6. call `getOutput($out, true)`
 
 ### Flow
 
@@ -197,9 +195,7 @@ flowchart TD
 	I --> J
 	J -->|"No"| K["404"]
 	J -->|"Yes"| L["Use instance"]
-	L --> M{"out == help?"}
-	M -->|"Yes"| N["DEBUG + IHelp -> getHelp, otherwise empty"]
-	M -->|"No"| O["getOutput(out, final=true)"]
+	L --> M["getOutput(out, final=true)"]
 ```
 
 ### Important characteristic
@@ -623,7 +619,7 @@ flowchart LR
 	A["Requested technical name: navigation"] --> B["ClassMap"]
 	B --> C["Find IOutput implementation with getName() = navigation"]
 	C --> D["Instantiate class"]
-	D --> E["getOutput html/json/help/etc."]
+	D --> E["getOutput html/json/xml/etc."]
 ```
 
 ### Why this is powerful
@@ -708,11 +704,10 @@ The following minimal example shows two `IOutput` classes. `page1` generates a l
 
 namespace Example\Content;
 
-use Base3\Api\IHelp;
 use Base3\Api\IOutput;
 use Base3\LinkTarget\Api\ILinkTargetService;
 
-class Page1 implements IOutput, IHelp {
+class Page1 implements IOutput {
 
 	public function __construct(
 		private readonly ILinkTargetService $linktargetservice
@@ -736,10 +731,6 @@ class Page1 implements IOutput, IHelp {
 			. '<p><a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '">Go to page 2</a></p>'
 			. '</body>'
 			. '</html>';
-	}
-
-	public function getHelp(): string {
-		return 'Help of Page1' . "\n";
 	}
 
 }
@@ -1012,28 +1003,7 @@ Projects can:
 
 ---
 
-## 17. Help routing in the current implementations
-
-The classic `AbstractServiceSelector` handles help as an optional capability:
-
-```text
-out=help
-  -> require DEBUG
-  -> require instance instanceof IHelp
-  -> call getHelp()
-```
-
-`GenericOutputRoute` still calls `getHelp()` directly for its `help` path without checking `IHelp`. That is a current implementation inconsistency, not a different `IOutput` contract. New output classes should follow the interfaces: implement `IHelp` when help is supported.
-
-The route implementations also differ in how they pass the `final` flag. The classic selector calls `getOutput($out, true)`, while `GenericOutputRoute` and `CliRoute` currently call `getOutput($out)`.
-
-These differences belong to the routing implementation boundary. Consumers should not add compatibility routers around output classes to hide them.
-
-See `core-contracts.md` for the current `IOutput` and `IHelp` contracts.
-
----
-
-## 18. Out of scope for this document
+## 17. Out of scope for this document
 
 The following related topics are intentionally left for separate documentation:
 
