@@ -284,41 +284,47 @@ Implementation-specific low-level exceptions should stay in the implementation p
 
 ## 9. Technical names with `getName()`
 
-Many BASE3 components use a static technical name.
+Discoverable BASE3 components need globally unique, stable technical names. The class name itself must already distinguish the component from implementations in other plugins and apps. Uniqueness only within one plugin or app is not sufficient.
+
+Rules for every class implementing `IBase` and discovered through `IClassMap`:
+
+* Use a globally unique class name with a clear plugin or component prefix, such as `PulseCorePlayFeature` instead of `PlayFeature`.
+* `getName()` must return the complete class name **without its namespace**, converted to lowercase. Do not remove the prefix, abbreviate the name, or choose an independent identifier.
+* Keep both the class name and its technical name stable once other code or configuration references them.
+* Use technical names only: no spaces, display labels, or translated text.
+* Apply the same rule to all discoverable component types, including features, groups, assignment rules, outputs, displays, jobs, policies, and providers.
 
 Example:
 
-```php id="mjrcc0"
-public static function getName(): string {
-	return 'connectionconfigdisplay';
+```php
+<?php declare(strict_types=1);
+
+namespace PulseCore\Feature;
+
+use Base3\Api\IBase;
+
+final class PulseCorePlayFeature implements IBase {
+
+	public static function getName(): string {
+		return 'pulsecoreplayfeature';
+	}
 }
 ```
 
-Rules for `getName()`:
+Additional naming examples:
 
-* use lowercase
-* use a stable technical identifier
-* do not use display labels
-* do not use translated text
-* do not include spaces
-* avoid project-specific names in generic reusable classes
-* keep names unique inside the relevant plugin/app
+| Class name | `getName()` |
+| --- | --- |
+| `PulseCorePlayFeature` | `pulsecoreplayfeature` |
+| `OtherGamePlayFeature` | `othergameplayfeature` |
+| `KimSearchFeature` | `kimsearchfeature` |
+| `KimChatbotFeature` | `kimchatbotfeature` |
+| `Base3AuthenticatedGroup` | `base3authenticatedgroup` |
+| `PulseCorePlayerAssignmentRule` | `pulsecoreplayerassignmentrule` |
 
-Good:
+**Incorrect:** A class called `PlayFeature` with `getName() = 'playfeature'` is not acceptable merely because it lives in the `PulseCore` namespace. Another game could use the same class name and technical name.
 
-```php id="drq3nt"
-public static function getName(): string {
-	return 'mailimportjob';
-}
-```
-
-Bad:
-
-```php id="jwz8rg"
-public static function getName(): string {
-	return 'Mail Import Job';
-}
-```
+Resolve naming collisions by naming the class correctly in the owning plugin or component. Do not introduce additional feature IDs, composite namespace-based identifiers, or special ClassMap collision handling.
 
 Human-readable labels belong in language files, schemas, settings, or dedicated label methods.
 
