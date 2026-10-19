@@ -141,26 +141,27 @@ Create, check, and delete scoped tokens using `IToken` (e.g. for secure links, c
 * `IAuthentication` for login/logout
 * `IAccesscontrol` for user ID access
 
-### Usermanager & RBAC
+### Users, authorization and rights administration
 
-Use `Base3\Usermanager\Api\IUsermanager` for framework-level user, group, role, and permission checks. The Usermanager exposes the current user, effective groups, effective roles, effective permissions, and role/permission assignment operations. New code should prefer `Role::named()` and `Permission::for()` over hardcoded compatibility checks against `User::$role`.
-
-Example:
+`IUsermanager` exposes the current identity, groups, effective roles and permission
+metadata. Only `IAuthorizationService` evaluates whether an action may be executed:
 
 ```php
+use Base3\Authorization\Dto\AuthorizationRequest;
 use Base3\Usermanager\Permission;
-use Base3\Usermanager\Role;
 
-if ($usermanager->hasRole(Role::named('admin'))) {
-    // admin UI
-}
-
-if ($usermanager->can(Permission::for('entry', 'admin'))) {
-    // entry ACL admin bypass
-}
+$allowed = $authorization->decide(new AuthorizationRequest(
+    $authorization->getDefaultAuthority(),
+    Permission::for('system', 'admin')
+))->isAllowed();
 ```
 
-See `docs/usermanager.md` for the full Usermanager and RBAC guide.
+Authorization requests can include native resource and subject references, trusted
+context and action parameters. `IUserCriterion`, `IGroup` and `IFeature` are
+`IClassMap`-discoverable extension slots. Project bindings choose a native backend;
+BASE3 defines **no new authorization database**, hierarchy engine or parallel
+`IUsermanager::can()` method. See `docs/authorization-model.md`,
+`docs/authorization-adapters.md` and `docs/usermanager.md`.
 
 ### Language System
 
@@ -346,3 +347,13 @@ to generate PHPDoc under `docs/phpdoc/`. The curated developer guides remain the
 
 * [Official project page (documentation)](https://base3.de/crm.php?id=05fdf4d623714e24a7418c160795ef34)
 
+
+
+## Authorization audiences
+
+BASE3 defines discoverable `IGroup`, `IUserCriterion`, and `IFeature` contracts.
+Both host-owned group membership and feature eligibility use one read-only
+`UserCriterionEvaluator` for composable criteria; feature audiences additionally
+accept effective BASE3 group references. See
+[Authorization Model](docs/authorization-model.md) and
+[Authorization Adapters](docs/authorization-adapters.md).

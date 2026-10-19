@@ -48,16 +48,6 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		$this->accesscontrol = $this->servicelocator->get('accesscontrol');
 		$this->session = $this->servicelocator->get('session');
 
-		if ($this->session && $this->session->started() && isset($_SESSION["authentication"])) {
-			if (isset($_SESSION["authentication"]["user"]))
-				$this->user = $_SESSION["authentication"]["user"];
-			if (isset($_SESSION["authentication"]["groups"]))
-				$this->groups = $_SESSION["authentication"]["groups"];
-			if (isset($_SESSION["authentication"]["roles"]))
-				$this->roles = $_SESSION["authentication"]["roles"];
-			if (isset($_SESSION["authentication"]["permissions"]))
-				$this->permissions = $_SESSION["authentication"]["permissions"];
-		}
 	}
 
 	// Implementation of IUsermanager
@@ -77,9 +67,6 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 			$this->user = $this->createUserFromRow($row, $this->getRoles());
 		}
 
-		if ($this->session && $this->session->started()) {
-			$_SESSION["authentication"]["user"] = $this->user;
-		}
 
 		return $this->user;
 	}
@@ -127,9 +114,6 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 			$this->groups[] = Group::fromArray($row);
 		}
 
-		if ($this->session && $this->session->started()) {
-			$_SESSION["authentication"]["groups"] = $this->groups;
-		}
 
 		return $this->groups;
 	}
@@ -171,9 +155,6 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 			$this->roles[] = Role::fromArray($row);
 		}
 
-		if ($this->session && $this->session->started()) {
-			$_SESSION["authentication"]["roles"] = $this->roles;
-		}
 
 		return $this->roles;
 	}
@@ -185,7 +166,7 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		if ($this->permissions) return $this->permissions;
 
 		if ($userid == "internal") {
-			$this->permissions = array(Permission::for("system", "admin", null));
+			$this->permissions = array(Permission::for("system", "admin"));
 			return $this->permissions;
 		}
 
@@ -216,9 +197,6 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 			$this->permissions[] = Permission::fromArray($row);
 		}
 
-		if ($this->session && $this->session->started()) {
-			$_SESSION["authentication"]["permissions"] = $this->permissions;
-		}
 
 		return $this->permissions;
 	}
@@ -230,23 +208,6 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		foreach ($this->getRoles() as $currentRole) {
 			if (isset($role->id, $currentRole->id) && $role->id && $currentRole->id == $role->id) return true;
 			if (isset($role->name, $currentRole->name) && $role->name && $currentRole->name == $role->name) return true;
-		}
-
-		return false;
-	}
-
-	public function can(Permission $permission): bool {
-		$userid = $this->accesscontrol->getUserId();
-		if ($userid == "internal") return true;
-
-		foreach ($this->getPermissions() as $currentPermission) {
-			if ($this->isSystemAdminPermission($currentPermission)) {
-				return true;
-			}
-
-			if ($this->permissionCovers($currentPermission, $permission)) {
-				return true;
-			}
 		}
 
 		return false;
@@ -601,8 +562,6 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 	private function resolvePermissionId(Permission $permission) {
 		if (isset($permission->id) && $permission->id !== null && $permission->id !== "") return (int)$permission->id;
 		if (!isset($permission->scope, $permission->permission) || !$permission->scope || !$permission->permission) return null;
-		if ($this->normalizePermissionTarget($permission) !== null) return null;
-
 		$this->database->connect();
 
 		$sql = "SELECT `id` FROM `base3system_syspermission`
@@ -612,32 +571,6 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 
 		$row = $this->database->singleQuery($sql);
 		return $row && isset($row["id"]) ? (int)$row["id"] : null;
-	}
-
-	private function isSystemAdminPermission(Permission $permission): bool {
-		return (string)$permission->scope === "system"
-			&& (string)$permission->permission === "admin"
-			&& $this->normalizePermissionTarget($permission) === null;
-	}
-
-	private function permissionCovers(Permission $available, Permission $requested): bool {
-		if ((string)$available->scope !== (string)$requested->scope) return false;
-
-		$availableTarget = $this->normalizePermissionTarget($available);
-		$requestedTarget = $this->normalizePermissionTarget($requested);
-
-		if ($availableTarget !== null && $availableTarget !== $requestedTarget) return false;
-
-		if ((string)$available->permission === (string)$requested->permission) return true;
-		if ((string)$available->permission === "admin") return true;
-
-		return false;
-	}
-
-	private function normalizePermissionTarget(Permission $permission): ?string {
-		if (!isset($permission->target) || $permission->target === null || $permission->target === "") return null;
-
-		return (string)$permission->target;
 	}
 
 	private function clearAuthorizationCache(): void {
@@ -651,13 +584,6 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 			$this->user->role = $this->resolveCompatibilityRole($this->user->roles, $this->user->role ?? "visit");
 		}
 
-		if ($this->session && $this->session->started()) {
-			unset($_SESSION["authentication"]["roles"]);
-			unset($_SESSION["authentication"]["permissions"]);
-			if ($this->user) {
-				$_SESSION["authentication"]["user"] = $this->user;
-			}
-		}
 	}
 
 }

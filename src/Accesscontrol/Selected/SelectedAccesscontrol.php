@@ -92,6 +92,9 @@ class SelectedAccesscontrol implements IAccesscontrol, ICheck {
 	}
 
 	public function getUserId(): mixed {
+		// Embedded hosts can resolve identity without passing through the BASE3 request middleware.
+		// Use the same authentication lifecycle once for both direct and routed requests.
+		$this->authenticate();
 		return $this->userid;
 	}
 

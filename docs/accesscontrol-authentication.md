@@ -75,6 +75,8 @@ return $this->next->process();
 
 Returns the user identity established by the active access-control implementation.
 
+With `SelectedAccesscontrol`, a direct call in an embedded host also initializes authentication once. This is intentional: an ILIAS display may be rendered directly inside a host page without passing through the BASE3 `AccesscontrolMiddleware`. The middleware and direct rendering therefore share exactly one authentication lifecycle and resolved user identity, not two login algorithms. An unauthenticated request still returns `null`.
+
 The concrete type is implementation-specific. It may be a numeric id, string identifier, or `null` when no user is authenticated.
 
 Reusable code should not assume one concrete id type unless its own contract explicitly requires one.
@@ -172,6 +174,7 @@ The important behavior is:
 * the configured order is preserved
 * the authentication lifecycle runs once per `SelectedAccesscontrol` instance
 * the last non-null result returned by `login()` becomes the current user id
+* `getUserId()` triggers the same `authenticate()` lifecycle on first use, if the BASE3 middleware has not run; later explicit authentication is idempotent
 
 This is useful when a project wants a deliberate and visible authentication composition.
 
@@ -480,7 +483,7 @@ Recommended flow:
 $accesscontrol->authenticate();
 $userId = $accesscontrol->getUserId();
 
-if (!$usermanager->can(Permission::for('report', 'edit'))) {
+if (!$authorization->decide(new AuthorizationRequest($authorization->getDefaultAuthority(), Permission::for('report', 'edit')))->isAllowed()) {
 	throw new RuntimeException('Permission denied.');
 }
 ```

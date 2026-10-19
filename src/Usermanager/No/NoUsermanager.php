@@ -51,10 +51,6 @@ class NoUsermanager implements IUsermanager {
 		return false;
 	}
 
-	public function can(Permission $permission): bool {
-		return false;
-	}
-
 	public function registUser($userid, $password, $data = null) {
 		return false;
 	}

@@ -96,6 +96,22 @@ Before describing actual collection or retention, inspect the active implementat
 Do not assume that changing a UI role automatically deletes corresponding user identity records or audit events.
 Do not assume an access-control interface itself enforces every resource-specific ACL.
 
+### Authorization interfaces (2026-10-19)
+
+The framework now exposes the immutable `AuthorizationRequest`, `AuthorizationDecision`,
+`SubjectReference`, and `ResourceReference` DTOs and the
+`IAuthorizationService`/`IAuthorizationAdministrationService` contracts. These
+objects may contain user identifiers, resource identifiers, native operation names and
+trusted execution parameters. The framework's `AuthorizationMultiplexer` only
+selects a registered authority, without storing decisions or building user profiles.
+`UserCriterionEvaluator` evaluates host-provided user attributes in memory and holds
+no persistent group-membership store. The framework has no new authorization database;
+retention, native logs, access rules and erasure depend on the concrete host binding.
+The optional `Base3SystemAuthorizationService` uses the existing usermanager's global
+permission metadata, not a new permission table. Operators must verify native
+implementations and their privacy notices separately; the contracts do not establish
+GDPR compliance or actual deployment retention periods.
+
 ## 8. Settings
 
 `ISettingsStore` handles editable grouped runtime settings.
@@ -269,3 +285,42 @@ When code changes processing behavior:
 | Date | Change | Basis |
 | --- | --- | --- |
 | 2026-10-14 | Initial BASE3 privacy inventory and evidence requirements | Architecture documentation and framework interface archive; full implementation verification outstanding |
+
+
+### Authentication context in embedded BASE3 displays (2026-10-19)
+
+`SelectedAccesscontrol::getUserId()` initializes the existing authentication-strategy lifecycle on first identity access if a host-embedded display did not run BASE3's access-control middleware. The same configured providers and their existing session/credential-processing behavior are used; authentication is not persisted by this change in a new BASE3 store. Requests that remain anonymous receive no authenticated user ID. The identity established by the host is then available for regular authorization and group evaluation. Operational retention and log behavior remain dependent on the configured authentication providers and hosting system.
+
+
+### Declarative group and feature audience contracts (2026-10-19)
+
+`UserCriterionEvaluator` is a read-only evaluator of a trusted host user,
+configurable criteria, and optionally the current effective BASE3 group list.
+Its `validate()` method checks the expression before a host chooses to persist it.
+The `IGroup` contract describes discoverable code definitions; hosts may independently
+store `Group` DTOs under their own settings backend. `IFeature::getDefaultAudience()`
+describes a code-owned audience expression. None of these contracts writes an
+authorization database or registers a recipient/transfer. Evaluations can process
+identity attributes such as an email domain, user IDs and group names in memory;
+stored configurations and their retention/deletion are exclusively the responsibility
+of the host adapter and operator. For the reviewed ILIAS implementation see
+`Base3Ilias/PRIVACY.md`. Third-party criterion plugins must document any additional
+attributes or external recipients they process.
+
+
+### Code-defined bootstrap membership and exact identity criteria (2026-10-19)
+
+`Base3UserIdentityCriterion` compares explicit native account login names
+(`User::userid`) and complete email addresses (`User::email`) that the active
+host usermanager has already provided. Matching is performed in memory and
+introduces no database, host lookups, network calls, recipient or new logging
+mechanism in the framework. An empty allowlist grants nobody. Host adapters
+remain responsible for verifying identity data, email ownership where needed,
+and the native administrative authorization required for protected actions.
+
+Project-owned `IGroup` implementations may embed exact identity allowlists in
+source code. In that case project source, artifacts, backups and logs can become
+repositories of personal data; the project owner must document its processing,
+access restrictions, update/revocation workflow and retention in its root
+`PRIVACY.md`. The framework does not maintain these allowlists or grant native
+administrator permissions.

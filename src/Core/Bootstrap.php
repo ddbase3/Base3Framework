@@ -27,6 +27,8 @@ use Base3\Api\IPlugin;
 use Base3\Api\IRequest;
 use Base3\Api\ISystemService;
 use Base3\Accesscontrol\Api\IAccesscontrol;
+use Base3\Authorization\Api\IAuthorizationService;
+use Base3\Authorization\No\NoAuthorizationService;
 use Base3\Accesscontrol\No\NoAccesscontrol;
 use Base3\Core\ComponentResolver;
 use Base3\Core\Request;
@@ -67,6 +69,7 @@ class Bootstrap implements IBootstrap {
 				$c->get(IClassMap::class)
 			), IContainer::SHARED)
 			->set(IMigrationRunner::class, fn() => new NoMigrationRunner(), IContainer::SHARED)
+			->set(IAuthorizationService::class, fn() => new NoAuthorizationService(), IContainer::SHARED)
 			->set('accesscontrol', fn($c) => new NoAccesscontrol(), IContainer::SHARED)
 			->set(IAccesscontrol::class, 'accesscontrol', IContainer::ALIAS)
 			->set(IServiceSelector::class, fn($c) => new StandardServiceSelector($c), IContainer::SHARED)

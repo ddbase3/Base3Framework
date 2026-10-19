@@ -151,10 +151,6 @@ class UsermanagerProxy implements IUsermanager {
 		return (bool) $this->connector->hasRole($role);
 	}
 
-	public function can(Permission $permission): bool {
-		return (bool) $this->connector->can($permission);
-	}
-
 	public function registUser($userid, $password, $data = null) {
 		$result = $this->connector->registUser($userid, $password, $data);
 
