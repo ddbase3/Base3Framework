@@ -357,3 +357,7 @@ Both host-owned group membership and feature eligibility use one read-only
 accept effective BASE3 group references. See
 [Authorization Model](docs/authorization-model.md) and
 [Authorization Adapters](docs/authorization-adapters.md).
+
+<!-- BASE3 XRM authorization migration 2026-10-19 -->
+
+See [XRM and Manager authorization](docs/authorization-xrm-manager.md) for the native authorization roles, updated client/server endpoints, and deployment instructions.
