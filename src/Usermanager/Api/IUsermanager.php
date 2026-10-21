@@ -116,6 +116,35 @@ interface IUsermanager {
 	public function getAllUsers();
 
 	/**
+	 * Searches the native user directory for a literal, case-insensitive substring
+	 * in the login, first name, last name, display/full name or email fields
+	 * supported by the backend. An all-digit query additionally matches a native
+	 * user ID exactly. The query is plain text, never SQL or a JSON expression.
+	 * Surrounding whitespace is ignored. An empty/whitespace-only query returns [].
+	 * SQL wildcards in input are literal characters, not query operators.
+	 *
+	 * Results MUST be fetched through the native backend with server-side search,
+	 * limit and offset, not by loading getAllUsers() and filtering it in PHP.
+	 * Return results in a deterministic order (display name, then native user ID)
+	 * so pages can be requested consistently. Results describe identity only;
+	 * expensive role/membership expansion is not required. A caller MUST NOT infer
+	 * authorization from a returned user. Host IDs remain authority-specific.
+	 *
+	 * This method does not authorize access to the directory. The caller MUST
+	 * enforce authorization before exposing results, particularly over HTTP.
+	 * Implementations must not introduce new persistence or log query contents.
+	 * Native backends may expose only users visible to the calling context.
+	 *
+	 * @param string $query Literal free-text search, trimmed before matching
+	 * @param int $limit Number of users to return, in the range 1..100 (default 20)
+	 * @param int $offset Non-negative count of users to skip (default 0)
+	 * @return User[] Matching native users (possibly empty), with identity fields
+	 * @throws \InvalidArgumentException If limit is outside 1..100 or offset is negative
+	 * @throws \Throwable On native backend/transport failure (do not return arbitrary users)
+	 */
+	public function searchUsers(string $query, int $limit = 20, int $offset = 0): array;
+
+	/**
 	 * Enumerates logical groups exposed by this host or discoverable BASE3 group plugins.
 	 * A missing group does not implicitly authorize its members or permissions.
 	 *

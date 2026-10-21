@@ -63,6 +63,14 @@ class NoUsermanager implements IUsermanager {
 		return array();
 	}
 
+	public function searchUsers(string $query, int $limit = 20, int $offset = 0): array {
+		if ($limit < 1 || $limit > 100 || $offset < 0) {
+			throw new \InvalidArgumentException('User search requires limit 1..100 and offset >= 0.');
+		}
+
+		return array();
+	}
+
 	public function getAllGroups() {
 		return array();
 	}

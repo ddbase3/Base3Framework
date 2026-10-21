@@ -92,6 +92,17 @@ A concrete installation MUST document which branches actually execute and which 
 Groups and roles can express access relationships, and permissions express capabilities.
 Identifiers and role assignment histories may be personal data.
 
+`IUsermanager::searchUsers()` enables limited native user-directory searches by
+login, name, email and exact numeric ID. The supplied free-text query and
+`limit`/`offset` are passed to the active native backend; the framework's
+`Base3SystemUsermanager` searches existing user records in place, returns only
+identity-oriented `User` objects and does not persist searches or expand roles
+per result. `UsermanagerProxy` forwards searches to its configured connector,
+which may involve network transfer depending on deployment; no search-result
+cache is introduced. The caller is responsible for authorization before
+exposing personal data. Searchability, visible accounts, access logs, network
+recipients and retention depend on the active host/backend and infrastructure.
+
 Before describing actual collection or retention, inspect the active implementation and any host adapter.
 Do not assume that changing a UI role automatically deletes corresponding user identity records or audit events.
 Do not assume an access-control interface itself enforces every resource-specific ACL.

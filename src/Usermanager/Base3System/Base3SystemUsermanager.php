@@ -252,6 +252,49 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		return $users;
 	}
 
+	public function searchUsers(string $query, int $limit = 20, int $offset = 0): array {
+		if ($limit < 1 || $limit > 100 || $offset < 0) {
+			throw new \InvalidArgumentException('User search requires limit 1..100 and offset >= 0.');
+		}
+
+		$query = trim($query);
+		if ($query === '') return array();
+
+		$this->database->connect();
+
+		// The pattern is literal user input: escape LIKE wildcards independently
+		// from SQL string escaping, using an explicit, cross-database escape char.
+		$pattern = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $query) . '%';
+		$escapedPattern = $this->database->escape($pattern);
+		$where = [
+			"LOWER(u.`name`) LIKE LOWER('" . $escapedPattern . "') ESCAPE '!'",
+			"LOWER(u.`fullname`) LIKE LOWER('" . $escapedPattern . "') ESCAPE '!'",
+			"LOWER(u.`email`) LIKE LOWER('" . $escapedPattern . "') ESCAPE '!'"
+		];
+
+		// Avoid numeric conversion overflow; IDs in this backend are integer keys.
+		if (ctype_digit($query) && strlen(ltrim($query, '0')) <= 18) {
+			$where[] = 'u.`id` = ' . (int)$query;
+		}
+
+		$sql = "SELECT u.`id`, u.`name` AS `userid`, u.`fullname`, u.`email`, l.`short` AS `lang`
+			FROM `base3system_sysuser` u
+			INNER JOIN `base3system_syslang` l ON u.`lang_id` = l.`id`
+			WHERE u.`id` != 1
+			  AND (" . implode(' OR ', $where) . ")
+			ORDER BY u.`fullname`, u.`id`
+			LIMIT " . $limit . " OFFSET " . $offset;
+
+		$rows = $this->database->multiQuery($sql);
+		$users = array();
+		foreach ($rows as $row) {
+			// Search results carry identity only. Do not load roles per result.
+			$users[] = $this->createUserIdentityFromRow($row);
+		}
+
+		return $users;
+	}
+
 	public function getAllGroups() {
 		if ($this->allgroups) return $this->allgroups;
 
@@ -421,15 +464,21 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		return $user;
 	}
 
-	private function createUserFromRow(array $row, ?array $roles = null): User {
-		$legacyRoles = array(0 => "visit", 1 => "member", 2 => "admin");
-
+	private function createUserIdentityFromRow(array $row): User {
 		$user = new User;
 		$user->id = $row["id"];
 		$user->userid = $row["userid"];
 		$user->name = $row["fullname"];
 		$user->email = $row["email"];
 		$user->lang = $row["lang"];
+
+		return $user;
+	}
+
+	private function createUserFromRow(array $row, ?array $roles = null): User {
+		$legacyRoles = array(0 => "visit", 1 => "member", 2 => "admin");
+
+		$user = $this->createUserIdentityFromRow($row);
 		$user->role = $legacyRoles[(int)$row["mode"]] ?? "visit";
 		$user->roles = $roles ?? $this->getRolesForUserId((int)$row["id"]);
 		$user->role = $this->resolveCompatibilityRole($user->roles, $user->role);

@@ -184,6 +184,35 @@ class UsermanagerProxy implements IUsermanager {
 		return $this->cachedAllUsers;
 	}
 
+	/**
+	 * Forwards a paginated native search without caching potentially sensitive
+	 * query results; connector results are hydrated into regular User objects.
+	 */
+	public function searchUsers(string $query, int $limit = 20, int $offset = 0): array {
+		if ($limit < 1 || $limit > 100 || $offset < 0) {
+			throw new \InvalidArgumentException('User search requires limit 1..100 and offset >= 0.');
+		}
+
+		$query = trim($query);
+		if ($query === '') return array();
+
+		$results = $this->connector->searchUsers($query, $limit, $offset);
+		if (!is_array($results)) {
+			throw new \UnexpectedValueException('User search connector must return an array.');
+		}
+
+		$users = array();
+		foreach ($results as $result) {
+			$user = $this->hydrateUser($result);
+			if ($user === null) {
+				throw new \UnexpectedValueException('User search connector returned an invalid user.');
+			}
+			$users[] = $user;
+		}
+
+		return $users;
+	}
+
 	public function getAllGroups() {
 		if ($this->cachedAllGroups !== null) {
 			return $this->cachedAllGroups;

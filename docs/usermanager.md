@@ -37,6 +37,36 @@ $allowed = $authorization->decide(new AuthorizationRequest(
 ))->isAllowed();
 ```
 
+### Native user directory search
+
+`IUsermanager::searchUsers(string $query, int $limit = 20, int $offset = 0): array`
+searches the active backend's own user directory. `$query` is a literal free-text
+term, not SQL or JSON. The backend matches supported login, name and email fields
+without regard to letter case; an all-digit term can also match an exact native
+user ID. Spaces at the ends of the term are removed. A blank term returns `[]`.
+
+```php
+$users = $usermanager->searchUsers('mueller');
+$users = $usermanager->searchUsers('max@example.org', 20, 0);
+$users = $usermanager->searchUsers('42', 20, 20);
+```
+
+The range for `$limit` is 1..100, and `$offset` must be non-negative. The backend
+applies both to the native query and orders matching users by display name, then
+native ID. Results are `User[]` containing identity fields, not an authorization
+result, and may omit expensive role expansion. No adapter may implement this by
+calling `getAllUsers()` and filtering the entire list in PHP. The standalone
+`Base3SystemUsermanager` searches the existing database directly with escaped
+literal terms; `UsermanagerProxy` forwards the query to its connector without
+introducing a second cache. `NoUsermanager` returns no users.
+
+A caller providing an HTTP/AJAX user picker must authorize access to personal
+information before calling `searchUsers()`. This metadata API intentionally does
+not make an access decision. Host usermanager adapters and remote endpoints must
+be updated to implement the new contract before deploying this version of the
+framework. This framework change does not add an AJAX endpoint or change existing
+UI components.
+
 `IUsermanager::can()` has been deleted. Do not retain a parallel implementation,
 proxy fallback or session-cached permission evaluator. The auth contract owns all
 boolean permission decisions. Existing direct user/group/role metadata operations

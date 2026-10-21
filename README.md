@@ -144,7 +144,14 @@ Create, check, and delete scoped tokens using `IToken` (e.g. for secure links, c
 ### Users, authorization and rights administration
 
 `IUsermanager` exposes the current identity, groups, effective roles and permission
-metadata. Only `IAuthorizationService` evaluates whether an action may be executed:
+metadata. `searchUsers(string $query, int $limit = 20, int $offset = 0): array`
+provides paginated native user-directory lookup by literal login, name, email or
+exact numeric ID. Results contain `User` identities and do not grant access.
+The backend searches without fetching the entire directory; the caller must
+check permission before presenting personal data. A blank query returns `[]`.
+Host implementations and remote connectors must implement the new method before
+upgrading the shared interface. Only `IAuthorizationService` evaluates whether
+an action may be executed:
 
 ```php
 use Base3\Authorization\Dto\AuthorizationRequest;
