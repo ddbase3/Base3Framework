@@ -27,6 +27,15 @@ class OpensslCrypt implements ICrypt, ICheck {
 
 	// Implementation of ICrypt
 
+	public static function getName(): string {
+		return 'opensslcrypt';
+	}
+
+	public function getMethod(): string {
+		return 'aes-256-cbc-legacy-v1';
+	}
+
+
 	public function encrypt(string $str, string $secret): string {
 		$key = hash('sha256', $secret);
 		$iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($this->method));

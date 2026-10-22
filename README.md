@@ -377,3 +377,13 @@ Discoverable `Base3\Diagnostics\Api\IDiagnosticCheck` and `IDiagnosticScope` imp
 ### Feature-based diagnostic access
 
 `Base3\Diagnostics\Feature\DiagnosticReportsFeature` is discoverable as an `IFeature`. Its permission is `feature/diagnosticreportsfeature`, with the logical BASE3 `development` group as its default audience. Feature audience decisions belong to `IAuthorizationService` and may be customized through the host's existing feature administration. The diagnostic UI and its AJAX execution must both enforce the permission, independently of menu visibility.
+
+### Discoverable cryptography methods
+
+`Base3\Crypt\Api\ICrypt` extends `IBase` and exposes `getMethod()` as a stable,
+versioned ciphertext format identifier. The framework ships the existing
+`OpensslCrypt` (`aes-256-cbc-legacy-v1`, compatibility only) and `SodiumCrypt`
+(`xchacha20poly1305-v1`, authenticated encryption); both reside in
+`Base3Framework/src/Crypt/`. Secret sourcing remains the responsibility of
+`IConfigValueResolver`. No application encryption is enabled by this API change.
+See `docs/cryptography.md`.

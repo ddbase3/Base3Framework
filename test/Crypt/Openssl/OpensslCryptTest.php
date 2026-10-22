@@ -18,6 +18,23 @@ class OpensslCryptTest extends TestCase
 		$this->crypt = new OpensslCrypt();
 	}
 
+	public function testLegacyImplementationHasStableMethodIdentifier(): void
+	{
+		$this->assertSame('opensslcrypt', OpensslCrypt::getName());
+		$this->assertSame('aes-256-cbc-legacy-v1', $this->crypt->getMethod());
+	}
+
+	public function testDecryptPreservesOriginalLegacyFormat(): void
+	{
+		$plain = 'Existing encrypted value';
+		$secret = 'legacy-secret';
+		$iv = str_repeat("\x03", openssl_cipher_iv_length('AES-256-CBC'));
+		$legacyCipher = openssl_encrypt($plain, 'AES-256-CBC', hash('sha256', $secret), 0, $iv);
+		$legacyValue = $legacyCipher . ':' . base64_encode($iv);
+
+		$this->assertSame($plain, $this->crypt->decrypt($legacyValue, $secret));
+	}
+
 	public function testEncryptReturnsCiphertextWithIvSuffix(): void
 	{
 		$plain = 'hello world';

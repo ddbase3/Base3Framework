@@ -366,3 +366,19 @@ The new `IDiagnosticCheck`, `IDiagnosticScope`, `IDiagnosticRunner` and `Diagnos
 ### Diagnostic reporting feature audience (2026-10-22)
 
 `DiagnosticReportsFeature` is a discoverable `IFeature` definition for `feature/diagnosticreportsfeature`. Its default audience is the logical BASE3 `development` group. The feature definition does not store diagnostic data, identities, or a second permission catalog. The owning host authorization service evaluates its effective audience; host-managed changes use the existing authorization settings backend. A diagnostic display must authorize its actual HTML and AJAX operations independently of navigation visibility.
+
+### Cryptography contract update (2026-10-22)
+
+`ICrypt` now exposes a stable, versioned method identifier and participates in
+`IBase` class-map discovery. The framework supplies a Sodium-backed,
+authenticated XChaCha20-Poly1305 implementation and keeps the existing OpenSSL
+AES-256-CBC format compatible for previously encrypted values. The legacy CBC
+format provides no ciphertext authentication and must not be assumed to prevent
+tampering. Neither implementation stores secrets, logs payloads, or persists
+application data by itself. This change does **not** encrypt existing chat,
+logs, settings, or backups and does not alter default data retention. Consumers
+must select a method explicitly, protect secrets through an appropriate
+configuration resolver, authorize decryption, retain historical keys only as
+required, and ensure erasure includes all relevant plaintext/encrypted copies.
+A wrong or missing Sodium secret fails decryption rather than returning
+plaintext. Server-side decryption is not end-to-end encryption.

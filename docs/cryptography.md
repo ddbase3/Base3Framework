@@ -2,190 +2,151 @@
 
 ## Purpose
 
-This document explains the small cryptography abstraction provided by BASE3.
+BASE3 provides discoverable, reversible encryption implementations through the
+framework-owned `Base3\Crypt\Api\ICrypt` contract. Consumers select a method
+independently of their secret source, data storage, and authorization model.
+Implementations shipped with BASE3 live in `Base3Framework/src/Crypt/`.
 
-It covers:
+This contract is for server-side encryption, not password hashing, digital
+signatures, or end-to-end encrypted collaboration.
 
-* the `ICrypt` contract
-* the built-in `OpensslCrypt` implementation
-* encryption format and secret handling in the current implementation
-* diagnostics
-* appropriate and inappropriate use cases
+## 1. `ICrypt` contract
 
----
-
-## 1. `ICrypt`
-
-The framework contract is:
+`ICrypt` extends `IBase` and defines:
 
 ```php
 namespace Base3\Crypt\Api;
 
-interface ICrypt {
+use Base3\Api\IBase;
 
-	public function encrypt(string $str, string $secret): string;
+interface ICrypt extends IBase {
 
-	public function decrypt(string $str, string $secret): string;
+    public function getMethod(): string;
+
+    public function encrypt(string $str, string $secret): string;
+
+    public function decrypt(string $str, string $secret): string;
 }
 ```
 
-The abstraction is deliberately small.
+- `IBase::getName()` is a unique, lowercase class-map identifier, for example
+  `sodiumcrypt`. The class map can instantiate a selected implementation by
+  `ICrypt` interface and this name.
+- `getMethod()` is the persistent, versioned ciphertext format identifier.
+  A stored value must retain its method identifier so the matching
+  implementation can be selected on subsequent reads.
+- `encrypt()` and `decrypt()` accept caller-supplied secrets. Implementations
+  must not resolve, log, persist, or return the secret.
+- Invalid, unavailable, or unverifiable encrypted data must not silently fall
+  back to plaintext. Compatibility limitations of legacy methods are noted
+  below.
 
-It provides reversible string encryption using a caller-supplied secret.
+Adding `IBase` and `getMethod()` to `ICrypt` is a public-contract change.
+Existing custom implementations need a stable `getName()` and `getMethod()`.
+In the supplied BASE3 source, `OpensslCrypt` was the only existing concrete
+implementation and has been updated accordingly.
 
----
+## 2. Framework methods
 
-## 2. Built-in implementation
+| Class | `getName()` | `getMethod()` | Status |
+|---|---|---|---|
+| `Base3\Crypt\Openssl\OpensslCrypt` | `opensslcrypt` | `aes-256-cbc-legacy-v1` | Legacy compatibility; unauthenticated encryption |
+| `Base3\Crypt\Sodium\SodiumCrypt` | `sodiumcrypt` | `xchacha20poly1305-v1` | Recommended for new encrypted values |
 
-BASE3 currently ships:
+### OpenSSL: existing legacy representation
+
+The existing implementation is left wire-format compatible:
+
+1. Calculate the SHA-256 **hex string** of the supplied secret as OpenSSL key
+   material, following the historical implementation.
+2. Encrypt with AES-256-CBC and a random IV.
+3. Store the OpenSSL base64 ciphertext, a colon, and the base64 IV.
+
+`OpensslCrypt` does **not** authenticate ciphertext. An attacker with write
+access to ciphertext may modify it without reliable detection. Preserve this
+implementation to read data already encrypted in that format, not as the new
+chat encryption default. Changing the method name does not modify old
+ciphertext bytes.
+
+### Sodium: authenticated encryption
+
+`SodiumCrypt` uses PHP's Sodium extension with
+`XChaCha20-Poly1305-IETF` authenticated encryption. Each encryption generates a
+fresh 24-byte random nonce and an authentication tag. Its stable textual
+format is `v1:` followed by strict base64 encoding of `nonce || ciphertext || tag`.
+An incorrect secret, invalid version, corrupted payload, or failed integrity
+check raises an exception. There is no plaintext fallback.
+
+A caller-supplied high-entropy secret of **at least 32 bytes** is required.
+The implementation uses libsodium BLAKE2b to derive a fixed-size encryption
+key from that secret. This is not a slow password derivation function: use a
+cryptographically random deployment secret, not a human password.
+
+Example of generating a deployment secret:
+
+```sh
+php -r 'echo base64_encode(random_bytes(32)), PHP_EOL;'
+```
+
+Store the resulting string in a protected secret source. Keep its exact value
+stable until every ciphertext encrypted with it has been re-encrypted or
+permanently deleted.
+
+## 3. Choosing an implementation
+
+Discover framework implementations through `IClassMap` and the common `ICrypt`
+contract, for example:
 
 ```php
-Base3\Crypt\Openssl\OpensslCrypt
-```
+$crypt = $classMap->getInstanceByInterfaceName(ICrypt::class, 'sodiumcrypt');
 
-It uses:
-
-```text
-AES-256-CBC
-```
-
-through the PHP OpenSSL extension.
-
----
-
-## 3. Encryption flow
-
-The current implementation:
-
-```text
-secret
-  -> SHA-256 hash used as key material
-
-plaintext
-  -> AES-256-CBC with random IV
-
-result
-  -> encrypted OpenSSL string + ":" + base64 encoded IV
-```
-
-Conceptually:
-
-```php
-$encrypted = $crypt->encrypt($plaintext, $secret);
-```
-
-The returned string contains both encrypted data and the IV needed for decryption.
-
----
-
-## 4. Decryption flow
-
-```php
-$plaintext = $crypt->decrypt($encrypted, $secret);
-```
-
-The implementation splits the stored value at `:` and uses the supplied secret to reconstruct the key.
-
-The caller must therefore retain the same secret used for encryption.
-
----
-
-## 5. Diagnostics
-
-`OpensslCrypt` implements `ICheck`.
-
-Its dependency check reports whether the PHP OpenSSL extension is loaded.
-
-This can be surfaced by the framework diagnostics described in `checks-diagnostics.md`.
-
----
-
-## 6. Dependency injection
-
-Consumers that only need reversible encryption should depend on:
-
-```php
-ICrypt
-```
-
-Example:
-
-```php
-final class ProtectedValueService {
-
-	public function __construct(
-		private readonly ICrypt $crypt
-	) {}
+if ($crypt->getMethod() !== 'xchacha20poly1305-v1') {
+    throw new \RuntimeException('Unexpected encryption method.');
 }
+
+$ciphertext = $crypt->encrypt($plaintext, $secret);
+$plaintext = $crypt->decrypt($ciphertext, $secret);
 ```
 
-The project decides which implementation fills the service slot.
+The caller is responsible for keeping the method and key identifier with the
+encrypted data. A database can hold several versions simultaneously, provided
+an appropriate implementation and secret remain available for each version.
+Changing a configured write method must not reinterpret stored ciphertext.
 
----
+The configuration value `none` signifies **no encryption by the storage
+consumer**. It is not an `ICrypt` implementation; unencrypted records must be
+explicitly marked and must never be passed through a crypto implementation.
 
-## 7. What `ICrypt` does not define
+## 4. Secret storage and rotation
 
-The current contract does not define:
+`IConfigValueResolver` already separates secret **source** from its **use**.
+Supported modes include `env`, `file`, `configuration`, and `fixed`, with new
+modes discoverable through `IConfigValueModeResolver`. Prefer an environment
+secret or a protected file outside the webroot; restrict permissions, backup
+access, and logs. Direct fixed values in editable settings are not recommended
+for encryption keys.
 
-* secret storage
-* key rotation
-* key identifiers
-* authenticated encryption semantics
-* password hashing
-* digital signatures
-* public-key encryption
-* token generation
+`ICrypt` does not define a key registry, rotation schedule, `key_id`, or secret
+storage. Consumers must keep a nonsecret key identifier alongside ciphertext,
+resolve the matching historical secret at read time, and perform any
+re-encryption through a separately controlled migration. If the key cannot be
+resolved, decryption must fail explicitly; never substitute `none`.
 
-Do not infer those guarantees from the existence of `ICrypt`.
+## 5. Scope and limitations
 
----
+- Adding a framework crypto method does **not** activate encryption in any
+  module. Conversation storage remains unchanged until its owner explicitly
+  adopts the contract. Optional encryption may default to `none`.
+- Server-side encryption allows the authorized server to decrypt data; it is
+  **not** end-to-end encryption. Sharing a chat requires separate server-side
+  authorization, even if encrypted at rest.
+- Encrypting only message `content` is insufficient if titles, opening
+  messages, serialized payloads, logs, caches, or backups also contain personal
+  information. Each storing module must inventory and protect its own copies.
+- Encryption does not erase plaintext that existed previously in database
+  backups or logs. It also does not satisfy a deletion request by itself.
+- Encrypted data can exceed the length of its plaintext; consumers must size
+  columns or binary payload storage accordingly.
 
-## 8. Passwords are a different problem
-
-Reversible encryption should not be used as a password hashing mechanism.
-
-Password verification should use a dedicated password-hashing approach appropriate to the authentication backend.
-
-`ICrypt` exists for values that must later be decrypted.
-
----
-
-## 9. Configured secrets
-
-A project may resolve the secret through a deployment-specific mechanism such as `IConfigValueResolver`.
-
-That keeps secret source selection separate from encryption:
-
-```text
-IConfigValueResolver
-  where does the secret come from?
-
-ICrypt
-  encrypt or decrypt using that secret
-```
-
-See `configvalue.md`.
-
----
-
-## 10. Current implementation boundary
-
-`OpensslCrypt` is the current framework implementation, but its wire format is not separately standardized by `ICrypt`.
-
-If encrypted values need to survive a backend replacement, the project must deliberately preserve format compatibility or perform a migration.
-
-Consumers should not parse the `ciphertext:iv` representation themselves.
-
----
-
-## 11. Summary
-
-```text
-ICrypt
-  reversible string encryption contract
-
-OpensslCrypt
-  AES-256-CBC implementation using PHP OpenSSL
-```
-
-Keep secret sourcing, password hashing, token storage, and other security concerns in their own architectural boundaries.
+See `configvalue.md` for the existing secret-source system and
+`privacy-accessibility.md` for BASE3 privacy requirements.
