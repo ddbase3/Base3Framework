@@ -368,3 +368,12 @@ accept effective BASE3 group references. See
 <!-- BASE3 XRM authorization migration 2026-10-19 -->
 
 See [XRM and Manager authorization](docs/authorization-xrm-manager.md) for the native authorization roles, updated client/server endpoints, and deployment instructions.
+
+
+### Structured diagnostics
+
+Discoverable `Base3\Diagnostics\Api\IDiagnosticCheck` and `IDiagnosticScope` implementations provide read-only checks, categorized scopes and translatable structured `DiagnosticCheckResult` values. `IDiagnosticRunner` discovers implementations through `IClassMap` and runs one check per invocation. The old `ICheck` API remains available unchanged until a separate migration. See `docs/checks-diagnostics.md`.
+
+### Feature-based diagnostic access
+
+`Base3\Diagnostics\Feature\DiagnosticReportsFeature` is discoverable as an `IFeature`. Its permission is `feature/diagnosticreportsfeature`, with the logical BASE3 `development` group as its default audience. Feature audience decisions belong to `IAuthorizationService` and may be customized through the host's existing feature administration. The diagnostic UI and its AJAX execution must both enforce the permission, independently of menu visibility.

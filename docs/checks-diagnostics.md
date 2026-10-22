@@ -323,3 +323,35 @@ IHelp
 ```
 
 Checks should report the state of the correct architecture boundary rather than trying to compensate for broken configuration or missing services.
+
+---
+
+## Structured diagnostic checks (new, independent of legacy ICheck)
+
+`Base3\Diagnostics\Api\IDiagnosticCheck` and `IDiagnosticScope` are the new classmap-discoverable contracts. Legacy `Base3\Api\ICheck` and `Base3\Core\Check` remain unchanged during migration. They are not auto-converted, executed or shown in the new results.
+
+`IDiagnosticScope` extends `IBase` and `ISortable`. The scope names and priorities are owned by the implementation. It also names a discoverable `IDisplay` (`getDisplayName()`), allowing project/plugin-specific UIs. Built-in scopes: `privacydiagnosticscope`, `installationdiagnosticscope`, `dependencydiagnosticscope`, and `optimizationdiagnosticscope`.
+
+`IDiagnosticCheck` extends `IBase`, provides `getScope()` and performs one read-only `run(): DiagnosticCheckResult`. The check belongs to exactly one installed scope. `IDiagnosticRunner` uses `IClassMap` to list scopes and checks and to execute a single selected check. It does not itself check user permissions; every HTTP/CLI caller must authorize access separately. The default `DiagnosticRunner` is registered in the BASE3 framework bootstrap and in the embedded Base3Ilias runtime. Custom host bootstraps that do not extend these must bind `IDiagnosticRunner` to the framework implementation.
+
+`DiagnosticCheckResult` requires one of `passed`, `warning`, `failed`, `error`, `not_applicable`, with a translation message key, optional named scalar substitutions, optional remediation key and optional scalar measurements. Use `failed` for a verified violation, `error` for unknown/unreliable evaluation and `not_applicable` for a genuinely absent optional resource. Never return `passed` on database/query failures. No result may contain raw log data, user identifiers, prompts or secrets. Checks must not mutate state, even to repair a violation.
+
+### Translations
+
+The scope's providing module owns `lang/DiagnosticScopes/de.ini` and `en.ini` with section `[<scope getName()>]` and keys `title`, `description`. Each check's providing module owns `lang/DiagnosticChecks/de.ini` and `en.ini` with section `[<check getName()>]`, including `title`, `description` and the result keys (`passed`, `failed`, `error`, etc.), `remediation` if returned and `detail_<field>` for every displayed measurement. Translation happens in the consuming UI via `ITranslation`, never in `run()`. Placeholders such as `{count}` are supplied through the result's replacements. Translation sets merge across installed BASE3 module roots in the existing ILIAS translation service.
+
+### Example: tool logs
+
+`MissionBay\Diagnostics\ToolUseLogRetentionDiagnosticCheck` checks the `base3_missionbay_tooluse` table for rows where both timestamps are more than 48 hours old. It uses the same predicate as `MissionBayToolUseCleanupJob` (24-hour cleanup). Missing table means `not_applicable`, connection/count failure means `error`. A failure suggests checking the cleanup job and the worker; the check never deletes rows.
+
+### Classmap cache
+
+After installing new check or scope implementations, regenerate the normal BASE3 classmap cache as part of deployment. No new registry, check-selection store or compatibility adapter is introduced.
+
+## Discoverable feature permission for diagnostic reports
+
+`Base3\Diagnostics\Feature\DiagnosticReportsFeature` declares the single `feature/diagnosticreportsfeature` operation for running system-wide diagnostics and reading the results. It is an `IFeature` discovered through `IClassMap`, with the code-owned BASE3 `development` group as its initial audience. Administrators may change the audience through their host's existing feature-audience administration. The authorization decision is owned by `IAuthorizationService`, not by `IUsermanager`, the tab configuration, or the feature class itself.
+
+The privileged `DiagnosticScopeDisplay` checks both this feature permission and native `system/admin` permission for HTML and AJAX access. Its view-only tab visibility is managed by the host/project navigation. A hidden tab is not an access decision. No diagnostic history or new storage is created by the feature definition.
+
+Translations for the feature label and description live in `Base3Framework/lang/Features/`.

@@ -20,6 +20,8 @@ namespace Base3\Core;
 
 use Base3\Api\IBootstrap;
 use Base3\Api\IClassMap;
+use Base3\Diagnostics\Api\IDiagnosticRunner;
+use Base3\Diagnostics\DiagnosticRunner;
 use Base3\Api\IComponentResolver;
 use Base3\Api\IContainer;
 use Base3\Api\IModuleRegistry;
@@ -64,6 +66,7 @@ class Bootstrap implements IBootstrap {
 			->set(IConfiguration::class, 'configuration', IContainer::ALIAS)
 			->set('classmap', fn($c) => new PluginClassMap($c->get(IContainer::class)), IContainer::SHARED)
 			->set(IClassMap::class, 'classmap', IContainer::ALIAS)
+			->set(IDiagnosticRunner::class, fn($c) => new DiagnosticRunner($c->get(IClassMap::class)), IContainer::SHARED)
 			->set(IComponentResolver::class, fn($c) => new ComponentResolver(
 				$c->get(IContainer::class),
 				$c->get(IClassMap::class)

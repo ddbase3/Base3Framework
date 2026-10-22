@@ -357,3 +357,12 @@ be verified from the selective supplied ZIPs. Deleting native grants is supporte
 through the XRM service, but does not automatically erase audit logs or backups.
 Operators must check their own retention, notices, authentication settings,
 recipient/transfer configuration and accessibility obligations.
+
+
+### Structured diagnostics API
+
+The new `IDiagnosticCheck`, `IDiagnosticScope`, `IDiagnosticRunner` and `DiagnosticCheckResult` contracts provide no persistent diagnostic report storage. The framework runner discovers installed checks via `IClassMap` and returns individual in-memory results to an authorized caller. It does not by itself grant HTTP access or enforce permissions; this is the responsibility of the calling endpoint. Result contracts constrain substitutions and details to scalar values but cannot prove a plugin does not supply personal information; plugin authors must minimize these values, must not include prompts or secrets, and must ensure checks are read-only. Retention and processing of inspected sources remain owned by their respective modules.
+
+### Diagnostic reporting feature audience (2026-10-22)
+
+`DiagnosticReportsFeature` is a discoverable `IFeature` definition for `feature/diagnosticreportsfeature`. Its default audience is the logical BASE3 `development` group. The feature definition does not store diagnostic data, identities, or a second permission catalog. The owning host authorization service evaluates its effective audience; host-managed changes use the existing authorization settings backend. A diagnostic display must authorize its actual HTML and AJAX operations independently of navigation visibility.
