@@ -2,7 +2,7 @@
 
 /**
  * Standalone regression test for MicroserviceHelper option A.
- * Run with: php test/Microservice/MicroserviceHelperSmoke.php
+ * Run with: php test/Microservice/MicroserviceHelperTest.php
  * Uses an isolated temporary registry and never changes the application's registry.
  */
 
@@ -28,7 +28,7 @@ if (!defined('DIR_TEST')) define('DIR_TEST', DIR_ROOT . 'test/');
 require_once DIR_SRC . 'Core/Autoloader.php';
 Autoloader::register();
 
-class CountingMicroserviceHelper extends MicroserviceHelper {
+class CountingMicroserviceHelperTest extends MicroserviceHelper {
 	public int $connections = 0;
 
 	public function connect() {
@@ -102,7 +102,7 @@ try {
 	$verify(!file_exists($registry), 'Client constructor tried to register at its master.');
 	$verify($helper->getMicroserviceList() === ['Client' => 'https://client.example.test'], 'Client configuration was not preserved.');
 
-	$helper = new CountingMicroserviceHelper();
+	$helper = new CountingMicroserviceHelperTest();
 	$verify($helper->connections === 0, 'Constructor invoked connect.');
 	$verify($helper->get('Master', IMicroserviceReceiver::class, 'microservicereceiver') === null, 'Missing remote service unexpectedly resolved.');
 	$verify($helper->connections === 1, 'Missing service did not trigger exactly one connection attempt.');
