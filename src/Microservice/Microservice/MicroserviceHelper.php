@@ -46,6 +46,7 @@ class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->configuration = $this->servicelocator->get('configuration');
+		$this->filename = DIR_TMP . 'microservices.json';
 
 		if ($this->configuration == null) return;
 		$this->cnf = $this->configuration->get();
@@ -53,9 +54,6 @@ class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 		$this->url = isset($this->cnf['base']) && isset($this->cnf['base']['url']) ? $this->cnf['base']['url'] : '';
 		$this->name = isset($this->cnf['microservice']) && isset($this->cnf['microservice']['name']) ? $this->cnf['microservice']['name'] : '';
 		$this->masterurl = isset($this->cnf['microservice']) && isset($this->cnf['microservice']['masterurl']) ? $this->cnf['microservice']['masterurl'] : '';
-		$this->filename = DIR_TMP . 'microservices.json';
-
-		if (!file_exists($this->filename)) $this->connect();
 	}
 
 	// Implementation of IMicroserviceHelper
@@ -63,8 +61,9 @@ class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 	public function connect() {
 		$allservices = array();
 		$services = $this->getMicroServiceList();
+		if (!$services && !strlen((string) $this->masterurl)) return;
 
-		if (strlen($this->masterurl)) {
+		if (strlen((string) $this->masterurl)) {
 			$msrec = "microservicereceiver";
 			$url = $this->getUrl($this->masterurl, $msrec);
 			$conn = new MicroserviceConnector($url, $this->getService($msrec, \Base3\Microservice\Api\IMicroserviceReceiver::class));
@@ -72,6 +71,8 @@ class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 		} else {
 			$allservices = $services;
 		}
+
+		if (!is_array($allservices)) return;
 
 		$fp = fopen($this->filename, "w");
 		fwrite($fp, json_encode($allservices));
@@ -120,15 +121,20 @@ class MicroserviceHelper implements IMicroserviceHelper, ICheck {
 	}
 
 	public function getMicroserviceList() {
-		return strlen($this->filename) && file_exists($this->filename)
-			? json_decode(file_get_contents($this->filename), true)
-			: array($this->name => $this->url);
+		if (file_exists($this->filename)) {
+			$services = json_decode(file_get_contents($this->filename), true);
+			return is_array($services) ? $services : array();
+		}
+
+		return strlen((string) $this->name) && strlen((string) $this->url)
+			? array($this->name => $this->url)
+			: array();
 	}
 
 	// private methods
 
 	private function getServiceUrl($servicename) {
-		$services = json_decode(file_get_contents($this->filename), true);
+		$services = $this->getMicroserviceList();
 		if (!isset($services[$servicename])) return null;
 		return $services[$servicename];
 	}
