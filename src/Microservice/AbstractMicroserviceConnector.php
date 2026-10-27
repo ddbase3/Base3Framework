@@ -120,6 +120,24 @@ abstract class AbstractMicroserviceConnector implements IMicroserviceConnector, 
 		// curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
 
 		$response = curl_exec($curl);
+		if (isset($_SERVER['HTTP_HOST']) && str_ends_with((string) parse_url($url, PHP_URL_PATH), '/entitydatamicroservice.json')) {
+			header('X-Contourz-Remote-HTTP: ' . (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE));
+			header('X-Contourz-Remote-Curl-Errno: ' . (int) curl_errno($curl));
+			header('X-Contourz-Remote-Body: ' . ($response === false ? 'curl-failure' : ($response === '' ? 'empty' : 'present')));
+			if (is_string($response)) {
+				$body = ltrim($response);
+				$format = 'other';
+				if (preg_match('/^a:[0-9]+:\{/', $body)) $format = 'php-array';
+				elseif (str_starts_with($body, 'N;')) $format = 'php-null';
+				elseif (preg_match('/^[OisbdC]:/', $body)) $format = 'php-other';
+				elseif (preg_match('/^<(?:!doctype|html|\?xml)/i', $body)) $format = 'html-xml';
+				elseif (str_starts_with($body, '{') || str_starts_with($body, '[')) $format = 'json';
+				header('X-Contourz-Remote-Format: ' . $format);
+				header('X-Contourz-Remote-Bytes: ' . strlen($response));
+				header('X-Contourz-Remote-Type: ' . preg_replace('/[^a-zA-Z0-9\/;= +._-]/', '', (string) curl_getinfo($curl, CURLINFO_CONTENT_TYPE)));
+			}
+
+		}
 		curl_close($curl);
 		return $response;
 	}
