@@ -24,35 +24,11 @@ final class QueryLegacyRouteTest extends TestCase {
 	}
 
 	private function makeAccesscontrol(string $userId = ''): IAccesscontrol {
-		return new class($userId) implements IAccesscontrol {
-			public function __construct(private string $userId) {}
-			public function getUserId() { return $this->userId; }
-			public function authenticate(): void {}
-		};
+		return new QueryLegacyRouteTestDouble1($userId);
 	}
 
 	private function makeRequest(array $get): IRequest {
-		return new class($get) implements IRequest {
-			public function __construct(private array $get) {}
-
-			public function get(string $key, $default = null) { return $this->get[$key] ?? $default; }
-			public function post(string $key, $default = null) { return $default; }
-			public function request(string $key, $default = null) { return $this->get($key, $default); }
-			public function allRequest(): array { return $this->get; }
-			public function cookie(string $key, $default = null) { return $default; }
-			public function session(string $key, $default = null) { return $default; }
-			public function server(string $key, $default = null) { return $default; }
-			public function files(string $key, $default = null) { return $default; }
-			public function allGet(): array { return $this->get; }
-			public function allPost(): array { return []; }
-			public function allCookie(): array { return []; }
-			public function allSession(): array { return []; }
-			public function allServer(): array { return []; }
-			public function allFiles(): array { return []; }
-			public function getJsonBody(): array { return []; }
-			public function isCli(): bool { return false; }
-			public function getContext(): string { return self::CONTEXT_TEST; }
-		};
+		return new QueryLegacyRouteTestDouble2($get);
 	}
 
 	private function makeClassMap(IOutput $output): IClassMap {
@@ -127,3 +103,7 @@ final class QueryLegacyRouteTest extends TestCase {
 		$this->assertSame('OUT:html', $result);
 	}
 }
+
+require_once __DIR__ . '/QueryLegacyRouteTestDouble1.php';
+
+require_once __DIR__ . '/QueryLegacyRouteTestDouble2.php';

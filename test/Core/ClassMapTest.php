@@ -24,21 +24,11 @@ final class ClassMapTest extends TestCase {
 	}
 
 	private function makeContainer(): IContainer {
-		return new class implements IContainer {
-			public function getServiceList(): array { return []; }
-			public function set(string $name, $classDefinition, $flags = 0): IContainer { return $this; }
-			public function remove(string $name) {}
-			public function has(string $name): bool { return false; }
-			public function get(string $name) { return null; }
-		};
+		return new ClassMapTestDouble1();
 	}
 
 	public function testGetScanTargetsConfiguredForSrcBase3Namespace(): void {
-		$cm = new class($this->makeContainer()) extends ClassMap {
-			public function exposeTargets(): array {
-				return $this->getScanTargets();
-			}
-		};
+		$cm = new ClassMapTestDouble2($this->makeContainer());
 
 		$targets = $cm->exposeTargets();
 
@@ -48,3 +38,7 @@ final class ClassMapTest extends TestCase {
 		$this->assertSame('Base3', $targets[0]['subns']);
 	}
 }
+
+require_once __DIR__ . '/ClassMapTestDouble1.php';
+
+require_once __DIR__ . '/ClassMapTestDouble2.php';

@@ -24,7 +24,7 @@ use Base3\Api\IRequest;
 use Base3\Api\IClassMap;
 use Base3\Accesscontrol\Api\IAccesscontrol;
 use Base3\Configuration\Api\IConfiguration;
-use Base3\ServiceSelector\AbstractServiceSelector;
+use Base3\ServiceSelector\Standard\StandardServiceSelector;
 
 /**
  * Legacy query-string based routing.
@@ -60,9 +60,7 @@ class QueryLegacyRoute implements IRoute {
 	 */
 	public function dispatch(array $match): string {
 		// Create a selector instance on the fly
-		$selector = new class($this->container) extends AbstractServiceSelector {
-			public function __construct(IContainer $c) { parent::__construct($c); }
-		};
+		$selector = new StandardServiceSelector($this->container);
 
 		return $selector->process();
 	}

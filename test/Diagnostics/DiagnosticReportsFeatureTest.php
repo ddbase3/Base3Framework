@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 final class DiagnosticReportsFeatureTest extends TestCase {
 
 	public function testPermissionAndDefaultAudience(): void {
-		$translation = $this->createMock(ITranslation::class);
+		$translation = $this->createStub(ITranslation::class);
 		$translation->method('translate')->willReturnCallback(
 			static fn(string $set, string $section, string $key): string => $section . '.' . $key
 		);

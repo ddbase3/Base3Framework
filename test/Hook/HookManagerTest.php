@@ -36,26 +36,7 @@ namespace Base3\Test\Hook {
 		{
 			$manager = new HookManager();
 
-			$listener = new class implements IHookListener {
-				public bool $active = true;
-				public array $calls = [];
-
-				public function isActive(): bool
-				{
-					return $this->active;
-				}
-
-				public static function getSubscribedHooks(): array
-				{
-					return ['bootstrap.init' => 10];
-				}
-
-				public function handle(string $hookName, ...$args)
-				{
-					$this->calls[] = ['hook' => $hookName, 'args' => $args];
-					return 'ok';
-				}
-			};
+			$listener = new HookManagerTestDouble1();
 
 			$manager->addHookListener($listener);
 
@@ -71,45 +52,9 @@ namespace Base3\Test\Hook {
 		{
 			$manager = new HookManager();
 
-			$inactive = new class implements IHookListener {
-				public int $handleCalls = 0;
+			$inactive = new HookManagerTestDouble2();
 
-				public function isActive(): bool
-				{
-					return false;
-				}
-
-				public static function getSubscribedHooks(): array
-				{
-					return ['bootstrap.init' => 10];
-				}
-
-				public function handle(string $hookName, ...$args)
-				{
-					$this->handleCalls++;
-					return 'should-not-happen';
-				}
-			};
-
-			$active = new class implements IHookListener {
-				public int $handleCalls = 0;
-
-				public function isActive(): bool
-				{
-					return true;
-				}
-
-				public static function getSubscribedHooks(): array
-				{
-					return ['bootstrap.init' => 10];
-				}
-
-				public function handle(string $hookName, ...$args)
-				{
-					$this->handleCalls++;
-					return 'active';
-				}
-			};
+			$active = new HookManagerTestDouble3();
 
 			$manager->addHookListener($inactive);
 			$manager->addHookListener($active);
@@ -125,17 +70,9 @@ namespace Base3\Test\Hook {
 		{
 			$manager = new HookManager();
 
-			$low = new class implements IHookListener {
-				public function isActive(): bool { return true; }
-				public static function getSubscribedHooks(): array { return ['bootstrap.init' => 5]; }
-				public function handle(string $hookName, ...$args) { return 'low'; }
-			};
+			$low = new HookManagerTestDouble4();
 
-			$high = new class implements IHookListener {
-				public function isActive(): bool { return true; }
-				public static function getSubscribedHooks(): array { return ['bootstrap.init' => 20]; }
-				public function handle(string $hookName, ...$args) { return 'high'; }
-			};
+			$high = new HookManagerTestDouble5();
 
 			$manager->addHookListener($low);
 			$manager->addHookListener($high);
@@ -150,17 +87,9 @@ namespace Base3\Test\Hook {
 		{
 			$manager = new HookManager();
 
-			$a = new class implements IHookListener {
-				public function isActive(): bool { return true; }
-				public static function getSubscribedHooks(): array { return ['bootstrap.init' => 10]; }
-				public function handle(string $hookName, ...$args) { return 'a'; }
-			};
+			$a = new HookManagerTestDouble6();
 
-			$b = new class implements IHookListener {
-				public function isActive(): bool { return true; }
-				public static function getSubscribedHooks(): array { return ['bootstrap.init' => 10]; }
-				public function handle(string $hookName, ...$args) { return 'b'; }
-			};
+			$b = new HookManagerTestDouble7();
 
 			$manager->addHookListener($a);
 			$manager->addHookListener($b);
@@ -174,28 +103,7 @@ namespace Base3\Test\Hook {
 		{
 			$manager = new HookManager();
 
-			$listener = new class implements IHookListener {
-				public int $calls = 0;
-
-				public function isActive(): bool
-				{
-					return true;
-				}
-
-				public static function getSubscribedHooks(): array
-				{
-					return [
-						'bootstrap.init' => 10,
-						'bootstrap.finish' => 10,
-					];
-				}
-
-				public function handle(string $hookName, ...$args)
-				{
-					$this->calls++;
-					return $hookName;
-				}
-			};
+			$listener = new HookManagerTestDouble8();
 
 			$manager->addHookListener($listener);
 
@@ -208,34 +116,11 @@ namespace Base3\Test\Hook {
 		{
 			$manager = new HookManager();
 
-			$event = new class {
-			};
+			$event = new HookManagerTestDouble9();
 
 			$eventName = get_class($event);
 
-			$listener = new class($eventName) implements IHookListener {
-				public static string $hook = '';
-
-				public function __construct(string $eventName)
-				{
-					self::$hook = $eventName;
-				}
-
-				public function isActive(): bool
-				{
-					return true;
-				}
-
-				public static function getSubscribedHooks(): array
-				{
-					return [self::$hook => 10];
-				}
-
-				public function handle(string $hookName, ...$args)
-				{
-					return $hookName;
-				}
-			};
+			$listener = new HookManagerTestDouble10($eventName);
 
 			$manager->addHookListener($listener);
 
@@ -244,4 +129,27 @@ namespace Base3\Test\Hook {
 			$this->assertSame([$eventName], $result);
 		}
 	}
+}
+
+namespace Base3\Test\Hook {
+
+require_once __DIR__ . '/HookManagerTestDouble1.php';
+
+require_once __DIR__ . '/HookManagerTestDouble2.php';
+
+require_once __DIR__ . '/HookManagerTestDouble3.php';
+
+require_once __DIR__ . '/HookManagerTestDouble4.php';
+
+require_once __DIR__ . '/HookManagerTestDouble5.php';
+
+require_once __DIR__ . '/HookManagerTestDouble6.php';
+
+require_once __DIR__ . '/HookManagerTestDouble7.php';
+
+require_once __DIR__ . '/HookManagerTestDouble8.php';
+
+require_once __DIR__ . '/HookManagerTestDouble9.php';
+
+require_once __DIR__ . '/HookManagerTestDouble10.php';
 }

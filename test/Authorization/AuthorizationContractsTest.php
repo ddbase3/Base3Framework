@@ -41,11 +41,7 @@ final class AuthorizationContractsTest extends TestCase {
 	}
 
 	public function testNativeFailureNeverBecomesAuthorization(): void {
-		$failed = new class implements IAuthorizationService {
-			public function getDefaultAuthority(): string { return 'ilias'; }
-			public function decide(AuthorizationRequest $request): AuthorizationDecision { throw new \RuntimeException('Native error'); }
-			public function decideMany(array $requests): array { throw new \RuntimeException('Native error'); }
-		};
+		$failed = new AuthorizationContractsTestDouble1();
 		$mux = new AuthorizationMultiplexer('ilias', ['ilias' => $failed]);
 		$request = new AuthorizationRequest('ilias', Permission::for('ilias', 'read'));
 		self::assertSame(AuthorizationDecision::INDETERMINATE, $mux->decide($request)->outcome);
@@ -63,18 +59,10 @@ final class AuthorizationContractsTest extends TestCase {
 	}
 
 	private function host(string $authority, bool $allowed): IAuthorizationService {
-		return new class($authority, $allowed) implements IAuthorizationService {
-			public function __construct(private string $authority, private bool $allowed) {}
-			public function getDefaultAuthority(): string { return $this->authority; }
-			public function decide(AuthorizationRequest $request): AuthorizationDecision {
-				if ($request->authority !== $this->authority) return AuthorizationDecision::indeterminate('unknown_authority');
-				return $this->allowed ? AuthorizationDecision::allow() : AuthorizationDecision::deny();
-			}
-			public function decideMany(array $requests): array {
-				$out = [];
-				foreach ($requests as $key => $request) $out[$key] = $this->decide($request);
-				return $out;
-			}
-		};
+		return new AuthorizationContractsTestDouble2($authority, $allowed);
 	}
 }
+
+require_once __DIR__ . '/AuthorizationContractsTestDouble1.php';
+
+require_once __DIR__ . '/AuthorizationContractsTestDouble2.php';

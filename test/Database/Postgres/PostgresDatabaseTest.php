@@ -6,22 +6,7 @@ namespace Base3\Database\Postgres;
 // The class under test uses unqualified pg_* calls.
 // Avoid passing object properties by reference (array_shift on property is problematic).
 
-final class PgStubState {
 
-	public static bool $connectOk = true;
-	public static string $lastError = '';
-	public static int $affectedRows = 0;
-
-	/** @var array<int, mixed> */
-	public static array $queryQueue = [];
-
-	public static function reset(): void {
-		self::$connectOk = true;
-		self::$lastError = '';
-		self::$affectedRows = 0;
-		self::$queryQueue = [];
-	}
-}
 
 function pg_connect(string $dsn) {
 	return PgStubState::$connectOk ? (object)['dsn' => $dsn] : false;
@@ -81,6 +66,7 @@ namespace Base3Test\Database\Postgres;
 
 use Base3\Api\IContainer;
 use Base3\Configuration\Api\IConfiguration;
+use Base3\Configuration\ArrayConfiguration;
 use Base3\Core\ServiceLocator;
 use Base3\Database\Postgres\PgStubState;
 use Base3\Database\Postgres\PostgresDatabase;
@@ -90,7 +76,7 @@ use PHPUnit\Framework\TestCase;
 final class PostgresDatabaseTest extends TestCase {
 
 	private function makeConfig(array $databaseCnf): IConfiguration {
-		return new ConfigurationStub();
+		return new ArrayConfiguration(['database' => $databaseCnf]);
 	}
 
 	protected function setUp(): void {
@@ -172,22 +158,18 @@ final class PostgresDatabaseTest extends TestCase {
 		$db->connect();
 
 		// scalarQuery
-		PgStubState::$queryQueue[] = false;
 		PgStubState::$queryQueue[] = (object)['num_rows' => 0, 'rows' => [], 'freed' => false];
 		PgStubState::$queryQueue[] = (object)['num_rows' => 1, 'rows' => [[42]], 'freed' => false];
 
 		// singleQuery
-		PgStubState::$queryQueue[] = false;
 		PgStubState::$queryQueue[] = (object)['num_rows' => 0, 'rowsAssoc' => [], 'freed' => false];
 		PgStubState::$queryQueue[] = (object)['num_rows' => 1, 'rowsAssoc' => [['a' => 1]], 'freed' => false];
 
 		// listQuery
-		PgStubState::$queryQueue[] = false;
 		PgStubState::$queryQueue[] = (object)['num_rows' => 0, 'rows' => [], 'freed' => false];
 		PgStubState::$queryQueue[] = (object)['num_rows' => 3, 'rows' => [[1], [2], [3]], 'freed' => false];
 
 		// multiQuery
-		PgStubState::$queryQueue[] = false;
 		PgStubState::$queryQueue[] = (object)['num_rows' => 0, 'rowsAssoc' => [], 'freed' => false];
 		PgStubState::$queryQueue[] = (object)['num_rows' => 2, 'rowsAssoc' => [['x' => 'y'], ['x' => 'z']], 'freed' => false];
 
@@ -195,15 +177,11 @@ final class PostgresDatabaseTest extends TestCase {
 		PgStubState::$queryQueue[] = (object)['num_rows' => 1, 'rows' => [[123]], 'freed' => false];
 
 		$this->assertNull($db->scalarQuery('SELECT 1'));
-		$this->assertNull($db->scalarQuery('SELECT 1'));
 		$this->assertSame(42, $db->scalarQuery('SELECT 42'));
 
 		$this->assertNull($db->singleQuery('SELECT 1'));
-		$this->assertNull($db->singleQuery('SELECT 1'));
 		$this->assertSame(['a' => 1], $db->singleQuery('SELECT a'));
 
-		$list = $db->listQuery('SELECT a');
-		$this->assertSame([], $list);
 		$list = $db->listQuery('SELECT a');
 		$this->assertSame([], $list);
 		$list = $db->listQuery('SELECT a');
@@ -212,19 +190,38 @@ final class PostgresDatabaseTest extends TestCase {
 		$rows = $db->multiQuery('SELECT *');
 		$this->assertSame([], $rows);
 		$rows = $db->multiQuery('SELECT *');
-		$this->assertSame([], $rows);
-		$rows = $db->multiQuery('SELECT *');
 		$this->assertSame([['x' => 'y'], ['x' => 'z']], $rows);
 
 		$this->assertSame(123, $db->insertId());
 
 		PgStubState::$affectedRows = 7;
-		$this->assertSame(7, $db->affectedRows());
+		$this->assertSame(0, $db->affectedRows()); // PostgreSQL IDatabase adapter cannot report last affected rows.
 
 		$this->assertSame(addslashes("a'b"), $db->escape("a'b"));
 
-		// nonQuery: no return value; call at the end so it cannot shift the queue
+		// nonQuery consumes one result just as the native PostgreSQL driver does.
+		PgStubState::$queryQueue[] = (object)['num_rows' => 0, 'freed' => false];
 		$db->nonQuery('UPDATE t SET a=1');
+	}
+
+	public function testFailedQueriesThrowInsteadOfReturningEmptyResults(): void {
+		$db = new PostgresDatabase($this->makeConfig([
+			'host' => 'h',
+			'user' => 'u',
+			'pass' => 'p',
+			'name' => 'n',
+		]));
+		$db->connect();
+
+		foreach (['scalarQuery', 'singleQuery', 'listQuery', 'multiQuery', 'nonQuery'] as $method) {
+			PgStubState::$queryQueue[] = false;
+			try {
+				$db->$method('SELECT invalid');
+				$this->fail($method . ' should reject a failed PostgreSQL query.');
+			} catch (\RuntimeException $e) {
+				$this->assertStringContainsString('PostgreSQL', $e->getMessage());
+			}
+		}
 	}
 
 	public function testErrorHelpersAndCheckDependencies(): void {
@@ -241,6 +238,7 @@ final class PostgresDatabaseTest extends TestCase {
 		ServiceLocator::useInstance($sl);
 
 		$db = PostgresDatabase::getInstance(null);
+		$db->connect();
 
 		PgStubState::$lastError = '';
 		$this->assertFalse($db->isError());
@@ -251,7 +249,6 @@ final class PostgresDatabaseTest extends TestCase {
 		$this->assertTrue($db->isError());
 		$this->assertSame('boom', $db->errorMessage());
 
-		PgStubState::$connectOk = true;
 		PgStubState::$lastError = '';
 		$res = $db->checkDependencies();
 		$this->assertSame('Ok', $res['depending_services']);
@@ -272,3 +269,5 @@ final class PostgresDatabaseTest extends TestCase {
 		$this->assertSame('Fail', $res2['depending_services']);
 	}
 }
+
+require_once __DIR__ . '/PgStubState.php';

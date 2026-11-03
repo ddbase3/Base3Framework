@@ -73,37 +73,7 @@ class LoggerProxyTest extends TestCase {
 	public function testCheckDependenciesDelegatesWhenConnectorImplementsICheck(): void {
 		$calls = [];
 
-		$connector = new class($calls) implements ILogger, ICheck {
-
-			private array $calls;
-
-			public function __construct(array &$calls) {
-				$this->calls = &$calls;
-			}
-
-			// --- PSR-3 ---
-			public function emergency(string|\Stringable $message, array $context = []): void {}
-			public function alert(string|\Stringable $message, array $context = []): void {}
-			public function critical(string|\Stringable $message, array $context = []): void {}
-			public function error(string|\Stringable $message, array $context = []): void {}
-			public function warning(string|\Stringable $message, array $context = []): void {}
-			public function notice(string|\Stringable $message, array $context = []): void {}
-			public function info(string|\Stringable $message, array $context = []): void {}
-			public function debug(string|\Stringable $message, array $context = []): void {}
-			public function logLevel(string $level, string|\Stringable $message, array $context = []): void {}
-
-			// --- legacy ---
-			public function log(string $scope, string $log, ?int $timestamp = null): bool { return true; }
-			public function getScopes(): array { return []; }
-			public function getNumOfScopes() { return 0; }
-			public function getLogs(string $scope, int $num = 50, bool $reverse = true): array { return []; }
-
-			// --- ICheck ---
-			public function checkDependencies() {
-				$this->calls[] = ['m' => 'checkDependencies'];
-				return ['dep1' => true];
-			}
-		};
+		$connector = new LoggerProxyTestDouble1($calls);
 
 		$proxy = new LoggerProxy($connector);
 
@@ -123,74 +93,10 @@ class LoggerProxyTest extends TestCase {
 	}
 
 	private function makeLoggerSpy(array &$calls): ILogger {
-		return new class($calls) implements ILogger {
-
-			private array $calls;
-
-			public function __construct(array &$calls) {
-				$this->calls = &$calls;
-			}
-
-			// --- PSR-3 ---
-			public function emergency(string|\Stringable $message, array $context = []): void {
-				$this->calls[] = ['m' => 'emergency', 'message' => (string)$message, 'context' => $context];
-			}
-
-			public function alert(string|\Stringable $message, array $context = []): void {
-				$this->calls[] = ['m' => 'alert', 'message' => (string)$message, 'context' => $context];
-			}
-
-			public function critical(string|\Stringable $message, array $context = []): void {
-				$this->calls[] = ['m' => 'critical', 'message' => (string)$message, 'context' => $context];
-			}
-
-			public function error(string|\Stringable $message, array $context = []): void {
-				$this->calls[] = ['m' => 'error', 'message' => (string)$message, 'context' => $context];
-			}
-
-			public function warning(string|\Stringable $message, array $context = []): void {
-				$this->calls[] = ['m' => 'warning', 'message' => (string)$message, 'context' => $context];
-			}
-
-			public function notice(string|\Stringable $message, array $context = []): void {
-				$this->calls[] = ['m' => 'notice', 'message' => (string)$message, 'context' => $context];
-			}
-
-			public function info(string|\Stringable $message, array $context = []): void {
-				$this->calls[] = ['m' => 'info', 'message' => (string)$message, 'context' => $context];
-			}
-
-			public function debug(string|\Stringable $message, array $context = []): void {
-				$this->calls[] = ['m' => 'debug', 'message' => (string)$message, 'context' => $context];
-			}
-
-			public function logLevel(string $level, string|\Stringable $message, array $context = []): void {
-				$this->calls[] = ['m' => 'logLevel', 'level' => $level, 'message' => (string)$message, 'context' => $context];
-			}
-
-			// --- legacy ---
-			public function log(string $scope, string $log, ?int $timestamp = null): bool {
-				$this->calls[] = ['m' => 'log', 'scope' => $scope, 'log' => $log, 'timestamp' => $timestamp];
-				return true;
-			}
-
-			public function getScopes(): array {
-				$this->calls[] = ['m' => 'getScopes'];
-				return ['a', 'b'];
-			}
-
-			public function getNumOfScopes() {
-				$this->calls[] = ['m' => 'getNumOfScopes'];
-				return 2;
-			}
-
-			public function getLogs(string $scope, int $num = 50, bool $reverse = true): array {
-				$this->calls[] = ['m' => 'getLogs', 'scope' => $scope, 'num' => $num, 'reverse' => $reverse];
-				return [
-					['timestamp' => 't1', 'level' => 'INFO', 'log' => 'x'],
-					['timestamp' => 't2', 'level' => 'ERROR', 'log' => 'y'],
-				];
-			}
-		};
+		return new LoggerProxyTestDouble2($calls);
 	}
 }
+
+require_once __DIR__ . '/LoggerProxyTestDouble1.php';
+
+require_once __DIR__ . '/LoggerProxyTestDouble2.php';

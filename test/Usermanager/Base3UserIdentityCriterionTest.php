@@ -24,10 +24,16 @@ final class Base3UserIdentityCriterionTest extends TestCase {
 		self::assertFalse($criterion->matches($one, []));
 	}
 
-	public function testNeitherDomainOnlyNorUnknownPropertiesGrantAccess(): void {
+	public function testDomainOnlyIdentityEmailIsRejected(): void {
 		$criterion = new Base3UserIdentityCriterion();
 		$user = User::fromArray(['id' => 44, 'userid' => 'other', 'email' => 'dev@qualitus.de']);
-		self::assertFalse($criterion->matches($user, ['emails' => ['@qualitus.de']]));
+		$this->expectException(InvalidArgumentException::class);
+		$criterion->matches($user, ['emails' => ['@qualitus.de']]);
+	}
+
+	public function testUnknownIdentitySettingsAreRejected(): void {
+		$criterion = new Base3UserIdentityCriterion();
+		$user = User::fromArray(['id' => 44, 'userid' => 'other', 'email' => 'dev@qualitus.de']);
 		$this->expectException(InvalidArgumentException::class);
 		$criterion->matches($user, ['ids' => [44]]);
 	}

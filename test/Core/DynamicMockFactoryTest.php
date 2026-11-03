@@ -48,9 +48,6 @@ final class DynamicMockFactoryTest extends TestCase {
 	}
 
 	public function testCreateMockForConcreteClassWithConstructorCreatesArgs(): void {
-		if (!class_exists(\Base3Test\Core\NeedsIntString::class, false)) {
-			eval('namespace Base3Test\Core; class NeedsIntString { public int $a; public string $b; public function __construct(int $a, string $b) { $this->a = $a; $this->b = $b; } }');
-		}
 
 		$obj = DynamicMockFactory::createMock(\Base3Test\Core\NeedsIntString::class);
 
@@ -60,9 +57,6 @@ final class DynamicMockFactoryTest extends TestCase {
 	}
 
 	public function testCreateMockForInterfaceGeneratesImplementationWithReturnTypes(): void {
-		if (!interface_exists(\Base3Test\Core\ITestIface::class, false)) {
-			eval('namespace Base3Test\Core; interface ITestIface { public function i(): int; public function s(): string; public function a(): array; public function v(): void; }');
-		}
 
 		$m = DynamicMockFactory::createMock(\Base3Test\Core\ITestIface::class);
 
@@ -75,9 +69,6 @@ final class DynamicMockFactoryTest extends TestCase {
 	}
 
 	public function testCreateMockForAbstractClassImplementsAbstractMethods(): void {
-		if (!class_exists(\Base3Test\Core\AbsWithMethod::class, false)) {
-			eval('namespace Base3Test\Core; abstract class AbsWithMethod { abstract public function n(): int; public function ok(): string { return "ok"; } }');
-		}
 
 		$m = DynamicMockFactory::createMock(\Base3Test\Core\AbsWithMethod::class);
 
@@ -86,3 +77,7 @@ final class DynamicMockFactoryTest extends TestCase {
 		$this->assertSame('ok', $m->ok());
 	}
 }
+
+require_once __DIR__ . '/NeedsIntString.php';
+require_once __DIR__ . '/ITestIface.php';
+require_once __DIR__ . '/AbsWithMethod.php';

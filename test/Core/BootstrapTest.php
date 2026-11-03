@@ -7,7 +7,7 @@ use Base3\Api\IContainer;
 use Base3\Api\IRequest;
 use Base3\Accesscontrol\Api\IAccesscontrol;
 use Base3\Configuration\Api\IConfiguration;
-use Base3\Hook\IHookManager;
+use Base3\Hook\Api\IHookManager;
 use Base3\ServiceSelector\Api\IServiceSelector;
 use PHPUnit\Framework\TestCase;
 

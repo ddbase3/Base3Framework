@@ -25,11 +25,7 @@ final class GenericOutputRouteTest extends TestCase {
 	}
 
 	private function makeAccesscontrol(string $userId = ''): IAccesscontrol {
-		return new class($userId) implements IAccesscontrol {
-			public function __construct(private string $userId) {}
-			public function getUserId() { return $this->userId; }
-			public function authenticate(): void {}
-		};
+		return new GenericOutputRouteTestDouble1($userId);
 	}
 
 	private function makeClassMap(IOutput $output): IClassMap {
@@ -132,3 +128,5 @@ final class GenericOutputRouteTest extends TestCase {
 		$this->assertSame('', $result);
 	}
 }
+
+require_once __DIR__ . '/GenericOutputRouteTestDouble1.php';

@@ -152,30 +152,7 @@ final class RequestTest extends TestCase {
         public function testToArraySupportsTraversable(): void {
                 $req = new Request();
 
-                $src = new class implements \ArrayAccess, \IteratorAggregate {
-
-                        private array $data = ['a' => 1, 'b' => 2];
-
-                        public function offsetExists($offset): bool {
-                                return array_key_exists($offset, $this->data);
-                        }
-
-                        public function offsetGet($offset): mixed {
-                                return $this->data[$offset] ?? null;
-                        }
-
-                        public function offsetSet($offset, $value): void {
-                                $this->data[$offset] = $value;
-                        }
-
-                        public function offsetUnset($offset): void {
-                                unset($this->data[$offset]);
-                        }
-
-                        public function getIterator(): \Traversable {
-                                return new \ArrayIterator($this->data);
-                        }
-                };
+                $src = new RequestTestDouble1();
 
                 $this->setProtected($req, 'get', $src);
 
@@ -184,14 +161,7 @@ final class RequestTest extends TestCase {
         }
 
         public function testParseCliArgsAddsToGetWhenInitFromGlobalsRunsInCli(): void {
-                $req = new class extends Request {
-                        protected function parseCliArgs(): void {
-                                parent::parseCliArgs();
-                        }
-                        public function isCli(): bool {
-                                return true;
-                        }
-                };
+                $req = new RequestTestDouble2();
 
                 $_GET = [];
                 $_POST = [];
@@ -258,11 +228,7 @@ final class RequestTest extends TestCase {
         }
 
         public function testGetContextWebBranchesViaIsCliOverride(): void {
-                $req = new class extends Request {
-                        public function isCli(): bool {
-                                return false;
-                        }
-                };
+                $req = new RequestTestDouble3();
 
                 $this->setProtected($req, 'server', ['REQUEST_METHOD' => 'POST']);
                 $this->setProtected($req, 'files', ['f' => ['name' => 'x']]);
@@ -291,3 +257,9 @@ final class RequestTest extends TestCase {
                 $this->assertSame(IRequest::CONTEXT_WEB_GET, $req->getContext());
         }
 }
+
+require_once __DIR__ . '/RequestTestDouble1.php';
+
+require_once __DIR__ . '/RequestTestDouble2.php';
+
+require_once __DIR__ . '/RequestTestDouble3.php';

@@ -9,14 +9,7 @@ use PHPUnit\Framework\TestCase;
 final class UsermanagerProxySearchUsersTest extends TestCase {
 
 	public function testSearchForwardsPaginationAndHydratesUserObjects(): void {
-		$connector = new class {
-			public array $calls = [];
-
-			public function searchUsers(string $query, int $limit, int $offset): array {
-				$this->calls[] = [$query, $limit, $offset];
-				return [['id' => '57', 'userid' => 'jane', 'name' => 'Jane']];
-			}
-		};
+		$connector = new UsermanagerProxySearchUsersTestDouble1();
 
 		$proxy = new UsermanagerProxy($connector);
 		$result = $proxy->searchUsers(' Jane ', 12, 3);
@@ -30,25 +23,27 @@ final class UsermanagerProxySearchUsersTest extends TestCase {
 	}
 
 	public function testBlankSearchDoesNotCallConnector(): void {
-		$connector = new class {
-			public function searchUsers(): array { throw new \RuntimeException('must not be called'); }
-		};
+		$connector = new UsermanagerProxySearchUsersTestDouble2();
 		self::assertSame([], (new UsermanagerProxy($connector))->searchUsers('  '));
 	}
 
 	public function testInvalidPaginationIsRejectedWithoutConnectorCall(): void {
-		$connector = new class {
-			public function searchUsers(): array { throw new \RuntimeException('must not be called'); }
-		};
+		$connector = new UsermanagerProxySearchUsersTestDouble3();
 		$this->expectException(\InvalidArgumentException::class);
 		(new UsermanagerProxy($connector))->searchUsers('test', 101);
 	}
 
 	public function testMalformedConnectorResultsAreNotAccepted(): void {
-		$connector = new class {
-			public function searchUsers(): array { return [['id' => 123], 'not a user']; }
-		};
+		$connector = new UsermanagerProxySearchUsersTestDouble4();
 		$this->expectException(\UnexpectedValueException::class);
 		(new UsermanagerProxy($connector))->searchUsers('any');
 	}
 }
+
+require_once __DIR__ . '/UsermanagerProxySearchUsersTestDouble1.php';
+
+require_once __DIR__ . '/UsermanagerProxySearchUsersTestDouble2.php';
+
+require_once __DIR__ . '/UsermanagerProxySearchUsersTestDouble3.php';
+
+require_once __DIR__ . '/UsermanagerProxySearchUsersTestDouble4.php';

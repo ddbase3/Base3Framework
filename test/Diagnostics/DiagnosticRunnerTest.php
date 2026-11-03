@@ -16,7 +16,7 @@ final class DiagnosticRunnerTest extends TestCase {
 
 	public function testListsScopesAndChecksWithoutExecutingThem(): void {
 		$check = new DiagnosticRunnerTestCheck();
-		$classmap = $this->createMock(IClassMap::class);
+		$classmap = $this->createStub(IClassMap::class);
 		$classmap->method('getInstancesByInterface')->willReturnCallback(
 			static fn(string $interface): array => match($interface) {
 				IDiagnosticScope::class => [new PrivacyDiagnosticScope()],
@@ -37,7 +37,7 @@ final class DiagnosticRunnerTest extends TestCase {
 
 	public function testExceptionsBecomeControlledErrorResults(): void {
 		$check = new DiagnosticRunnerTestCheck();
-		$classmap = $this->createMock(IClassMap::class);
+		$classmap = $this->createStub(IClassMap::class);
 		$classmap->method('getInstanceByInterfaceName')->willReturnCallback(
 			static fn(string $interface, string $name) => $interface === IDiagnosticScope::class ? new PrivacyDiagnosticScope() : $check
 		);
@@ -50,7 +50,7 @@ final class DiagnosticRunnerTest extends TestCase {
 
 	public function testRejectsWrongScopeBeforeExecutingTheCheck(): void {
 		$check = new DiagnosticRunnerTestCheck();
-		$classmap = $this->createMock(IClassMap::class);
+		$classmap = $this->createStub(IClassMap::class);
 		$classmap->method('getInstanceByInterfaceName')->willReturnCallback(
 			static fn(string $interface, string $name) => $interface === IDiagnosticScope::class ? new PrivacyDiagnosticScope() : $check
 		);
@@ -60,15 +60,4 @@ final class DiagnosticRunnerTest extends TestCase {
 
 }
 
-final class DiagnosticRunnerTestCheck implements IDiagnosticCheck {
-
-	public int $executions = 0;
-
-	public static function getName(): string { return 'diagnosticrunnertestcheck'; }
-	public function getScope(): string { return PrivacyDiagnosticScope::getName(); }
-	public function run(): DiagnosticCheckResult {
-		$this->executions++;
-		throw new RuntimeException('Potential sensitive exception detail');
-	}
-
-}
+require_once __DIR__ . '/DiagnosticRunnerTestCheck.php';

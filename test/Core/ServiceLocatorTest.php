@@ -307,24 +307,7 @@ final class ServiceLocatorTest extends TestCase {
 	}
 }
 
-final class DummyService {}
-
-final class DummyWithContainer {
-	public ServiceLocator $container;
-
-	public function __construct(ServiceLocator $container) {
-		$this->container = $container;
-	}
-}
-
-final class InvokableWithParam {
-	public function __invoke(ServiceLocator $container): DummyWithContainer {
-		return new DummyWithContainer($container);
-	}
-}
-
-final class InvokableNoParam {
-	public function __invoke(): DummyService {
-		return new DummyService();
-	}
-}
+require_once __DIR__ . '/DummyService.php';
+require_once __DIR__ . '/DummyWithContainer.php';
+require_once __DIR__ . '/InvokableWithParam.php';
+require_once __DIR__ . '/InvokableNoParam.php';

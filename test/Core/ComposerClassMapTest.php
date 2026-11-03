@@ -65,13 +65,7 @@ final class ComposerClassMapTest extends TestCase {
 	}
 
 	private function makeContainer(): IContainer {
-		return new class implements IContainer {
-			public function getServiceList(): array { return []; }
-			public function set(string $name, $classDefinition, $flags = 0): IContainer { return $this; }
-			public function remove(string $name) {}
-			public function has(string $name): bool { return false; }
-			public function get(string $name) { return null; }
-		};
+		return new ComposerClassMapTestDouble1();
 	}
 
 	private function writePhp(string $path, string $code): void {
@@ -85,16 +79,17 @@ final class ComposerClassMapTest extends TestCase {
 	}
 
 	public function testGetScanTargetsIsEmpty(): void {
-		$cm = new class($this->makeContainer()) extends ComposerClassMap {
-			public function exposeTargets(): array {
-				return $this->getScanTargets();
-			}
-		};
+		$cm = new ComposerClassMapTestDouble2($this->makeContainer());
 
 		$this->assertSame([], $cm->exposeTargets());
 	}
 
 	public function testGenerateFromComposerClassMapBuildsInterfaceAndNameMaps(): void {
+		$this->writePhp($this->tmpClassDir . DIRECTORY_SEPARATOR . 'IFoo.php', <<<'PHP'
+<?php declare(strict_types=1);
+namespace Base3\MyApp;
+interface IFoo {}
+PHP);
 		$goodFile = $this->tmpClassDir . DIRECTORY_SEPARATOR . 'Good.php';
 		$this->writePhp($goodFile, <<<'PHP'
 <?php declare(strict_types=1);
@@ -102,8 +97,7 @@ final class ComposerClassMapTest extends TestCase {
 namespace Base3\MyApp;
 
 use Base3\Api\IBase;
-
-interface IFoo {}
+require_once __DIR__ . '/IFoo.php';
 
 class Good implements IBase, IFoo {
 	public static function getName(): string { return 'good'; }
@@ -132,7 +126,7 @@ class ThrowName implements IBase {
 }
 PHP);
 
-		$nonNamespacedFile = $this->tmpClassDir . DIRECTORY_SEPARATOR . 'NoNs.php';
+		$nonNamespacedFile = $this->tmpClassDir . DIRECTORY_SEPARATOR . 'NoNsClass.php';
 		$this->writePhp($nonNamespacedFile, <<<'PHP'
 <?php declare(strict_types=1);
 
@@ -159,23 +153,7 @@ return [
 ];
 PHP);
 
-		$cm = new class($this->makeContainer()) extends ComposerClassMap {
-
-			public function __construct(IContainer $container) {
-				parent::__construct($container);
-				$this->classMapFile = DIR_TMP . 'composerclassmap_' . uniqid('', true) . '.php';
-				$this->ctorCacheFile = DIR_TMP . 'composerctorcache_' . uniqid('', true) . '.php';
-			}
-
-			public function exposeMap(): array {
-				$map = &$this->getMap();
-				return $map;
-			}
-
-			public function getFile(): string {
-				return $this->classMapFile;
-			}
-		};
+		$cm = new ComposerClassMapTestDouble3($this->makeContainer());
 
 		$map = $cm->exposeMap();
 
@@ -200,3 +178,9 @@ PHP);
 		$this->assertFileExists($cm->getFile());
 	}
 }
+
+require_once __DIR__ . '/ComposerClassMapTestDouble1.php';
+
+require_once __DIR__ . '/ComposerClassMapTestDouble2.php';
+
+require_once __DIR__ . '/ComposerClassMapTestDouble3.php';

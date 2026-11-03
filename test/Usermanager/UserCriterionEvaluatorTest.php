@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 final class UserCriterionEvaluatorTest extends TestCase {
 
 	public function testNestedCriteriaAndNegation(): void {
-		$map = $this->createMock(IClassMap::class);
+		$map = $this->createStub(IClassMap::class);
 		$map->method('getInstanceByInterfaceName')->willReturnCallback(static function($interface, $name) {
 			if ($interface !== IUserCriterion::class) return null;
 			return match ($name) {
@@ -35,19 +35,19 @@ final class UserCriterionEvaluatorTest extends TestCase {
 	}
 
 	public function testNegationOfEmptyExpressionCannotGrantEveryUser(): void {
-		$evaluator = new UserCriterionEvaluator($this->createMock(IClassMap::class));
+		$evaluator = new UserCriterionEvaluator($this->createStub(IClassMap::class));
 		$this->expectException(InvalidArgumentException::class);
 		$evaluator->matches(null, ['not' => []]);
 	}
 
 	public function testCriterionWithUnexpectedFieldsIsRejected(): void {
-		$evaluator = new UserCriterionEvaluator($this->createMock(IClassMap::class));
+		$evaluator = new UserCriterionEvaluator($this->createStub(IClassMap::class));
 		$this->expectException(InvalidArgumentException::class);
 		$evaluator->matches(null, ['criterion' => 'base3authenticatedcriterion', 'config' => [], 'extra' => 'unexpected']);
 	}
 
 	public function testFeatureAudienceMayCombineGroupsAndAttributeCriteria(): void {
-		$map = $this->createMock(IClassMap::class);
+		$map = $this->createStub(IClassMap::class);
 		$map->method('getInstanceByInterfaceName')->willReturnCallback(static fn($interface, $name) =>
 			$name === 'base3emaildomaincriterion' ? new Base3EmailDomainCriterion() : null
 		);
@@ -65,19 +65,19 @@ final class UserCriterionEvaluatorTest extends TestCase {
 	}
 
 	public function testGroupCriterionCannotReferenceAnOtherGroup(): void {
-		$evaluator = new UserCriterionEvaluator($this->createMock(IClassMap::class));
+		$evaluator = new UserCriterionEvaluator($this->createStub(IClassMap::class));
 		$this->expectException(InvalidArgumentException::class);
 		$evaluator->validate(['group' => 'development']);
 	}
 
 	public function testUnknownGroupCannotBeSavedInsideFeatureAudience(): void {
-		$evaluator = new UserCriterionEvaluator($this->createMock(IClassMap::class));
+		$evaluator = new UserCriterionEvaluator($this->createStub(IClassMap::class));
 		$this->expectException(InvalidArgumentException::class);
 		$evaluator->validate(['group' => 'unknown'], ['authenticated']);
 	}
 
 	public function testUnknownCriterionCannotBecomeAllowedByNegation(): void {
-		$map = $this->createMock(IClassMap::class);
+		$map = $this->createStub(IClassMap::class);
 		$map->method('getInstanceByInterfaceName')->willReturn(null);
 		$evaluator = new UserCriterionEvaluator($map);
 		$this->expectException(InvalidArgumentException::class);

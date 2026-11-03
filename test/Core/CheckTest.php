@@ -50,39 +50,23 @@ final class CheckTest extends TestCase {
 
 		// array service -> recursion into array entries
 		$services['array_service'] = [
-			'ok' => new class implements ICheck {
-				public function checkDependencies(): array {
-					return ['dep_ok' => 'Ok'];
-				}
-			},
-			'fail' => new class implements ICheck {
-				public function checkDependencies(): array {
-					return ['dep_fail' => 'Fail'];
-				}
-			},
+			'ok' => new CheckTestDouble1(),
+			'fail' => new CheckTestDouble2(),
 		];
 
 		// closure service with optional param -> triggers "third party service" branch safely
 		$services['closure_third_party'] = function ($container = null) {
-			return new class implements ICheck {
-				public function checkDependencies(): array {
-					return ['closure_dep' => 'Ok'];
-				}
-			};
+			return new CheckTestDouble3();
 		};
 
 		// ICheck returning empty array -> "empty check"
-		$services['icheck_empty'] = new class implements ICheck {
-			public function checkDependencies(): array {
-				return [];
-			}
-		};
+		$services['icheck_empty'] = new CheckTestDouble4();
 
 		// service without check -> "no check"
 		$services['no_check'] = new \stdClass();
 
 		// container->get throws -> "exception: ..."
-		$services['throws'] = new class {};
+		$services['throws'] = new CheckTestDouble5();
 
 		$container = $this->makeContainer($services, [
 			'throws' => new \RuntimeException('boom'),
@@ -141,39 +125,18 @@ final class CheckTest extends TestCase {
 	 * @param array<string, \Throwable> $throwOnGet
 	 */
 	private function makeContainer(array $services, array $throwOnGet = []): IContainer {
-		return new class($services, $throwOnGet) implements IContainer {
-
-			private array $services;
-			private array $throwOnGet;
-
-			public function __construct(array $services, array $throwOnGet) {
-				$this->services = $services;
-				$this->throwOnGet = $throwOnGet;
-			}
-
-			public function getServiceList(): array {
-				return array_keys($this->services);
-			}
-
-			public function set(string $name, $classDefinition, $flags = 0): IContainer {
-				$this->services[$name] = $classDefinition;
-				return $this;
-			}
-
-			public function remove(string $name) {
-				unset($this->services[$name]);
-			}
-
-			public function has(string $name): bool {
-				return array_key_exists($name, $this->services);
-			}
-
-			public function get(string $name) {
-				if (isset($this->throwOnGet[$name])) {
-					throw $this->throwOnGet[$name];
-				}
-				return $this->services[$name] ?? null;
-			}
-		};
+		return new CheckTestDouble6($services, $throwOnGet);
 	}
 }
+
+require_once __DIR__ . '/CheckTestDouble1.php';
+
+require_once __DIR__ . '/CheckTestDouble2.php';
+
+require_once __DIR__ . '/CheckTestDouble3.php';
+
+require_once __DIR__ . '/CheckTestDouble4.php';
+
+require_once __DIR__ . '/CheckTestDouble5.php';
+
+require_once __DIR__ . '/CheckTestDouble6.php';

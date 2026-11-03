@@ -8,35 +8,11 @@ use PHPUnit\Framework\TestCase;
 final class ComparatorTest extends TestCase {
 
 	public function testSortCallsCompareToAndSortsAscending(): void {
-		$a = new class(3) {
-			public int $v;
-			public int $calls = 0;
-			public function __construct(int $v) { $this->v = $v; }
-			public function compareTo($other): int {
-				$this->calls++;
-				return $this->v <=> $other->v;
-			}
-		};
+		$a = new ComparatorTestDouble1(3);
 
-		$b = new class(1) {
-			public int $v;
-			public int $calls = 0;
-			public function __construct(int $v) { $this->v = $v; }
-			public function compareTo($other): int {
-				$this->calls++;
-				return $this->v <=> $other->v;
-			}
-		};
+		$b = new ComparatorTestDouble2(1);
 
-		$c = new class(2) {
-			public int $v;
-			public int $calls = 0;
-			public function __construct(int $v) { $this->v = $v; }
-			public function compareTo($other): int {
-				$this->calls++;
-				return $this->v <=> $other->v;
-			}
-		};
+		$c = new ComparatorTestDouble3(2);
 
 		$arr = [$a, $b, $c];
 
@@ -49,17 +25,9 @@ final class ComparatorTest extends TestCase {
 	}
 
 	public function testSortKeepsArrayByReferenceAndWorksOnAlreadySorted(): void {
-		$x = new class(1) {
-			public int $v;
-			public function __construct(int $v) { $this->v = $v; }
-			public function compareTo($other): int { return $this->v <=> $other->v; }
-		};
+		$x = new ComparatorTestDouble4(1);
 
-		$y = new class(2) {
-			public int $v;
-			public function __construct(int $v) { $this->v = $v; }
-			public function compareTo($other): int { return $this->v <=> $other->v; }
-		};
+		$y = new ComparatorTestDouble5(2);
 
 		$arr = [$x, $y];
 
@@ -68,3 +36,13 @@ final class ComparatorTest extends TestCase {
 		$this->assertSame([1, 2], [$arr[0]->v, $arr[1]->v]);
 	}
 }
+
+require_once __DIR__ . '/ComparatorTestDouble1.php';
+
+require_once __DIR__ . '/ComparatorTestDouble2.php';
+
+require_once __DIR__ . '/ComparatorTestDouble3.php';
+
+require_once __DIR__ . '/ComparatorTestDouble4.php';
+
+require_once __DIR__ . '/ComparatorTestDouble5.php';

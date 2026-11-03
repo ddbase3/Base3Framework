@@ -28,21 +28,11 @@ final class PluginClassMapTest extends TestCase {
 	}
 
 	private function makeContainer(): IContainer {
-		return new class implements IContainer {
-			public function getServiceList(): array { return []; }
-			public function set(string $name, $classDefinition, $flags = 0): IContainer { return $this; }
-			public function remove(string $name) {}
-			public function has(string $name): bool { return false; }
-			public function get(string $name) { return null; }
-		};
+		return new PluginClassMapTestDouble1();
 	}
 
 	public function testGetScanTargetsIncludesSrcAndPluginDirs(): void {
-		$cm = new class($this->makeContainer()) extends PluginClassMap {
-			public function exposeTargets(): array {
-				return $this->getScanTargets();
-			}
-		};
+		$cm = new PluginClassMapTestDouble2($this->makeContainer());
 
 		$targets = $cm->exposeTargets();
 
@@ -58,40 +48,16 @@ final class PluginClassMapTest extends TestCase {
 	}
 
 	public function testGetPluginsReturnsAppsWithIPluginInterfaceInMap(): void {
-		$cm = new class($this->makeContainer()) extends PluginClassMap {
-
-			private array $fakeMap;
-
-			public function __construct(IContainer $container) {
-				parent::__construct($container);
-				$this->fakeMap = [
-					'PluginA' => [
-						'interface' => [
-							IPlugin::class => ['PluginA\\MyPlugin'],
-						],
-					],
-					'PluginB' => [
-						'interface' => [
-							'SomeOtherInterface' => ['PluginB\\X'],
-						],
-					],
-					'PluginC' => [
-						// missing interface key -> ignored
-					],
-				];
-			}
-
-			protected function getScanTargets(): array {
-				return [];
-			}
-
-			protected function &getMap(): array {
-				return $this->fakeMap;
-			}
-		};
+		$cm = new PluginClassMapTestDouble3($this->makeContainer());
 
 		$plugins = $cm->getPlugins();
 
 		$this->assertSame(['PluginA'], $plugins);
 	}
 }
+
+require_once __DIR__ . '/PluginClassMapTestDouble1.php';
+
+require_once __DIR__ . '/PluginClassMapTestDouble2.php';
+
+require_once __DIR__ . '/PluginClassMapTestDouble3.php';

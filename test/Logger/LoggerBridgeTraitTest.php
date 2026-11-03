@@ -13,23 +13,7 @@ class LoggerBridgeTraitTest extends TestCase {
 	public function testPsr3ConvenienceMethodsCallLogLevelWithCorrectLevel(): void {
 		$calls = [];
 
-		$logger = new class($calls) {
-			use \Base3\Logger\LoggerBridgeTrait;
-
-			private array $calls;
-
-			public function __construct(array &$calls) {
-				$this->calls = &$calls;
-			}
-
-			public function logLevel(string $level, string|\Stringable $message, array $context = []): void {
-				$this->calls[] = [
-					'level' => $level,
-					'message' => (string)$message,
-					'context' => $context
-				];
-			}
-		};
+		$logger = new LoggerBridgeTraitTestDouble1($calls);
 
 		$logger->emergency('m1');
 		$logger->alert('m2');
@@ -55,23 +39,7 @@ class LoggerBridgeTraitTest extends TestCase {
 	public function testLegacyLogMapsToInfoLevelAndAddsScopeAndTimestamp(): void {
 		$calls = [];
 
-		$logger = new class($calls) {
-			use \Base3\Logger\LoggerBridgeTrait;
-
-			private array $calls;
-
-			public function __construct(array &$calls) {
-				$this->calls = &$calls;
-			}
-
-			public function logLevel(string $level, string|\Stringable $message, array $context = []): void {
-				$this->calls[] = [
-					'level' => $level,
-					'message' => (string)$message,
-					'context' => $context
-				];
-			}
-		};
+		$logger = new LoggerBridgeTraitTestDouble2($calls);
 
 		$ok = $logger->log('myscope', 'hello', 1700000000);
 		$this->assertTrue($ok);
@@ -86,16 +54,16 @@ class LoggerBridgeTraitTest extends TestCase {
 	}
 
 	public function testDefaultLegacyMethodsReturnEmptyValues(): void {
-		$logger = new class {
-			use \Base3\Logger\LoggerBridgeTrait;
-
-			public function logLevel(string $level, string|\Stringable $message, array $context = []): void {
-				// no-op
-			}
-		};
+		$logger = new LoggerBridgeTraitTestDouble3();
 
 		$this->assertSame([], $logger->getScopes());
 		$this->assertSame(0, $logger->getNumOfScopes());
 		$this->assertSame([], $logger->getLogs('any', 10, true));
 	}
 }
+
+require_once __DIR__ . '/LoggerBridgeTraitTestDouble1.php';
+
+require_once __DIR__ . '/LoggerBridgeTraitTestDouble2.php';
+
+require_once __DIR__ . '/LoggerBridgeTraitTestDouble3.php';

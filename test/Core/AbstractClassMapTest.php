@@ -43,35 +43,7 @@ final class AbstractClassMapTest extends TestCase {
 	}
 
 	private function makeContainer(array $services = []): IContainer {
-		return new class($services) implements IContainer {
-
-			private array $services;
-
-			public function __construct(array $services) {
-				$this->services = $services;
-			}
-
-			public function getServiceList(): array {
-				return array_keys($this->services);
-			}
-
-			public function set(string $name, $classDefinition, $flags = 0): IContainer {
-				$this->services[$name] = $classDefinition;
-				return $this;
-			}
-
-			public function remove(string $name) {
-				unset($this->services[$name]);
-			}
-
-			public function has(string $name): bool {
-				return array_key_exists($name, $this->services);
-			}
-
-			public function get(string $name) {
-				return $this->services[$name] ?? null;
-			}
-		};
+		return new AbstractClassMapTestDouble1($services);
 	}
 
 	private function writePhp(string $path, string $code): void {
@@ -95,43 +67,20 @@ class Foo implements IBase {
 }
 PHP);
 
+		$this->writePhp($appDir . DIRECTORY_SEPARATOR . 'IMarker.php', <<<'PHP'
+<?php declare(strict_types=1);
+namespace MyApp;
+interface IMarker {}
+PHP);
 		$this->writePhp($appDir . DIRECTORY_SEPARATOR . 'Bar.php', <<<'PHP'
 <?php declare(strict_types=1);
 namespace MyApp;
-
-interface IMarker {}
+require_once __DIR__ . '/IMarker.php';
 class Bar implements IMarker {}
 PHP);
 
 		$container = $this->makeContainer([]);
-		$cm = new class($container, $this->basedir) extends AbstractClassMap {
-
-			public int $generateCalls = 0;
-			private string $basedir;
-
-			public function __construct(IContainer $container, string $basedir) {
-				parent::__construct($container);
-				$this->basedir = $basedir;
-				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
-				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
-			}
-
-			protected function getScanTargets(): array {
-				return [
-					['basedir' => $this->basedir],
-				];
-			}
-
-			public function generate($regenerate = false): void {
-				$this->generateCalls++;
-				parent::generate($regenerate);
-			}
-
-			public function exposeGetMap(): array {
-				$map = &$this->getMap();
-				return $map;
-			}
-		};
+		$cm = new AbstractClassMapTestDouble2($container, $this->basedir);
 
 		$map = $cm->exposeGetMap();
 
@@ -147,29 +96,7 @@ PHP);
 	public function testGenerateSkipsWhenFileExistsAndNotRegenerate(): void {
 		$container = $this->makeContainer([]);
 
-		$cm = new class($container) extends AbstractClassMap {
-
-			public int $scanCalls = 0;
-
-			public function __construct(IContainer $container) {
-				parent::__construct($container);
-				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
-				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
-			}
-
-			protected function getScanTargets(): array {
-				$this->scanCalls++;
-				return [];
-			}
-
-			public function writeDummy(): void {
-				file_put_contents($this->classMapFile, "<?php return ['x' => 1];\n");
-			}
-
-			public function getFile(): string {
-				return $this->classMapFile;
-			}
-		};
+		$cm = new AbstractClassMapTestDouble3($container);
 
 		$cm->writeDummy();
 		$cm->generate(false);
@@ -181,36 +108,8 @@ PHP);
 	public function testGenerateFromComposerClassMapPathWhenMethodExists(): void {
 		$container = $this->makeContainer([]);
 
-		$cm = new class($container) extends AbstractClassMap {
+		$cm = new AbstractClassMapTestDouble4($container);
 
-			public function __construct(IContainer $container) {
-				parent::__construct($container);
-				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
-				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
-			}
-
-			protected function getScanTargets(): array {
-				return [];
-			}
-
-			protected function generateFromComposerClassMap(): void {
-				$this->map = [
-					'AppX' => [
-						'name' => ['demo' => \Base3Test\Core\ClassMapDemo::class],
-						'interface' => [],
-					],
-				];
-			}
-
-			public function exposeGetMap(): array {
-				$map = &$this->getMap();
-				return $map;
-			}
-		};
-
-		if (!class_exists(\Base3Test\Core\ClassMapDemo::class, false)) {
-			eval('namespace Base3Test\Core; use Base3\Api\IBase; class ClassMapDemo implements IBase { public static function getName(): string { return "demo"; } }');
-		}
 
 		$map = $cm->exposeGetMap();
 
@@ -222,13 +121,18 @@ PHP);
 		$appDir = $this->basedir . DIRECTORY_SEPARATOR . 'AppA';
 		@mkdir($appDir, 0777, true);
 
+		$this->writePhp($appDir . DIRECTORY_SEPARATOR . 'IA.php', <<<'PHP'
+<?php declare(strict_types=1);
+namespace AppA;
+interface IA {}
+PHP);
 		$this->writePhp($appDir . DIRECTORY_SEPARATOR . 'NamedThing.php', <<<'PHP'
 <?php declare(strict_types=1);
 namespace AppA;
 
 use Base3\Api\IBase;
+require_once __DIR__ . '/IA.php';
 
-interface IA {}
 class NamedThing implements IBase, IA {
 	public static function getName(): string { return 'named'; }
 }
@@ -236,27 +140,7 @@ PHP);
 
 		$container = $this->makeContainer([]);
 
-		$cm = new class($container, $this->basedir) extends AbstractClassMap {
-
-			public int $generateCalls = 0;
-			private string $basedir;
-
-			public function __construct(IContainer $container, string $basedir) {
-				parent::__construct($container);
-				$this->basedir = $basedir;
-				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
-				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
-			}
-
-			protected function getScanTargets(): array {
-				return [['basedir' => $this->basedir]];
-			}
-
-			public function generate($regenerate = false): void {
-				$this->generateCalls++;
-				parent::generate($regenerate);
-			}
-		};
+		$cm = new AbstractClassMapTestDouble5($container, $this->basedir);
 
 		// force map creation
 		$cm->generate(true);
@@ -286,9 +170,6 @@ PHP);
 		$this->assertInstanceOf(\AppA\NamedThing::class, $byInterfaceName[0]);
 
 		// Retry path without autoload noise: use an existing interface that is not in the map.
-		if (!interface_exists(\Base3Test\Core\IRetryMissing::class, false)) {
-			eval('namespace Base3Test\Core; interface IRetryMissing {}');
-		}
 
 		$before = $cm->generateCalls;
 		$none = $cm->getInstances(['app' => 'AppA', 'interface' => \Base3Test\Core\IRetryMissing::class]);
@@ -297,51 +178,15 @@ PHP);
 	}
 
 	public function testInstantiateCoversConstructorResolution(): void {
-		if (!class_exists(\Base3Test\Core\DepA::class, false)) {
-			eval('namespace Base3Test\Core; class DepA {}');
-		}
-		if (!class_exists(\Base3Test\Core\DepB::class, false)) {
-			eval('namespace Base3Test\Core; class DepB {}');
-		}
-		if (!interface_exists(\Base3Test\Core\IMockMe::class, false)) {
-			eval('namespace Base3Test\Core; interface IMockMe { public function x(): int; }');
-		}
 
-		if (!class_exists(\Base3Test\Core\NoCtor::class, false)) {
-			eval('namespace Base3Test\Core; class NoCtor { public function ping(): string { return "ok"; } }');
-		}
 
-		if (!class_exists(\Base3Test\Core\NeedsBuiltin::class, false)) {
-			eval('namespace Base3Test\Core; class NeedsBuiltin { public function __construct(string $name) {} }');
-		}
 
-		if (!class_exists(\Base3Test\Core\NeedsClassType::class, false)) {
-			eval('namespace Base3Test\Core; class NeedsClassType { public DepA $a; public function __construct(DepA $a) { $this->a = $a; } }');
-		}
 
-		if (!class_exists(\Base3Test\Core\NeedsByParamName::class, false)) {
-			eval('namespace Base3Test\Core; class NeedsByParamName { public DepA $a; public function __construct(DepA $custom) { $this->a = $custom; } }');
-		}
 
-		if (!class_exists(\Base3Test\Core\UnionNeeds::class, false)) {
-			eval('namespace Base3Test\Core; class UnionNeeds { public $v; public function __construct(DepA|DepB $dep) { $this->v = $dep; } }');
-		}
 
-		if (!class_exists(\Base3Test\Core\UnionDefault::class, false)) {
-			eval('namespace Base3Test\Core; class UnionDefault { public $v; public function __construct(DepA|DepB $dep = null) { $this->v = $dep; } }');
-		}
 
-		if (!class_exists(\Base3Test\Core\NullableDefault::class, false)) {
-			eval('namespace Base3Test\Core; class NullableDefault { public $v; public function __construct(?DepA $a = null) { $this->v = $a; } }');
-		}
 
-		if (!class_exists(\Base3Test\Core\NeedsMockedInterface::class, false)) {
-			eval('namespace Base3Test\Core; class NeedsMockedInterface { public $m; public function __construct(IMockMe $m) { $this->m = $m; } }');
-		}
 
-		if (!class_exists(\Base3Test\Core\AbstractX::class, false)) {
-			eval('namespace Base3Test\Core; abstract class AbstractX { abstract public function a(): int; }');
-		}
 
 		$depA = new \Base3Test\Core\DepA();
 
@@ -353,9 +198,7 @@ PHP);
 			'custom' => $depA,
 		]);
 
-		$cm = new class($container) extends AbstractClassMap {
-			protected function getScanTargets(): array { return []; }
-		};
+		$cm = new AbstractClassMapTestDouble6($container);
 
 		$noCtor = $cm->instantiate(\Base3Test\Core\NoCtor::class);
 		$this->assertInstanceOf(\Base3Test\Core\NoCtor::class, $noCtor);
@@ -392,22 +235,7 @@ PHP);
 	public function testCheckDependenciesReportsWritability(): void {
 		$container = $this->makeContainer([]);
 
-		$cm = new class($container) extends AbstractClassMap {
-
-			public function __construct(IContainer $container) {
-				parent::__construct($container);
-				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
-				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
-			}
-
-			protected function getScanTargets(): array {
-				return [];
-			}
-
-			public function exposeCheck(): array {
-				return $this->checkDependencies();
-			}
-		};
+		$cm = new AbstractClassMapTestDouble7($container);
 
 		$res = $cm->exposeCheck();
 		$this->assertArrayHasKey('classmap_writable', $res);
@@ -447,27 +275,7 @@ PHP);
 
 		$container = $this->makeContainer([]);
 
-		$cm = new class($container, $this->basedir) extends AbstractClassMap {
-
-			private string $basedir;
-
-			public function __construct(IContainer $container, string $basedir) {
-				parent::__construct($container);
-				$this->basedir = $basedir;
-				$this->classMapFile = DIR_TMP . 'classmap_' . uniqid('', true) . '.php';
-				$this->ctorCacheFile = DIR_TMP . 'ctorcache_' . uniqid('', true) . '.php';
-			}
-
-			protected function getScanTargets(): array {
-				return [['basedir' => $this->basedir, 'app' => 'ScanApp']];
-			}
-
-			public function scanOnly(): array {
-				$classes = [];
-				$this->scanClasses($classes, $this->basedir, 'ScanApp');
-				return $classes;
-			}
-		};
+		$cm = new AbstractClassMapTestDouble8($container, $this->basedir);
 
 		$classes = $cm->scanOnly();
 
@@ -477,3 +285,34 @@ PHP);
 		$this->assertNotContains(\ScanApp\Abs::class, $found);
 	}
 }
+
+require_once __DIR__ . '/AbstractClassMapTestDouble1.php';
+
+require_once __DIR__ . '/AbstractClassMapTestDouble2.php';
+
+require_once __DIR__ . '/AbstractClassMapTestDouble3.php';
+
+require_once __DIR__ . '/AbstractClassMapTestDouble4.php';
+
+require_once __DIR__ . '/AbstractClassMapTestDouble5.php';
+
+require_once __DIR__ . '/AbstractClassMapTestDouble6.php';
+
+require_once __DIR__ . '/AbstractClassMapTestDouble7.php';
+
+require_once __DIR__ . '/AbstractClassMapTestDouble8.php';
+
+require_once __DIR__ . '/ClassMapDemo.php';
+require_once __DIR__ . '/IRetryMissing.php';
+require_once __DIR__ . '/DepA.php';
+require_once __DIR__ . '/DepB.php';
+require_once __DIR__ . '/IMockMe.php';
+require_once __DIR__ . '/NoCtor.php';
+require_once __DIR__ . '/NeedsBuiltin.php';
+require_once __DIR__ . '/NeedsClassType.php';
+require_once __DIR__ . '/NeedsByParamName.php';
+require_once __DIR__ . '/UnionNeeds.php';
+require_once __DIR__ . '/UnionDefault.php';
+require_once __DIR__ . '/NullableDefault.php';
+require_once __DIR__ . '/NeedsMockedInterface.php';
+require_once __DIR__ . '/AbstractX.php';
