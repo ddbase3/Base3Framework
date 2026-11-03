@@ -1,79 +1,53 @@
-# Privacy and data handling (source-verified technical inventory)
+# BASE3 Framework: technical privacy and security inventory
 
-This file records what can be established from the Contourz source code supplied
-for the current migration. It is not a replacement for the public privacy notice
-or a deployment-level GDPR assessment.
+Review: 2026-11-03. Source: supplied BASE3 framework implementation and
+current `src/Usermanager` and authorization contracts. This technical record
+is not an operator-specific privacy notice or legal compliance determination.
 
-## Processing and purpose
+## Processing and data categories
 
-- `ContourzPubJob` reads data from XRM through `IEntityDataService` and exports
-  selected public information into local JSON files.
-- The publishing job removes the contact fields `phone`, `phonework`, `mobile`,
-  `email1`, `email2`, `email3`, `fax`, and `dateofbirth` from the exported
-  contact payload. Address latitude/longitude values are rounded in the main
-  entity projection.
-- `LogVisitMiddleware` records an origin parameter and IP address in a local
-  `visit` database table when the `o` request parameter is supplied.
-- The new comparison output reads the same source entities, compares the public
-  projection to local exports, and prints counts, public identifiers and changed
-  top-level field names. It does not print field values or persist reports.
+BASE3 supplies reusable interfaces and implementations for identity,
+authentication, authorization, sessions, settings, state, logs, database access,
+and request handling. These components can process user and account IDs,
+login names, roles, groups, permissions, session identifiers, request metadata
+and application-provided content. Which concrete service is active is selected
+by the host/project composition; the framework alone cannot establish the
+identity of the controller or the legal basis for a given deployment.
 
-## Storage and recipients
+The built-in code-owned `authenticated` and `anonymous` logical groups read
+only the already trusted current user object (or its absence) through the
+existing `Base3AuthenticatedCriterion` and `Base3AnonymousCriterion`. They
+create no records, change no native roles and never authorize an action on
+their own. In hosts that support logical group audiences, the single existing
+`UserCriterionEvaluator` processes membership in memory. Framework-level
+group definitions have no independent account store.
 
-- Public entity exports are written to `local/Contourz/`; location map exports
-  are written to `local/ContourzLocations/`.
-- Image data and publication lists are stored locally under
-  `local/ContourzPhotos/` by the existing publishing/sync workflows.
-- XRM is accessed using configured BASE3 microservice connections. The physical
-  hosting locations, processors and international transfer arrangements cannot
-  be established from these source archives alone.
+## Storage, deletion, retention and access
 
-## Retention, deletion and security
+The interfaces do not mandate any physical backend. Concrete sessions,
+settings, databases, file storage, logs and caches are supplied or configured
+by the active host. This patch adds neither a table nor a file format nor a
+retention job. Removing the built-in group definitions removes their computed
+audience entries; it does not delete host-owned identities, feature rules,
+logs, backups or any native rights. Those must be handled by the responsible
+host through its existing deletion and access processes.
 
-- Source code establishes no universal retention period for exports, visit
-  records, server logs or backups. These must be documented and verified for the
-  deployment.
-- The existing image sync performs deletion of local files in some cases; it
-  will be reviewed before the image migration. This comparison patch performs
-  no deletion and changes no production data files.
-- Microservice authentication, HTTPS configuration, network restrictions,
-  hosting access controls and backup protection require deployment verification.
+Exact retention durations, backup expiration and native account erasure
+behavior are unknown from the supplied framework code alone and must be
+established for each deployment, including data subject access, correction,
+restriction and deletion workflows.
 
-## Known gaps and follow-up
+## Recipients, transfers, security and open verification
 
-- Verify whether any other sensitive contact fields require exclusion before
-  moving the public site to direct entity access. The existing export field
-  filter is not proof that an unrestricted entity response is safe to expose.
-- Verify live host retention/deletion policies and data-subject workflows.
-- Verify the existing published privacy notice, processors, server logs and
-  international transfers against the actual production deployment.
-- Verify the full public-data authorization boundary before enabling the new
-  live data read path for frontend requests.
+The new group definitions perform no network request and add no recipient.
+Other framework services may use configured databases, proxies, remote
+services or application endpoints; their deployment geography, subprocessors
+and transfer mechanisms cannot be established from the supplied source.
 
-## Migration step 2 (read-only preparation)
-
-- `ContourzPubJob::getPublishedEntry()` can fetch a single Memora entity by its
-  binary UUID through the existing remote `IEntityDataService` and only emits
-  data after matching the existing publication tag/type/exclusion criteria.
-- `ContourzDirectDataProbeOutput` is CLI-only and returns the UUID, whether an
-  entry is public, its type and query time, without writing or displaying payload
-  contents. The HTTP pages continue reading the existing JSON exports.
-
-## Migration step 2: live public reads
-
-- The public header, location map and search now retrieve Memora entities via
-  the authenticated XRM `IEntityDataService` microservice; data is projected
-  through the existing publication rules before rendering.
-- Linked items are fetched in one structured UUID query and filtered for public
-  visibility. The image serving workflow and local JSON publishing job remain
-  active. No new personal data is intentionally persisted by the live readers.
-- The remote service returns entity fields to the Contourz PHP process before
-  the publication projection removes excluded fields. Audit the XRM service
-  authorization and transport as part of production signoff. Hosting, deletion
-  periods, backup retention, processors and GDPR compliance remain unverified.
-
-## Service-to-service identity for public projections
-
-- The serialized XRM EntityData/EntityFile connector on Contourz uses the existing `INTERNALONLY` flag, avoiding propagation of the current website visitor identifier in the `auth` header. The remote request still uses the configured service credential.
-- This is not a relaxation of the publication rules. Contourz must enforce the existing published type, tag and exclusion filters before rendering. Raw remote entity results are not intentionally exposed to visitors.
-- Verify the configured XRM service credential, server-side permissions, and data minimization in deployment; no conclusion about GDPR compliance is inferred.
+Feature authorizations are decisions of the active `IAuthorizationService`.
+Logical group membership is not an implicit native permission grant. The
+active host owns authentication integrity, transport security, logging,
+CSRF protection for mutations and resource-level authorization. A full
+runtime privacy/security audit and accessibility review of the complete
+host installation remain deployment obligations. The new group definitions
+have no interactive UI of their own.
