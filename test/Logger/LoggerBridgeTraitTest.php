@@ -3,11 +3,10 @@
 namespace Base3\Test\Logger;
 
 use Base3\Logger\Api\ILogger;
+use PHPUnit\Framework\Attributes\CoversTrait;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Base3\Logger\LoggerBridgeTrait
- */
+#[CoversTrait(\Base3\Logger\LoggerBridgeTrait::class)]
 class LoggerBridgeTraitTest extends TestCase {
 
 	public function testPsr3ConvenienceMethodsCallLogLevelWithCorrectLevel(): void {

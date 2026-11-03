@@ -6,12 +6,11 @@ use Base3\Api\ICheck;
 use Base3\Logger\Api\ILogger;
 use Base3\Logger\LoggerProxy;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Base3\Logger\LoggerProxy
- */
 #[AllowMockObjectsWithoutExpectations]
+#[CoversClass(\Base3\Logger\LoggerProxy::class)]
 class LoggerProxyTest extends TestCase {
 
 	public function testPsr3MethodsDelegateToConnector(): void {

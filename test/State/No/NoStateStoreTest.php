@@ -2,12 +2,11 @@
 
 namespace Base3\Test\State\No;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Base3\State\No\NoStateStore;
 
-/**
- * @covers \Base3\State\No\NoStateStore
- */
+#[CoversClass(\Base3\State\No\NoStateStore::class)]
 class NoStateStoreTest extends TestCase {
 
 	public function testHasAlwaysReturnsFalse(): void {

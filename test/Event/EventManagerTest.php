@@ -1,21 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Base3\Event;
-
-if (!class_exists(\Base3\Event\StoppableEvent::class)) {
-	/**
-	 * Test fallback for EventManager's instanceof-check.
-	 * Only defined when the project does not provide it.
-	 */
-	
-}
-
 namespace Base3\Test\Event;
 
-use PHPUnit\Framework\TestCase;
+use Base3\Event\BaseEvent;
 use Base3\Event\EventManager;
+use PHPUnit\Framework\TestCase;
 
-
+require_once __DIR__ . '/DummyEvent.php';
 
 class EventManagerTest extends TestCase
 {
@@ -136,16 +127,16 @@ class EventManagerTest extends TestCase
 
 	public function testStoppableEventStopsPropagation(): void
 	{
-		$event = new \Base3\Event\StoppableEvent();
+		$event = new BaseEvent();
 		$called = [];
 
-		$this->em->on('*StoppableEvent', function ($e) use (&$called) {
+		$this->em->on('*BaseEvent', function ($e) use (&$called) {
 			$called[] = 'first';
 			$e->stopPropagation();
 			return 'first';
 		}, 10);
 
-		$this->em->on('*StoppableEvent', function () use (&$called) {
+		$this->em->on('*BaseEvent', function () use (&$called) {
 			$called[] = 'second';
 			return 'second';
 		}, 0);
@@ -157,5 +148,3 @@ class EventManagerTest extends TestCase
 	}
 }
 
-require_once __DIR__ . '/StoppableEvent.php';
-require_once __DIR__ . '/DummyEvent.php';

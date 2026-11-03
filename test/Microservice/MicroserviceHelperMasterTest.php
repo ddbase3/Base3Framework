@@ -74,7 +74,7 @@ final class MicroserviceHelperMasterTest extends TestCase {
 		self::assertSame(['Client' => 'https://client.example.test'], $advertised, 'Wrong local services offered for registration.');
 		self::assertInstanceOf(MicroserviceConnector::class, $remote, 'Resolution did not use the production connector.');
 		self::assertSame(
-			realpath(DIR_SRC . 'Microservice/Microservice/MicroserviceConnector.php'),
+			realpath(dirname(__DIR__, 2) . '/src/Microservice/Microservice/MicroserviceConnector.php'),
 			realpath((new \ReflectionClass(MicroserviceConnector::class))->getFileName()),
 			'Production connector was shadowed by a test class.'
 		);

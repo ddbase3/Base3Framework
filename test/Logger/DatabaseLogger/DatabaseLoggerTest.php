@@ -5,12 +5,11 @@ namespace Base3\Test\Logger\DatabaseLogger;
 use Base3\Database\Api\IDatabase;
 use Base3\Logger\DatabaseLogger\DatabaseLogger;
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Base3\Logger\DatabaseLogger\DatabaseLogger
- */
 #[AllowMockObjectsWithoutExpectations]
+#[CoversClass(\Base3\Logger\DatabaseLogger\DatabaseLogger::class)]
 class DatabaseLoggerTest extends TestCase {
 
 	public function testLogLevelEnsuresTableAndInsertsEscapedRow(): void {

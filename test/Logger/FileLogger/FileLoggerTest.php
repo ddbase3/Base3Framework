@@ -2,6 +2,7 @@
 
 namespace Base3\Test\Logger\FileLogger;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Base3\Logger\FileLogger\FileLogger;
 
@@ -13,9 +14,7 @@ if (!defined('Base3\\Logger\\FileLogger\\DIR_LOCAL')) {
 	define('Base3\\Logger\\FileLogger\\DIR_LOCAL', '');
 }
 
-/**
- * @covers \Base3\Logger\FileLogger\FileLogger
- */
+#[CoversClass(\Base3\Logger\FileLogger\FileLogger::class)]
 class FileLoggerTest extends TestCase {
 
 	private string $tmpDir = '';

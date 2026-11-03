@@ -13,8 +13,12 @@ use FilesystemIterator;
 final class OneTypePerFileTest extends TestCase {
 
 	public function testEveryPhpTypeHasItsOwnFileAndTestNamesStayIndependent(): void {
-		$roots = [DIR_SRC, DIR_TEST];
-		foreach (glob(DIR_PLUGIN . '*', GLOB_ONLYDIR) ?: [] as $plugin) {
+		$frameworkRoot = dirname(__DIR__, 2);
+		$pluginRoot = is_dir($frameworkRoot . '/plugin')
+			? $frameworkRoot . '/plugin'
+			: dirname($frameworkRoot);
+		$roots = [$frameworkRoot . '/src', $frameworkRoot . '/test'];
+		foreach (glob($pluginRoot . '/*', GLOB_ONLYDIR) ?: [] as $plugin) {
 			$roots[] = $plugin . DIRECTORY_SEPARATOR . 'src';
 			$roots[] = $plugin . DIRECTORY_SEPARATOR . 'test';
 		}

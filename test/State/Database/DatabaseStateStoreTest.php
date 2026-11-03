@@ -2,13 +2,12 @@
 
 namespace Base3\Test\State\Database;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Base3\Database\Api\IDatabase;
 use Base3\State\Database\DatabaseStateStore;
 
-/**
- * @covers \Base3\State\Database\DatabaseStateStore
- */
+#[CoversClass(\Base3\State\Database\DatabaseStateStore::class)]
 class DatabaseStateStoreTest extends TestCase {
 
 	/**

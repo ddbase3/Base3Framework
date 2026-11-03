@@ -10,7 +10,11 @@ use Base3\Configuration\Api\IConfiguration;
 use Base3\Hook\Api\IHookManager;
 use Base3\ServiceSelector\Api\IServiceSelector;
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
 
+#[RunTestsInSeparateProcesses]
+#[PreserveGlobalState(false)]
 final class BootstrapTest extends TestCase {
 
 	private ?string $tmpDir = null;
@@ -120,6 +124,13 @@ final class BootstrapTest extends TestCase {
 
 	public function testRunRegistersContainerServicesAndEchoesResponse(): void {
 		$this->resetServiceLocatorSingletons();
+
+		$frameworkRoot = dirname(__DIR__, 2);
+		$pluginRoot = is_dir($frameworkRoot . '/plugin') ? $frameworkRoot . '/plugin' : dirname($frameworkRoot);
+		$this->defineConstIfMissing('DIR_ROOT', rtrim($frameworkRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
+		$this->defineConstIfMissing('DIR_SRC', $frameworkRoot . '/src/');
+		$this->defineConstIfMissing('DIR_TEST', $frameworkRoot . '/test/');
+		$this->defineConstIfMissing('DIR_PLUGIN', rtrim($pluginRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
 
 		$baseDir = $this->makeTmpDir();
 
