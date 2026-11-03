@@ -32,8 +32,6 @@ class SingleAuth extends AbstractAuth implements ICheck {
 	public function __construct() {
 		$this->servicelocator = ServiceLocator::getInstance();
 		$this->configuration = $this->servicelocator->get('configuration');
-
-		if ($this->configuration != null) $this->cnf = $this->configuration->get('singleauth');
 	}
 
 	// Implementation of IBase
@@ -45,6 +43,7 @@ class SingleAuth extends AbstractAuth implements ICheck {
 	// Implementation of IAuthentication
 
 	public function login() {
+		if ($this->configuration != null) $this->cnf = $this->configuration->get('singleauth');
 		if ($this->cnf == null) return null;
 		if (!isset($_REQUEST["login"])) return null;
 		if (!isset($_REQUEST["username"]) || !isset($_REQUEST["password"])) return null;
@@ -60,5 +59,4 @@ class SingleAuth extends AbstractAuth implements ICheck {
 			"depending_services" => $this->configuration == null ? "Fail" : "Ok"
 		);
 	}
-
 }
