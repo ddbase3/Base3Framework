@@ -44,7 +44,8 @@ class MultiAuth extends AbstractAuth implements ICheck {
 
 	// Implementation of IAuthentication
 
-	public function login() {
+	public function login(?array $credentials = null) {
+		if ($credentials !== null) return null;
 		if ($this->cnf == null) return null;
 		if (!isset($_REQUEST["login"])) return null;
 		if (!isset($_REQUEST["username"]) || !isset($_REQUEST["password"])) return null;

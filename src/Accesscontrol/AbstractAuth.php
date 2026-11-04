@@ -30,7 +30,7 @@ abstract class AbstractAuth implements IAuthentication {
 		$this->verbose = $verbose;
 	}
 
-	public function login() {}
+	public function login(?array $credentials = null) {}
 
 	public function keep($userid) {}
 

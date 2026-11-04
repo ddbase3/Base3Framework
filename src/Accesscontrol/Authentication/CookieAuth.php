@@ -57,7 +57,8 @@ class CookieAuth extends AbstractAuth implements ICheck {
 
 	// Implementation of IAuthentication
 
-	public function login() {
+	public function login(?array $credentials = null) {
+		if ($credentials !== null) return null;
 		if (!isset($_COOKIE["authentication"])) return null;
 		$cookieContent = json_decode($_COOKIE["authentication"], true);
 		$userid = $cookieContent["userid"];

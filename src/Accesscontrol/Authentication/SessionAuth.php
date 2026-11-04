@@ -34,7 +34,8 @@ class SessionAuth extends AbstractAuth implements ICheck {
 
 	// Implementation of IAuthentication
 
-	public function login() {
+	public function login(?array $credentials = null) {
+		if ($credentials !== null) return null;
 		if (!isset($_SESSION["authentication"]) || !isset($_SESSION["authentication"]["userid"])) return null;
 		$userid = $_SESSION["authentication"]["userid"];
 		if ($this->verbose) echo "User " . $userid . " loaded<br />";

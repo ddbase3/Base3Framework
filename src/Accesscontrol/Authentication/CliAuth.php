@@ -31,7 +31,8 @@ class CliAuth extends AbstractAuth {
 
 	// Implementation of IAuthentication
 
-	public function login() {
+	public function login(?array $credentials = null) {
+		if ($credentials !== null) return null;
 		return php_sapi_name() == "cli" ? "internal" : null;
 	}
 

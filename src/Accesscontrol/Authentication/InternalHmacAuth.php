@@ -55,7 +55,8 @@ class InternalHmacAuth extends AbstractAuth implements ICheck {
 
 	// Implementation of IAuthentication
 
-	public function login() {
+	public function login(?array $credentials = null) {
+		if ($credentials !== null) return null;
 		// Anmeldung wird nicht gehalten/Rest-Service ist stateless, also kein keep/logout
 
 		if (!isset($_SERVER["HTTP_USER"]) || !isset($_SERVER["HTTP_TIME"]) || !isset($_SERVER["HTTP_TOKEN"]) || !isset($_SERVER["HTTP_HASH"])) return null;

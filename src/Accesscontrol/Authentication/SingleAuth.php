@@ -40,7 +40,8 @@ class SingleAuth extends AbstractAuth implements ICheck {
 
 	// Implementation of IAuthentication
 
-	public function login() {
+	public function login(?array $credentials = null) {
+		if ($credentials !== null) return null;
 		if ($this->configuration == null) return null;
 		$cnf = $this->configuration->get('singleauth');
 		if ($cnf == null) return null;

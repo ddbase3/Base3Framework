@@ -40,20 +40,30 @@ class Base3SystemAuth extends AbstractAuth implements ICheck {
 
 	// Implementation of IAuthentication
 
-	public function login() {
+	public function login(?array $credentials = null) {
 		if ($this->database == null) return null;
-		if (!isset($_REQUEST["login"])) return null;
-		if (!isset($_REQUEST["username"]) || !isset($_REQUEST["password"])) return null;
+
+		if ($credentials === null) {
+			if (!isset($_REQUEST["login"])) return null;
+			if (!isset($_REQUEST["username"]) || !isset($_REQUEST["password"])) return null;
+			$username = $_REQUEST["username"];
+			$password = $_REQUEST["password"];
+		} else {
+			if (!isset($credentials["username"], $credentials["password"])) return null;
+			$username = $credentials["username"];
+			$password = $credentials["password"];
+		}
+		if (!is_string($username) || !is_string($password)) return null;
 
 		$this->database->connect();
 		$sql = "SELECT `name`, `mode`
 			FROM `base3system_sysuser`
-			WHERE `name` = '" . $this->database->escape($_REQUEST["username"]) . "' AND `password` = '" . md5($_REQUEST["password"]) . "' LIMIT 1";
+			WHERE `name` = '" . $this->database->escape($username) . "' AND `password` = '" . md5($password) . "' LIMIT 1";
 		$row = $this->database->singleQuery($sql);
 		if ($row == null) return null;
 
-		// special login (bypass)
-		if (isset($_REQUEST["switchuser"]) && $row["mode"] == 2) {
+		// The existing local switch-user behavior must never apply to remote credentials.
+		if ($credentials === null && isset($_REQUEST["switchuser"]) && $row["mode"] == 2) {
 			if ($this->verbose) echo "User " . $_REQUEST["switchuser"] . " loaded<br />";
 			return $_REQUEST["switchuser"];
 		}

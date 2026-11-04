@@ -36,14 +36,20 @@ interface IAuthentication extends IBase {
 	public function setVerbose($verbose);
 
 	/**
-	 * Performs the login operation.
+	 * Authenticates a user using the current request or explicit credentials.
 	 *
-	 * Typically reads credentials from the request context (e.g. POST, headers, etc.)
-	 * and initiates a session if valid.
+	 * Without an argument, implementations MUST retain their existing request,
+	 * session or transport-based authentication behavior. With credentials,
+	 * an implementation MUST authenticate only those supplied values or return
+	 * null when explicit credentials are unsupported. It MUST NOT substitute
+	 * request, session, impersonation or service identities for the supplied user.
+	 * This method does not establish a session in a different application.
 	 *
-	 * @return mixed Implementation-defined result (e.g. user ID, status, or void)
+	 * @param array<string, mixed>|null $credentials Explicit username/password fields or null for existing request behavior.
+	 * @return mixed The verified user identifier, null if no identity is established, or an existing provider-specific denial result.
+	 * @throws \Throwable On implementation-specific infrastructure failures; callers must not treat these as invalid credentials.
 	 */
-	public function login();
+	public function login(?array $credentials = null);
 
 	/**
 	 * Keeps the current session active for the given user ID.

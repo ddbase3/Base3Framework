@@ -30,7 +30,8 @@ class GroupUserAuth extends AbstractAuth {
 
 	// Implementation of IAuthentication
 
-	public function login() {
+	public function login(?array $credentials = null) {
+		if ($credentials !== null) return null;
 		if (!isset($_REQUEST["password"])) return null;
 		$pwfile = DIR_LOCAL . "Authentication" . DIRECTORY_SEPARATOR . "groupusers.json";
 		$content = file_get_contents($pwfile);

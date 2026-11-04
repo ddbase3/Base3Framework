@@ -37,7 +37,8 @@ class SingleSignOnAuth extends AbstractAuth implements ICheck {
 
 	// Implementation of IAuthentication
 
-	public function login() {
+	public function login(?array $credentials = null) {
+		if ($credentials !== null) return null;
 		if (!isset($_REQUEST["userid"]) || !isset($_REQUEST["ssocode"])) return null;
 
 		$userid = $_REQUEST["userid"];
