@@ -13,9 +13,9 @@ class FileCache implements ICache {
 	private $timeout;
 
 	public function __construct($cnf = null) {
-		$this->servicelocator = ServiceLocator::getInstance();
-		$this->database = $this->servicelocator->get('database');
-		$configuration = $this->servicelocator->get('configuration');
+		$servicelocator = ServiceLocator::getInstance();
+		$this->database = $servicelocator->get('database');
+		$configuration = $servicelocator->get('configuration');
 		$this->cnf = $configuration == null ? array("url" => "") : $configuration->get('base');
 
 		$this->timeout = 60 * 60 * 24 * 30;  // 1 month
@@ -78,7 +78,7 @@ class FileCache implements ICache {
 			$newfile = $dir . $newfile;
 
 			$folder = $destdir . $dir;
-			if (!is_dir($folder)) mkdir($folder, 0777, 1);
+			if (!is_dir($folder)) mkdir($folder, 0777, true);
 
 			$content = file_get_contents($url);
 

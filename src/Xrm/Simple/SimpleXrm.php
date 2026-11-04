@@ -104,7 +104,7 @@ class SimpleXrm extends AbstractXrm implements ICheck {
 			$newEntry->access[] = $access;
 		}
 
-		if (substr($entry->id, 0, 2) != "xx") {
+		if ($entry->id === null || substr($entry->id, 0, 2) != "xx") {
 			$newEntry->log = $entry->log == null ? array() : $entry->log;
 			$log = new \Base3\Xrm\XrmEntryLog;
 			$log->action = $entry->id == null ? "created" : "changed";

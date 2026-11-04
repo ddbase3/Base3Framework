@@ -25,7 +25,9 @@ class MailParser {
 		// list($x, $boundary) = $matches;
 		$boundary = array_pop($matches);
 		if (isset($boundary) && !empty($boundary)) {
-			$strippedcontent = substr($content, 0, strrpos($content, '--' . $boundary . '--'));
+			$end = strrpos($content, '--' . $boundary . '--');
+			if ($end === false) return new MailPart($content);
+			$strippedcontent = substr($content, 0, $end);
 			$segments = explode('--' . $boundary, $strippedcontent);
 			if (sizeof($segments) == 1) return new MailPart($content);
 			$parts = array();

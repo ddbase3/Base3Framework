@@ -81,7 +81,7 @@ class CookieAuth extends AbstractAuth implements ICheck {
 	public function logout() {
 		if (!isset($_REQUEST["logout"])) return;
 		$this->clean();
-		setcookie("authentication", "", time() - 3600 * 24, "", $this->cookieDomain);
+		setcookie("authentication", "", time() - 3600 * 24, "", $this->cookieDomain ?? '');
 		unset($_COOKIE["authentication"]);
 	}
 

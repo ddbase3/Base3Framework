@@ -268,6 +268,255 @@ final class PostgresDatabaseTest extends TestCase {
 		$res2 = $db2->checkDependencies();
 		$this->assertSame('Fail', $res2['depending_services']);
 	}
+	private function database(array $values = []): PostgresDatabase {
+		PgStubState::reset();
+		return new PostgresDatabase(new ArrayConfiguration([
+			'database' => $values ?: ['host' => 'localhost', 'user' => 'tester', 'pass' => 'secret', 'name' => 'demo']
+		]));
+	}
+
+	private function disconnectedDatabase(): PostgresDatabase {
+		return new PostgresDatabase(new ArrayConfiguration(['database' => []]));
+	}
+
+	public function testConnectingTwiceKeepsTheOriginalConnection(): void {
+		$db = $this->database();
+		$db->connect();
+		$this->assertTrue($db->connected());
+		PgStubState::$connectOk = false;
+		$db->connect();
+		$this->assertTrue($db->connected());
+	}
+
+	public function testMissingIndividualCredentialsPreventConnections(): void {
+		foreach (['host', 'user', 'pass', 'name'] as $field) {
+			$values = ['host' => 'h', 'user' => 'u', 'pass' => 'p', 'name' => 'n'];
+			$values[$field] = '';
+			$db = $this->database($values);
+			$db->connect();
+			$this->assertFalse($db->connected(), $field);
+		}
+	}
+
+	public function testFailedConnectCanBeRetried(): void {
+		$db = $this->database();
+		PgStubState::$connectOk = false;
+		$db->connect();
+		$this->assertFalse($db->connected());
+		PgStubState::$connectOk = true;
+		$db->connect();
+		$this->assertTrue($db->connected());
+	}
+
+	public function testDisconnectWithoutConnectionIsIdempotent(): void {
+		$db = $this->disconnectedDatabase();
+		$db->disconnect();
+		$db->disconnect();
+		$this->assertFalse($db->connected());
+	}
+
+	public function testBeginTransactionExecutesBeginAndReleasesResult(): void {
+		$db = $this->database();
+		$result = (object)['freed' => false];
+		PgStubState::$queryQueue[] = $result;
+		$db->beginTransaction();
+		$this->assertTrue($result->freed);
+		$this->assertSame([], PgStubState::$queryQueue);
+	}
+
+	public function testCommitExecutesCommitAndReleasesResult(): void {
+		$db = $this->database();
+		$result = (object)['freed' => false];
+		PgStubState::$queryQueue[] = $result;
+		$db->commit();
+		$this->assertTrue($result->freed);
+		$this->assertSame([], PgStubState::$queryQueue);
+	}
+
+	public function testRollbackExecutesRollbackAndReleasesResult(): void {
+		$db = $this->database();
+		$result = (object)['freed' => false];
+		PgStubState::$queryQueue[] = $result;
+		$db->rollback();
+		$this->assertTrue($result->freed);
+		$this->assertSame([], PgStubState::$queryQueue);
+	}
+
+	public function testFailedBeginIncludesDriverError(): void {
+		$db = $this->database();
+		PgStubState::$lastError = 'begin denied';
+		PgStubState::$queryQueue[] = false;
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Failed to begin transaction: begin denied');
+		$db->beginTransaction();
+	}
+
+	public function testFailedCommitIncludesDriverError(): void {
+		$db = $this->database();
+		PgStubState::$lastError = 'commit denied';
+		PgStubState::$queryQueue[] = false;
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Failed to commit transaction: commit denied');
+		$db->commit();
+	}
+
+	public function testFailedRollbackIncludesDriverError(): void {
+		$db = $this->database();
+		PgStubState::$lastError = 'rollback denied';
+		PgStubState::$queryQueue[] = false;
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Failed to rollback transaction: rollback denied');
+		$db->rollback();
+	}
+
+	public function testBeginWithoutConnectionIsRejected(): void {
+		$db = $this->disconnectedDatabase();
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('PostgreSQL connection not available.');
+		$db->beginTransaction();
+	}
+
+	public function testCommitWithoutConnectionIsRejected(): void {
+		$db = $this->disconnectedDatabase();
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('PostgreSQL connection not available.');
+		$db->commit();
+	}
+
+	public function testRollbackWithoutConnectionIsRejected(): void {
+		$db = $this->disconnectedDatabase();
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('PostgreSQL connection not available.');
+		$db->rollback();
+	}
+
+	public function testNonQueryWithoutConnectionIsRejected(): void {
+		$db = $this->disconnectedDatabase();
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('PostgreSQL connection not available.');
+		$db->nonQuery('UPDATE demo SET x = 1');
+	}
+
+	public function testScalarQueryWithoutConnectionIsRejected(): void {
+		$db = $this->disconnectedDatabase();
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('PostgreSQL connection not available.');
+		$db->scalarQuery('SELECT x FROM demo');
+	}
+
+	public function testSingleQueryWithoutConnectionIsRejected(): void {
+		$db = $this->disconnectedDatabase();
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('PostgreSQL connection not available.');
+		$db->singleQuery('SELECT * FROM demo');
+	}
+
+	public function testListQueryWithoutConnectionIsRejected(): void {
+		$db = $this->disconnectedDatabase();
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('PostgreSQL connection not available.');
+		$db->listQuery('SELECT x FROM demo');
+	}
+
+	public function testMultiQueryWithoutConnectionIsRejected(): void {
+		$db = $this->disconnectedDatabase();
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('PostgreSQL connection not available.');
+		$db->multiQuery('SELECT * FROM demo');
+	}
+
+	public function testInsertIdWithoutConnectionIsRejected(): void {
+		$db = $this->disconnectedDatabase();
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('PostgreSQL connection not available.');
+		$db->insertId();
+	}
+
+	public function testEscapeWithoutConnectionIsRejected(): void {
+		$db = $this->disconnectedDatabase();
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('PostgreSQL connection not available.');
+		$db->escape('value');
+	}
+
+	public function testLastvalQueryFailureReturnsZero(): void {
+		$db = $this->database();
+		PgStubState::$queryQueue[] = false;
+		$this->assertSame(0, $db->insertId());
+	}
+
+	public function testLastvalWithNoRowReturnsZeroAndFreesResult(): void {
+		$db = $this->database();
+		$result = (object)['rows' => [], 'freed' => false];
+		PgStubState::$queryQueue[] = $result;
+		$this->assertSame(0, $db->insertId());
+		$this->assertTrue($result->freed);
+	}
+
+	public function testLastvalNumericStringBecomesInteger(): void {
+		$db = $this->database();
+		$result = (object)['rows' => [['780']], 'freed' => false];
+		PgStubState::$queryQueue[] = $result;
+		$this->assertSame(780, $db->insertId());
+		$this->assertTrue($result->freed);
+	}
+
+	public function testLastvalNonNumericStringIsPreserved(): void {
+		$db = $this->database();
+		$result = (object)['rows' => [['record-key']], 'freed' => false];
+		PgStubState::$queryQueue[] = $result;
+		$this->assertSame('record-key', $db->insertId());
+		$this->assertTrue($result->freed);
+	}
+
+	public function testScalarQueryWithMissingFirstRowReturnsNullAndFreesResult(): void {
+		$db = $this->database();
+		$result = (object)['num_rows' => 1, 'rows' => [], 'freed' => false];
+		PgStubState::$queryQueue[] = $result;
+		$this->assertNull($db->scalarQuery('SELECT x'));
+		$this->assertTrue($result->freed);
+	}
+
+	public function testSingleQueryWithMissingFirstRowReturnsNullAndFreesResult(): void {
+		$db = $this->database();
+		$result = (object)['num_rows' => 1, 'rowsAssoc' => [], 'freed' => false];
+		PgStubState::$queryQueue[] = $result;
+		$this->assertNull($db->singleQuery('SELECT x'));
+		$this->assertTrue($result->freed);
+	}
+
+	public function testErrorHelpersReportDisconnectedState(): void {
+		$db = $this->disconnectedDatabase();
+		$this->assertTrue($db->isError());
+		$this->assertSame('Not connected', $db->errorMessage());
+		$this->assertSame(0, $db->errorNumber());
+		$this->assertSame(0, $db->affectedRows());
+	}
+
+	public function testNestedConfigurationShapeIsAccepted(): void {
+		$db = PostgresDatabase::getInstance(['database' => [
+			'host' => 'server', 'user' => 'u', 'pass' => 'p', 'name' => 'n'
+		]]);
+		PgStubState::reset();
+		$db->connect();
+		$this->assertTrue($db->connected());
+	}
+
+	public function testScalarQueryReturnsFirstColumnAndFreesResult(): void {
+		$db = $this->database();
+		$result = (object)['num_rows' => 2, 'rows' => [['first', 'second'], ['other']], 'freed' => false];
+		PgStubState::$queryQueue[] = $result;
+		$this->assertSame('first', $db->scalarQuery('SELECT x, y'));
+		$this->assertTrue($result->freed);
+	}
+
+	public function testSingleQueryReturnsAssociativeRowAndFreesResult(): void {
+		$db = $this->database();
+		$result = (object)['num_rows' => 1, 'rowsAssoc' => [['id' => '9']], 'freed' => false];
+		PgStubState::$queryQueue[] = $result;
+		$this->assertSame(['id' => '9'], $db->singleQuery('SELECT *'));
+		$this->assertTrue($result->freed);
+	}
 }
 
 require_once __DIR__ . '/PgStubState.php';
