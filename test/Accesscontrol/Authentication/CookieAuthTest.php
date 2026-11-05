@@ -7,6 +7,7 @@ use PHPUnit\Framework\TestCase;
 final class CookieAuthTest extends TestCase {
 
 	public function testWithoutCookieAndTokenServiceDeniesLoginAndChecksDependencies(): void {
+		$GLOBALS['_COOKIE'] ??= [];
 		$old=\Base3\Core\ServiceLocator::getInstance();$cookie=$_COOKIE;$request=$_REQUEST;
 		try {
 			$new=new \Base3\Core\ServiceLocator();\Base3\Core\ServiceLocator::useInstance($new);

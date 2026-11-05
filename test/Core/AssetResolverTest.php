@@ -90,10 +90,10 @@ final class AssetResolverTest extends TestCase {
 
 		$resolver = new AssetResolver();
 
-		$path = 'plugin/Demo/assets/js/app.js';
+		$path = 'plugin/Demo/assets/js/__base3_asset_resolver_missing_5f6d9c3a.js';
 		$resolved = $resolver->resolve($path);
 
-		self::assertSame('assets/Demo/js/app.js?t=000000', $resolved);
+		self::assertSame('assets/Demo/js/__base3_asset_resolver_missing_5f6d9c3a.js?t=000000', $resolved);
 	}
 
 	public function testResolveAddsHashWhenFileExists(): void {
