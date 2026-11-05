@@ -27,14 +27,24 @@ class User {
 	public $lang;
 	public $role;        // Compatibility: "visit" | "member" | "admin"
 	public $roles = array();
+	public $groups = array();
+	public $permissions = array();
 
 	public static function fromArray(array $data): self {
 		$user = new self();
 
-		foreach (['id', 'userid', 'name', 'email', 'lang', 'role', 'roles'] as $key) {
+		foreach (['id', 'userid', 'name', 'email', 'lang', 'role', 'roles', 'groups', 'permissions'] as $key) {
 			if (array_key_exists($key, $data)) {
 				$user->$key = $data[$key];
 			}
+		}
+
+		foreach (['roles' => Role::class, 'groups' => Group::class, 'permissions' => Permission::class] as $name => $model) {
+			if (!is_array($user->$name)) continue;
+			$user->$name = array_map(
+				static fn($entry) => is_array($entry) ? $model::fromArray($entry) : $entry,
+				$user->$name
+			);
 		}
 
 		return $user;

@@ -89,6 +89,26 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		return $this->createUserFromRow($row);
 	}
 
+	/**
+	 * Resolve the authoritative XRM user and effective membership metadata for
+	 * an explicit trusted login. Uses existing native user, group and role reads.
+	 * This is read-only; identity is not an authorization decision.
+	 *
+	 * @param int|string $login Exact native login or positive numeric user ID
+	 * @return User|null Verified native user context, or null if absent
+	 * @throws \Throwable On native database failures
+	 */
+	public function getUserContextById(int|string $login): ?User {
+		if ((string)$login === '' || (string)$login === 'internal') return null;
+		$id = is_int($login) ? $login : $this->resolveUserId($login, true);
+		if (!$id || $id <= 1) return null;
+		$user = $this->getUserById($id);
+		if ($user === null) return null;
+		$user->groups = $this->getGroupsForUserId($id);
+		$user->permissions = $this->getPermissionsForRoles($user->roles);
+		return $user;
+	}
+
 	public function getGroups() {
 		$userid = $this->accesscontrol->getUserId();
 
@@ -99,22 +119,7 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		$userId = $this->getCurrentUserDatabaseId();
 		if (!$userId) return array();
 
-		$this->database->connect();
-
-		$sql = "SELECT g.`id`, g.`name`, g.`info`, g.`archive`
-			FROM `base3system_sysusergroup` ug
-			INNER JOIN `base3system_sysgroup` g ON ug.`group_id` = g.`id`
-			WHERE ug.`user_id` = " . (int)$userId . "
-			  AND g.`archive` = 0
-			ORDER BY g.`name`";
-
-		$rows = $this->database->multiQuery($sql);
-		$this->groups = array();
-		foreach ($rows as $row) {
-			$this->groups[] = Group::fromArray($row);
-		}
-
-
+		$this->groups = $this->getGroupsForUserId((int)$userId);
 		return $this->groups;
 	}
 
@@ -170,34 +175,7 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 			return $this->permissions;
 		}
 
-		$roleIds = array();
-		foreach ($this->getRoles() as $role) {
-			if (isset($role->id) && is_numeric($role->id)) {
-				$roleIds[] = (int)$role->id;
-			}
-		}
-
-		if (empty($roleIds)) {
-			$this->permissions = array();
-			return $this->permissions;
-		}
-
-		$this->database->connect();
-
-		$sql = "SELECT DISTINCT p.`id`, p.`scope`, p.`permission`, p.`label`, p.`info`, p.`archive`
-			FROM `base3system_syspermission` p
-			INNER JOIN `base3system_sysrolepermission` rp ON rp.`permission_id` = p.`id`
-			WHERE rp.`role_id` IN (" . implode(",", $roleIds) . ")
-			  AND p.`archive` = 0
-			ORDER BY p.`scope`, p.`permission`";
-
-		$rows = $this->database->multiQuery($sql);
-		$this->permissions = array();
-		foreach ($rows as $row) {
-			$this->permissions[] = Permission::fromArray($row);
-		}
-
-
+		$this->permissions = $this->getPermissionsForRoles($this->getRoles());
 		return $this->permissions;
 	}
 
@@ -522,6 +500,38 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		return $row && isset($row["id"]) ? (int)$row["id"] : null;
 	}
 
+	/** Native group memberships for an explicit trusted XRM user ID. */
+	private function getGroupsForUserId(int $userId): array {
+		$this->database->connect();
+		$sql = "SELECT g.`id`, g.`name`, g.`info`, g.`archive`
+			FROM `base3system_sysusergroup` ug
+			INNER JOIN `base3system_sysgroup` g ON ug.`group_id` = g.`id`
+			WHERE ug.`user_id` = " . (int)$userId . "
+			  AND g.`archive` = 0
+			ORDER BY g.`name`";
+		$rows = $this->database->multiQuery($sql);
+		return array_map(static fn($row) => Group::fromArray($row), $rows);
+	}
+
+	/** Effective global permission metadata from the native roles (not access decisions). */
+	private function getPermissionsForRoles(array $roles): array {
+		$roleIds = array();
+		foreach ($roles as $role) {
+			if (isset($role->id) && is_numeric($role->id)) $roleIds[] = (int)$role->id;
+		}
+		if (!$roleIds) return array();
+
+		$this->database->connect();
+		$sql = "SELECT DISTINCT p.`id`, p.`scope`, p.`permission`, p.`label`, p.`info`, p.`archive`
+			FROM `base3system_syspermission` p
+			INNER JOIN `base3system_sysrolepermission` rp ON rp.`permission_id` = p.`id`
+			WHERE rp.`role_id` IN (" . implode(",", $roleIds) . ")
+			  AND p.`archive` = 0
+			ORDER BY p.`scope`, p.`permission`";
+		$rows = $this->database->multiQuery($sql);
+		return array_map(static fn($row) => Permission::fromArray($row), $rows);
+	}
+
 	private function getRolesForUserId(int $userId): array {
 		$this->database->connect();
 
@@ -564,12 +574,12 @@ class Base3SystemUsermanager implements IUsermanager, ICheck {
 		return $fallback;
 	}
 
-	private function resolveUserId($userid) {
+	private function resolveUserId($userid, bool $exactLogin = false) {
 		if ($userid === null || $userid === "") return null;
 
 		$this->database->connect();
 
-		if (is_numeric($userid)) {
+		if (is_numeric($userid) && !$exactLogin) {
 			$sql = "SELECT `id` FROM `base3system_sysuser` WHERE `id` = " . (int)$userid;
 		} else {
 			$sql = "SELECT `id` FROM `base3system_sysuser` WHERE `name` = '" . $this->database->escape((string)$userid) . "'";
