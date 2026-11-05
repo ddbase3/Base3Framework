@@ -10,7 +10,10 @@ final class RecordingAuthentication implements IAuthentication {
 	public function __construct(private readonly ?string $identity) {}
 	public static function getName(): string { return 'recordingauthentication'; }
 	public function setVerbose($verbose) { $this->verbose=(bool)$verbose; }
-	public function login() { $this->lifecycle[]='login'; return $this->identity; }
+	public function login(?array $credentials = null) {
+		$this->lifecycle[]='login';
+		return $credentials === null ? $this->identity : null;
+	}
 	public function keep($userid) { $this->lifecycle[]='keep:'.$userid; }
 	public function finish($userid) { $this->lifecycle[]='finish:'.($userid ?? 'null'); }
 	public function logout() { $this->lifecycle[]='logout'; }
