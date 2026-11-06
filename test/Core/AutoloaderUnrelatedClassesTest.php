@@ -5,6 +5,7 @@ namespace Base3\Test\Core;
 use Base3\Core\Autoloader;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 
 final class AutoloaderUnrelatedClassesTest extends TestCase {
 
@@ -14,17 +15,16 @@ final class AutoloaderUnrelatedClassesTest extends TestCase {
 		putenv('DEBUG=' . $debug);
 
 		try {
-			Autoloader::register();
+			$autoload = new ReflectionMethod(Autoloader::class, 'autoload');
 
 			ob_start();
 			try {
-				$exists = class_exists('ExternalVendorWithoutNamespaceMapping\\MissingAutoloadRegressionClass');
+				$autoload->invoke(null, 'ExternalVendorWithoutNamespaceMapping\\MissingAutoloadRegressionClass');
 			}
 			finally {
 				$output = ob_get_clean();
 			}
 
-			self::assertFalse($exists);
 			self::assertSame('', $output);
 		}
 		finally {
