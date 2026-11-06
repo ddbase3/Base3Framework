@@ -166,6 +166,8 @@ abstract class AbstractServiceSelector implements IServiceSelector, IMiddleware 
 		$data = $this->request->get('data', '');
 		$app = $this->request->get('app', '');
 		$name = $this->request->get('name', 'index');
+		// Expose the resolved default to page modules, as rewritten named URLs do.
+		if (!isset($_REQUEST['name'])) $_REQUEST['name'] = $name;
 
 		$url = $this->configuration->get('base')["url"];
 		$intern = $this->configuration->get('base')["intern"];

@@ -387,3 +387,23 @@ versioned ciphertext format identifier. The framework ships the existing
 `Base3Framework/src/Crypt/`. Secret sourcing remains the responsibility of
 `IConfigValueResolver`. No application encryption is enabled by this API change.
 See `docs/cryptography.md`.
+
+### Standalone global chatbot (2026-11-05)
+
+The chat.base3.de project uses `Base3Template\Content\PageHeader` as the only
+full-page insertion point for ClientStack's existing global launcher. The site
+composes a server-controlled `chatbot/default` instance, and the shared Settings
+renderer discovers Chatbot, Launcher and Extensions tabs through `ISettingsTab`.
+Chatbot resources use FileBridge local managed storage below the configured private `[directories] data` directory in `filemanager/`.
+See the owning plugin READMEs for authorization and deployment requirements. The FileManager reads the existing BASE3 `[directories] data` configuration rather than constructing a storage path under `DIR_ROOT`.
+
+### Default index page request normalization (2026-11-06)
+
+`AbstractServiceSelector` exposes its resolved default `index` name through
+`$_REQUEST['name']` when the URL rewrite did not provide one. This is the
+existing request name consumed by `ModuledPage\Page\GeneratedPage` and the
+shared page header. Direct `/` and `/index.php` now use the same configured
+`page-index.json` as a named `index` route. Explicit named routes are unchanged.
+The Base3Template launcher uses the existing ClientStack dock targets to
+shrink the website while the panel is docked. No new launcher mode or
+additional frontend asset is introduced.

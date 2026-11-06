@@ -51,3 +51,23 @@ CSRF protection for mutations and resource-level authorization. A full
 runtime privacy/security audit and accessibility review of the complete
 host installation remain deployment obligations. The new group definitions
 have no interactive UI of their own.
+
+## FileBridge FileManager integration for chat.base3.de (2026-11-05)
+
+The `Base3ChatWebsite` project binds FileBridge's `LocalManagedFileStorageService` under `[directories] data`/`filemanager/`. The configured data directory is independent of `DIR_ROOT` and must be an absolute path that is writable by PHP. The project FileManager output authorizes chatbot configuration operations using `IAuthorizationService`, user identity from `IUsermanager`, a fixed `chatbot/default` owner, and AJAX-only POST actions. File content and temporary upload metadata are stored locally, not transmitted to a new recipient by the file storage backend. Storage owner directories are hashed and separated. Session metadata includes the actor ID, owner, filename, path, size, chunk sizes, time and multipart upload IDs.
+
+Completed and aborted uploads remove their session artifacts. Abandoned sessions may persist until manually cleaned, and backup retention, web-server logging and deployment filesystem permissions are not established by the provided project archive. The operator must deny direct HTTP access to the configured `[directories] data`/`filemanager` directory (Apache `.htaccess` alone is insufficient on other servers), define deletion/backup periods, and verify access controls on the deployed web server before public use. These are known operational gaps, not claims of finished regulatory compliance.
+
+## Standalone global chat rendering (2026-11-05)
+
+The `Base3ChatWebsite` project adds a global chatbot launcher to full HTML
+website pages through `Base3Template`. ClientStack may store window-mode and
+reopen preferences in browser local or session storage, as documented by the
+ClientStack plugin. An explicitly allowed BASE3 feature is required to render
+the launcher and separately to fetch HTML for the `chatbot/default` instance.
+Conversations continue to use the existing Chatbot/Assistant services, whose
+processor locations and retention depend on deployment configuration. The
+Chatbot Configuration tab now presents the existing FileBridge-backed
+FileManager for that same instance. The local data-directory storage and upload processing,
+rights checks and known operational gaps remain documented in the site and
+ClientStack privacy statements. No remote file storage service is introduced.
