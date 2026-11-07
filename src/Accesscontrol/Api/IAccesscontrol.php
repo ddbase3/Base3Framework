@@ -26,9 +26,17 @@ namespace Base3\Accesscontrol\Api;
 interface IAccesscontrol {
 
 	/**
-	 * Returns the ID of the current user.
+	 * Returns the authenticated identity key used by the active host usermanager.
+	 * This is NOT necessarily the native database primary key User::$id.
+	 * In a Base3SystemUsermanager deployment this is the current exact login
+	 * User::$userid (base3system_sysuser.name), including numeric-looking logins.
+	 * KeyHarbor credentials instead store the host-native User::$id; authentication
+	 * providers MUST resolve it through the native usermanager before returning
+	 * a host login key. No numeric-string heuristic or implicit cross-host mapping
+	 * is permitted. A missing or deleted user must not become an authenticated actor.
 	 *
-	 * @return mixed User ID (type depends on implementation, e.g. int or string)
+	 * @return mixed Exact host authentication key, or host-specific unauthenticated result.
+	 * @throws \Throwable On errors in underlying authentication or user lookup.
 	 */
 	public function getUserId();
 

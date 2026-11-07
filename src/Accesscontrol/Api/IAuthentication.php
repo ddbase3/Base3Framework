@@ -46,7 +46,12 @@ interface IAuthentication extends IBase {
 	 * This method does not establish a session in a different application.
 	 *
 	 * @param array<string, mixed>|null $credentials Explicit username/password fields or null for existing request behavior.
-	 * @return mixed The verified user identifier, null if no identity is established, or an existing provider-specific denial result.
+	 * @return mixed The verified host authentication key understood by the active
+	 * usermanager, null when no identity is established, or an existing provider-specific
+	 * denial result. This MUST NOT be a different identifier merely because both
+	 * identifiers are called user IDs. In Base3SystemUsermanager deployments the
+	 * key is the exact User::$userid login, NOT native User::$id; KeyHarbor user
+	 * credentials hold the latter and need a verified native lookup to obtain the former.
 	 * @throws \Throwable On implementation-specific infrastructure failures; callers must not treat these as invalid credentials.
 	 */
 	public function login(?array $credentials = null);
