@@ -19,7 +19,7 @@
 namespace Base3\Settings\Database;
 
 use Base3\Database\Api\IDatabase;
-use Base3\Settings\Api\ISettingsStore;
+use Base3\Settings\Base\AbstractSettingsStore;
 use JsonException;
 use RuntimeException;
 
@@ -39,7 +39,7 @@ use RuntimeException;
  * - remove() persists immediately
  * - save() is therefore a no-op
  */
-class DatabaseSettingsStore implements ISettingsStore {
+class DatabaseSettingsStore extends AbstractSettingsStore {
 
 	private const TABLE_NAME = 'base3_settingsstore';
 

@@ -18,9 +18,9 @@
 
 namespace Base3\Hook;
 
-use Base3\Hook\Api\IHookListener;
+use Base3\Hook\Base\AbstractHookListener;
 
-class BootstrapLoggingHookListener implements IHookListener {
+class BootstrapLoggingHookListener extends AbstractHookListener {
 
 	public function isActive(): bool {
 		return false;

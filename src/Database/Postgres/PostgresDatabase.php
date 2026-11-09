@@ -22,9 +22,9 @@ use Base3\Api\ICheck;
 use Base3\Configuration\ArrayConfiguration;
 use Base3\Configuration\Api\IConfiguration;
 use Base3\Core\ServiceLocator;
-use Base3\Database\Api\IDatabase;
+use Base3\Database\Base\AbstractDatabase;
 
-class PostgresDatabase implements IDatabase, ICheck {
+class PostgresDatabase extends AbstractDatabase implements ICheck {
 
 	private static $servicelocator;
 

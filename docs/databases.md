@@ -111,9 +111,21 @@ classDiagram
         -name: string|null
     }
 
-    IDatabase <|.. MysqlDatabase
-    IDatabase <|.. PostgresDatabase
+	class AbstractDatabase {
+		<<abstract>>
+	}
+
+	IDatabase <|.. AbstractDatabase
+	AbstractDatabase <|-- MysqlDatabase
+	AbstractDatabase <|-- PostgresDatabase
 ```
+
+`Base3\Database\Base\AbstractDatabase` implements the complete current `IDatabase`
+contract so backend classes can inherit compatible defaults when the interface is
+extended. `MysqlDatabase` and `PostgresDatabase` extend this base and still override
+all existing methods. The base has no connection: mandatory database operations
+throw `LogicException` rather than pretending a transaction or query succeeded;
+`escape()` never guesses SQL escaping rules. Consumers continue to inject `IDatabase`.
 
 ### Key design decision: explicit lazy connection
 

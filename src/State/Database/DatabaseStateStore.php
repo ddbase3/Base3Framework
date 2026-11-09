@@ -19,7 +19,7 @@
 namespace Base3\State\Database;
 
 use Base3\Database\Api\IDatabase;
-use Base3\State\Api\IStateStore;
+use Base3\State\Base\AbstractStateStore;
 
 /**
  * Class DatabaseStateStore
@@ -41,7 +41,7 @@ use Base3\State\Api\IStateStore;
  * - connect() is called on every public operation to honor the framework's
  *   lazy-connect expectation (connect only if necessary).
  */
-class DatabaseStateStore implements IStateStore {
+class DatabaseStateStore extends AbstractStateStore {
 
 	private IDatabase $db;
 	private string $tableName;

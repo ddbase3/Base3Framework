@@ -18,7 +18,7 @@
 
 namespace Base3\State\No;
 
-use Base3\State\Api\IStateStore;
+use Base3\State\Base\AbstractStateStore;
 
 /**
  * Class NoStateStore
@@ -34,7 +34,7 @@ use Base3\State\Api\IStateStore;
  * - Explicitly disable runtime state
  * - Avoid null checks and conditional logic in services
  */
-class NoStateStore implements IStateStore {
+class NoStateStore extends AbstractStateStore {
 
 	public function get(string $key, mixed $default = null): mixed {
 		return $default;

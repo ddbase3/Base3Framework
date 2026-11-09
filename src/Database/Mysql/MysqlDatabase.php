@@ -20,11 +20,11 @@ namespace Base3\Database\Mysql;
 
 use Base3\Configuration\ArrayConfiguration;
 use Base3\Core\ServiceLocator;
-use Base3\Database\Api\IDatabase;
+use Base3\Database\Base\AbstractDatabase;
 use Base3\Api\ICheck;
 use Base3\Configuration\Api\IConfiguration;
 
-class MysqlDatabase implements IDatabase, ICheck {
+class MysqlDatabase extends AbstractDatabase implements ICheck {
 
 	private static $servicelocator;
 

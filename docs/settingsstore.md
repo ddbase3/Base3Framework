@@ -1352,6 +1352,13 @@ Possible custom backends:
 * hybrid file/database settings store
 * settings store backed by a host platform
 
+The current `JsonSettingsStore` and `DatabaseSettingsStore` extend
+`Base3\Settings\Base\AbstractSettingsStore`. Both still override every
+`ISettingsStore` method. The base provides empty read results and no buffered
+persistence; unsupported `set()` and `remove()` throw `LogicException` to avoid
+silently dropping settings. New implementations should extend the base and
+provide the required backend behavior. Consumers still depend on `ISettingsStore`.
+
 A custom implementation must preserve the interface behavior:
 
 * `get()` returns one dataset or the default

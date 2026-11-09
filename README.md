@@ -182,6 +182,19 @@ Log entries using `ILogger`, with support for scoped log streams.
 
 Manage structured configuration data using `IConfiguration`.
 
+### Abstract bases for interface evolution
+
+`IDatabase`, `ISettingsStore`, `IStateStore` and `IHookListener` have optional
+abstract bases in their respective `Base` namespaces: `AbstractDatabase`,
+`AbstractSettingsStore`, `AbstractStateStore` and `AbstractHookListener`.
+Existing framework implementations extend these bases while continuing to
+override all current contract methods. This allows future, contract-compatible
+interface additions to receive a default in the base without immediately
+breaking subclasses. Defaults are inactive or empty where valid; mandatory
+backend operations throw `LogicException` rather than simulating success.
+Consumers and service bindings continue to depend on the interfaces, and direct
+interface implementations remain supported.
+
 ## Example Usage
 
 ### Hello World Example

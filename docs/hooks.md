@@ -462,6 +462,11 @@ public function isActive(): bool {
 
 ---
 
+`Base3\Hook\Base\AbstractHookListener` implements the complete
+`IHookListener` contract with inactive, unsubscribed defaults. The framework's
+`BootstrapLoggingHookListener` extends it and still overrides all three methods.
+The active `HookManager` continues to use `IHookListener` directly.
+
 ## 8. A minimal listener example
 
 This is the small example adapted into a complete explanation:
@@ -471,7 +476,7 @@ This is the small example adapted into a complete explanation:
 
 namespace Base3\Hook;
 
-class BootstrapLoggingHookListener implements IHookListener {
+class BootstrapLoggingHookListener extends AbstractHookListener {
 
 	public function isActive(): bool {
 		return false;

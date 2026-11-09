@@ -19,7 +19,7 @@
 namespace Base3\Settings\Json;
 
 use Base3\Configuration\Api\IConfiguration;
-use Base3\Settings\Api\ISettingsStore;
+use Base3\Settings\Base\AbstractSettingsStore;
 use JsonException;
 use RuntimeException;
 
@@ -31,7 +31,7 @@ use RuntimeException;
  * File location:
  * - <directories.data>/cnf/settings.json
  */
-class JsonSettingsStore implements ISettingsStore {
+class JsonSettingsStore extends AbstractSettingsStore {
 
 	private IConfiguration $configuration;
 

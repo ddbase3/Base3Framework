@@ -1217,6 +1217,13 @@ The more your service only depends on the documented behavior of `IStateStore`, 
 
 ---
 
+`Base3\State\Base\AbstractStateStore` is the optional inheritance base for
+`IStateStore` implementations. `DatabaseStateStore` and `NoStateStore` now extend
+it while still overriding every existing method. The base reports empty reads
+and rejects unimplemented persistent writes and atomic `setIfNotExists()` with
+`LogicException`, so it never falsely claims a lock was acquired. `NoStateStore`
+retains its separate, deliberately inert behavior unchanged.
+
 ## 26. Implementing your own backend
 
 You may want a custom implementation when:
