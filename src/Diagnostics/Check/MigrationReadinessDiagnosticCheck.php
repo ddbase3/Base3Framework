@@ -8,7 +8,7 @@ use Base3\Diagnostics\Inspection\ModuleSourceInventory;
 use Base3\Diagnostics\Inspection\PhpSourceInspector;
 use Base3\Diagnostics\Scope\InstallationDiagnosticScope;
 
-/** Reports migration down() readiness and explicit legacy checksum exemptions without loading plugin code. */
+/** Reports migration down() readiness without loading or executing plugin code. */
 final class MigrationReadinessDiagnosticCheck extends AbstractSourceDiagnosticCheck {
 
 	public static function getName(): string {
@@ -44,9 +44,6 @@ final class MigrationReadinessDiagnosticCheck extends AbstractSourceDiagnosticCh
 				$inspected++;
 				if(!$source['migrationCertain']) {
 					$warnings[] = $location . ': migration identity cannot be verified statically';
-				}
-				if($source['legacyMarker']) {
-					$warnings[] = $location . ': legacy checksum validation is disabled for applied migrations';
 				}
 				if(!$source['downDeclared']) {
 					$warnings[] = $location . ': down() is not yet declared';

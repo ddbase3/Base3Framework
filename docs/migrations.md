@@ -1035,12 +1035,17 @@ An explicit exception is not a functioning reverse migration. Any real
 `down()` operation requires behavior tests against the relevant database and
 data state; some destructive transformations cannot be safely reversed.
 
-`MigrationReadinessDiagnosticCheck` reports missing or incorrectly declared
-`down()` methods and classes marked for legacy checksum exemption. It does not
-inspect the method body or flag an intentional `MigrationException('Not implemented')`. It is a read-only, warning-oriented preparatory check,
-not a new migration execution path. The public interface is tightened only
-in a separately approved later step. Implementations unknown to the inspected
-project may remain unchanged until their installation is upgraded.
+`MigrationReadinessDiagnosticCheck` reports only missing or incorrectly
+declared `down()` methods. Legacy checksum markers do not cause findings in
+this check. It does not inspect the method body or flag an intentional
+`MigrationException('Not implemented')`. A structurally prepared migration
+passes this check regardless of its legacy marker. The separate
+`LegacyMigrationDiagnosticCheck` counts the markers and shows a bounded preview
+so that checksum reconciliation can be tracked independently. Both checks are
+read-only and do not create a reverse migration execution path. The public
+interface is tightened only in a separately approved later step.
+Implementations unknown to the inspected project may remain unchanged until
+their installation is upgraded.
 
 There is currently no automatic reverse execution, reverse provider ordering,
 rollback history update or reversible-DDL guarantee. Those are separate

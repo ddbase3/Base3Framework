@@ -36,15 +36,13 @@ final class MigrationReadinessDiagnosticCheckTest extends TestCase {
 		$this->assertStringContainsString('down() is not yet declared', $result->replacements['sample']);
 	}
 
-	public function testThrowingDownDoesNotCreateAdditionalDiagnosticFinding(): void {
+	public function testLegacyMarkerDoesNotAffectDownReadiness(): void {
 		$this->fixture->module('Alpha', 'Alpha', '1.0.0', [], [
 			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; use Base3\Migration\Api\IDatabaseMigration as MigrationContract; use Base3\Migration\Api\ILegacyDatabaseMigration as Legacy; use Base3\Migration\Exception\MigrationException; final class AlphaMigration001 implements MigrationContract, Legacy { public function up(): void {} public function getVersion(): string { return "001"; } public function down(): void { throw new MigrationException("Not implemented"); } }'
 		]);
 		$result = $this->runCheck();
-		$this->assertSame(DiagnosticCheckResult::WARNING, $result->status);
-		$this->assertSame(1, $result->details['warning']);
-		$this->assertStringContainsString('legacy checksum validation is disabled', $result->replacements['sample']);
-		$this->assertFalse(str_contains($result->replacements['sample'], 'throw'));
+		$this->assertSame(DiagnosticCheckResult::PASSED, $result->status);
+		$this->assertSame(0, $result->details['warning']);
 	}
 
 	public function testExplicitNotImplementedExceptionIsNotReportedAsDiagnosticFinding(): void {

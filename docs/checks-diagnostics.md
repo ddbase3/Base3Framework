@@ -369,7 +369,10 @@ BASE3 class map. The framework supplies these read-only checks:
 | `modulemanifestdiagnosticcheck` | Installation | Module roots, `base3.json`, required manifest fields, module uniqueness, hard dependency versions and cycles. |
 | `phpmoduledependencydiagnosticcheck` | Dependencies | PHP source references to installed BASE3 modules, target type declarations and corresponding manifest dependencies. |
 | `classmapsourcediagnosticcheck` | Installation | Source namespace/path alignment, one declared type per class file, literal technical `getName()` values and duplicates. |
-| `migrationreadinessdiagnosticcheck` | Installation | Static migration `down()` readiness, explicit legacy checksum exemptions and unresolved source coverage. |
+| `migrationreadinessdiagnosticcheck` | Installation | Static readiness of migration `down(): void` declarations, independently of legacy markers. |
+| `legacymigrationdiagnosticcheck` | Installation | Count and short preview of migrations with the explicit legacy checksum exemption. |
+| `requiredmodulefilesdiagnosticcheck` | Installation | Checks the exact repository-root files `README.md`, `PRIVACY.md` and `LICENSE` in every module and the framework. |
+| `translationcatalogdiagnosticcheck` | Installation | Checks required languages, complete section/key sets and non-empty translations in each module-owned `lang/` catalog. |
 
 These checks use the existing `IModuleRegistry` for registered module roots. In the
 standard layout they also inspect `DIR_ROOT` and immediate directories under
@@ -379,19 +382,42 @@ hosts with other module locations must make those roots available through the
 existing registry. If the inspectable scope is incomplete, the result must not
 be interpreted as proof of installation-wide compliance.
 
-The migration readiness check reports missing `down()` and invalid
-`public function down(): void` declarations as staged **warnings** while
-the migration interface is unchanged. The check intentionally does not inspect
-method bodies: `throw new MigrationException('Not implemented')` is a valid
-staged implementation and will fail explicitly only if `down()` is executed.
-The independent
-`ILegacyDatabaseMigration` marker is also reported, since it disables checksum
-comparison for already applied instances only. A missing manifest, parse
-error or incomplete source inventory must not produce a false green result.
-Inherited or dynamically selected migrations may be unverifiable by static
-inspection and must be resolved or reported, not silently presumed reversible.
-The check neither loads migration classes nor executes `up()` or `down()`.
+The `migrationreadinessdiagnosticcheck` reports missing `down()` and invalid
+`public function down(): void` declarations as staged **warnings** while the
+migration interface is unchanged. It does not inspect method bodies:
+`throw new MigrationException('Not implemented')` satisfies the structural
+check and fails explicitly only if `down()` is invoked. Legacy markers do not
+affect this check. When every detected migration has a valid signature, the
+readiness check passes even if those migrations still carry legacy markers.
 The actual `down()` contract is not mandatory in this preparatory release.
+
+The separate `legacymigrationdiagnosticcheck` counts and summarizes migrations
+that implement the independent `ILegacyDatabaseMigration` marker. These
+migrations are still discovered and can run `up()` normally; checksum comparison
+is disabled only for their already-applied histories. It reports one compact
+summary with the total and a bounded file preview, not one warning per
+migration. The check passes when no legacy markers remain. An incomplete
+source inventory, invalid manifest, parse error or statically unresolved
+migration must not produce a false green result. Neither check loads migration
+classes or executes `up()` or `down()`.
+
+The `requiredmodulefilesdiagnosticcheck` inspects the registered and standard
+manifest-based module roots, including the framework. Each must contain
+readable, regular repository-root files named exactly `README.md`, `PRIVACY.md`
+and `LICENSE`. It checks presence and readability, not the legal accuracy or
+completeness of those documents.
+
+The `translationcatalogdiagnosticcheck` inspects existing `lang/` catalog
+subdirectories. For each catalog group containing INI files it requires
+`ar`, `bg`, `de`, `en`, `es`, `fr`, `hi`, `it`, `pl`, `pt`, `ru`, and `zh`. All
+present languages, including optional additional languages, must contain the
+same section/key entries with non-empty values and matching message placeholders.
+Missing individual keys, mismatched placeholders and invalid INI files are failures. Modules with no language catalogs are not
+required to introduce artificial empty language directories. The required
+language list is owned by the check and can be extended in a later framework
+change; no second language configuration or translation service is created.
+The check does not attempt to determine whether translated text is linguistically
+correct, only whether catalogs are structurally complete.
 
 The PHP checks tokenize source files without requiring, including or
 instantiating the inspected plugin code. The source dependency check evaluates
