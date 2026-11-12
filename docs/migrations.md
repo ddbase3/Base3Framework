@@ -98,7 +98,11 @@ IDatabaseMigrationProvider
   Provides migration steps for one schema owner.
 
 IDatabaseMigration
-  Describes and applies one immutable migration step.
+  Describes and applies a forward migration step. Its down() method is optional
+  while the diagnosis-guided transition remains open.
+
+ILegacyDatabaseMigration
+  Independent marker for an explicitly checksum-exempt historical migration.
 
 DatabaseMigrationRepository
   Stores which migration steps have already been applied.
@@ -121,6 +125,7 @@ The framework migration subsystem lives under:
 src/Migration/
 ├── Api/
 │   ├── IDatabaseMigration.php
+│   ├── ILegacyDatabaseMigration.php
 │   ├── IDatabaseMigrationProvider.php
 │   └── IMigrationRunner.php
 ├── Database/
@@ -605,36 +610,79 @@ Locks have a TTL. This matters because a crashed process must not block migratio
 
 ---
 
-## 15. Checksums and immutability
+## 15. Checksums, immutability and incremental legacy preparation
 
-The runner stores a checksum for each applied migration.
+The database-backed runner records one SHA-256 checksum per applied migration
+in `base3_migrations`. For a normal migration, an existing history entry is
+compared against the current checksum every time that migration is discovered.
+The SHA-256 input is the complete PHP source file declaring the concrete
+migration class, not its `IDatabaseMigration` interface or other dependencies.
+When no source file is available, the runner uses its established metadata
+hash. Changing a migration file, including its `implements` list or comments,
+therefore changes the checksum; changing the interface file itself does not.
 
-When a migration has already been applied, the runner calculates the current checksum and compares it with the stored checksum.
+`Base3\Migration\Api\ILegacyDatabaseMigration` is an independent empty marker.
+It is **not** a replacement for `IDatabaseMigration` and does not inherit it.
+A migration can temporarily implement both interfaces while its source is
+being prepared incrementally:
 
-If the checksum differs, the runner throws a `MigrationException`.
+```php
+use Base3\Migration\Api\IDatabaseMigration;
+use Base3\Migration\Api\ILegacyDatabaseMigration;
 
-This protects an important rule:
+final class ExampleMigration001 implements IDatabaseMigration, ILegacyDatabaseMigration {
 
-```text
-Do not edit old migration files after they have been released.
+	public static function getName(): string {
+		return 'examplemigration001';
+	}
+
+	public function getVersion(): string {
+		return '001';
+	}
+
+	public function getDescription(): string {
+		return 'Example legacy migration';
+	}
+
+	public function up(): void {
+		// Preserve the original schema changes here.
+	}
+
+	public function down(): void {
+		throw new \Base3\Migration\Exception\MigrationException('Not implemented');
+	}
+}
 ```
 
-If a released migration was incomplete, do not change it. Add a new migration.
+When an **already applied** migration has this marker, the runner skips only
+its checksum comparison. It still finds and orders the migration through its
+existing provider and applied-history identity. No source file or history
+record is changed merely by adding this runner support. When a marked
+migration is **not yet applied**, its `up()` executes normally and the runner
+stores its current checksum as usual. The marker is not a bypass of other
+migration errors and does not make a step reversible.
 
-Good:
+Existing migrations remain immutable by default. The marker is an explicit,
+per-class, temporary exception during an intentional source transition, not a
+global relaxation of integrity checks. Migration classes that do not implement
+it retain their strict previous behavior. A database may have an old stored
+checksum for a legacy-marked migration until it is deliberately reconciled.
 
-```text
-001_create_tables
-002_add_missing_index
-```
+To restore ordinary checksum validation, finalize the source **without** the
+marker, update the applied history's checksum to match that final complete
+source, and then deploy it with normal validation. The reconciliation can be
+performed manually or by a deliberately ordered database migration, but is
+not automatically performed by the runner. Removing the marker before
+reconciliation would trigger the normal checksum mismatch. Different projects
+may make this transition at different times; unknown or older installations
+are not required to upgrade together.
 
-Bad:
-
-```text
-001_create_tables  edited after release to also add the missing index
-```
-
-Migration steps are historical records. Treat them as immutable.
+Later, obsolete migration source files may be removed only once their upgrade
+path is officially unsupported and installations requiring it are outside the
+supported range. Existing applied-history entries can remain in the database;
+the current runner only processes migrations supplied by active providers.
+A fresh installation must nevertheless have a supported way to create the
+required initial schema. A consolidated baseline is optional, not mandatory.
 
 ---
 
@@ -973,33 +1021,31 @@ Avoid turning every migration into a large schema-inspection script. The migrati
 
 ---
 
-## 25. Rollbacks
+## 25. Preparing future reverse migrations
 
-The initial BASE3 migration contract intentionally defines only:
+The current `IDatabaseMigration` interface still requires only `up(): void`.
+A `down(): void` method may be added to individual concrete migrations now,
+but is **not yet** a mandatory interface member and is **not executed** by
+the existing migration runner.
 
-```php
-public function up(): void;
-```
+For an older step without a known safe reversal, a deliberate implementation
+may throw the existing `MigrationException('Not implemented')`. This permits a
+staged source update without pretending a database rollback is available.
+An explicit exception is not a functioning reverse migration. Any real
+`down()` operation requires behavior tests against the relevant database and
+data state; some destructive transformations cannot be safely reversed.
 
-There is no `down()` method.
+`MigrationReadinessDiagnosticCheck` reports missing or incorrectly declared
+`down()` methods and classes marked for legacy checksum exemption. It does not
+inspect the method body or flag an intentional `MigrationException('Not implemented')`. It is a read-only, warning-oriented preparatory check,
+not a new migration execution path. The public interface is tightened only
+in a separately approved later step. Implementations unknown to the inspected
+project may remain unchanged until their installation is upgraded.
 
-Reason:
-
-```text
-Automatic rollback of real production data is often unsafe or misleading.
-```
-
-If a migration must be reverted, prefer a new forward migration that restores or adapts the schema intentionally.
-
-Example:
-
-```text
-010_add_status_column
-011_restore_status_defaults
-012_deprecate_status_column
-```
-
-For development databases, manual reset tooling can be separate from the migration API.
+There is currently no automatic reverse execution, reverse provider ordering,
+rollback history update or reversible-DDL guarantee. Those are separate
+behavioral requirements for any later runner enhancement, not capabilities
+introduced by the legacy marker or source diagnostic.
 
 ---
 

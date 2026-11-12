@@ -385,7 +385,7 @@ See [XRM and Manager authorization](docs/authorization-xrm-manager.md) for the n
 
 ### Structured diagnostics
 
-Discoverable `Base3\Diagnostics\Api\IDiagnosticCheck` and `IDiagnosticScope` implementations provide read-only checks, categorized scopes and translatable structured `DiagnosticCheckResult` values. `IDiagnosticRunner` discovers implementations through `IClassMap` and runs one check per invocation. The old `ICheck` API remains available unchanged until a separate migration. See `docs/checks-diagnostics.md`.
+Discoverable `Base3\Diagnostics\Api\IDiagnosticCheck` and `IDiagnosticScope` implementations provide read-only checks, categorized scopes and translatable structured `DiagnosticCheckResult` values. `IDiagnosticRunner` discovers implementations through `IClassMap` and runs one check per invocation. The old `ICheck` API remains available unchanged until a separate migration. See `docs/checks-diagnostics.md`. The framework also provides read-only installation and dependency checks for module manifests, statically referenced PHP types, classmap source consistency and future migration `down()` readiness. The latter reports explicit `ILegacyDatabaseMigration` checksum exemptions without executing migration code. It does not make `down()` mandatory or enable reverse execution. See `docs/migrations.md` for the incremental transition and eventual removal/reconciliation of legacy markers.
 
 ### Feature-based diagnostic access
 

@@ -355,3 +355,67 @@ After installing new check or scope implementations, regenerate the normal BASE3
 The privileged `DiagnosticScopeDisplay` checks both this feature permission and native `system/admin` permission for HTML and AJAX access. Its view-only tab visibility is managed by the host/project navigation. A hidden tab is not an access decision. No diagnostic history or new storage is created by the feature definition.
 
 Translations for the feature label and description live in `Base3Framework/lang/Features/`.
+
+
+---
+
+## Structured source diagnostics for staged BASE3 changes
+
+The existing `IDiagnosticRunner` discovers `IDiagnosticCheck` implementations through the
+BASE3 class map. The framework supplies these read-only checks:
+
+| Check name | Scope | Evaluated condition |
+| --- | --- | --- |
+| `modulemanifestdiagnosticcheck` | Installation | Module roots, `base3.json`, required manifest fields, module uniqueness, hard dependency versions and cycles. |
+| `phpmoduledependencydiagnosticcheck` | Dependencies | PHP source references to installed BASE3 modules, target type declarations and corresponding manifest dependencies. |
+| `classmapsourcediagnosticcheck` | Installation | Source namespace/path alignment, one declared type per class file, literal technical `getName()` values and duplicates. |
+| `migrationreadinessdiagnosticcheck` | Installation | Static migration `down()` readiness, explicit legacy checksum exemptions and unresolved source coverage. |
+
+These checks use the existing `IModuleRegistry` for registered module roots. In the
+standard layout they also inspect `DIR_ROOT` and immediate directories under
+`DIR_PLUGIN`, so that a directory with a missing manifest does not disappear
+from the result merely because normal registry discovery skips it. Embedded
+hosts with other module locations must make those roots available through the
+existing registry. If the inspectable scope is incomplete, the result must not
+be interpreted as proof of installation-wide compliance.
+
+The migration readiness check reports missing `down()` and invalid
+`public function down(): void` declarations as staged **warnings** while
+the migration interface is unchanged. The check intentionally does not inspect
+method bodies: `throw new MigrationException('Not implemented')` is a valid
+staged implementation and will fail explicitly only if `down()` is executed.
+The independent
+`ILegacyDatabaseMigration` marker is also reported, since it disables checksum
+comparison for already applied instances only. A missing manifest, parse
+error or incomplete source inventory must not produce a false green result.
+Inherited or dynamically selected migrations may be unverifiable by static
+inspection and must be resolved or reported, not silently presumed reversible.
+The check neither loads migration classes nor executes `up()` or `down()`.
+The actual `down()` contract is not mandatory in this preparatory release.
+
+The PHP checks tokenize source files without requiring, including or
+instantiating the inspected plugin code. The source dependency check evaluates
+actually referenced imports and qualified names in known BASE3 namespaces,
+not arbitrary vendor packages, dynamic class-name strings or DI runtime
+bindings. Statically unresolved Foundation namespaces are reported as warnings.
+The classmap check validates **source prerequisites**, not the contents of an
+already-generated classmap cache. These diagnostics do not replace PHP syntax
+checks, class loading or integration tests.
+
+Manifest version constraints use the documented common forms `>=`, `<=`,
+`>`, `<`, `=`, `^`, `~`, wildcard suffixes and `||` alternatives, with
+space- or comma-separated conjunctions. Unsupported expressions are reported
+as errors, never accepted as matching. A complete Composer constraint parser
+is not silently assumed to be installed.
+
+Checks return translation keys and bounded technical findings using
+`DiagnosticCheckResult`. Strings are defined under the owning framework
+`lang/DiagnosticChecks/` catalogs. No diagnostic creates a table, stores its
+results, downloads code or attempts repairs. Access to diagnostic reports
+must remain controlled by the invoking endpoint through the existing
+`IAuthorizationService`; adding a check does not grant access.
+
+For contract evolution, add an observable check before enforcing the future
+rule, correct the affected sources, verify the stated project scope, then
+change the contract only when appropriate behavior tests also pass. Keep
+useful diagnostics afterward to catch regressions.

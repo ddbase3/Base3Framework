@@ -71,3 +71,23 @@ Chatbot Configuration tab now presents the existing FileBridge-backed
 FileManager for that same instance. The local data-directory storage and upload processing,
 rights checks and known operational gaps remain documented in the site and
 ClientStack privacy statements. No remote file storage service is introduced.
+
+
+## Read-only source diagnostics (2026-11-12)
+
+BASE3's structured diagnostics now include checks for module manifests,
+module dependency versions, static PHP type references, migration signatures
+and classmap source naming. The checks read installed module metadata and
+PHP source files locally and produce an in-memory `DiagnosticCheckResult`
+with bounded technical module identifiers and relative source locations.
+They do not require or execute inspected plugin code, modify module files,
+run database migrations, persist findings or contact external services.
+The framework adds no diagnostic database, retention mechanism or recipient.
+
+Diagnostic result access remains the responsibility of the existing
+invoking endpoint and `IAuthorizationService`; the checks themselves grant
+no rights. Technical source identifiers can disclose installation structure,
+so diagnostics must not be exposed to unauthorized users. Web-server access
+logs or host-provided monitoring may retain requests to the diagnostic UI;
+those records and their retention are outside the checks and must be
+verified for each deployment.

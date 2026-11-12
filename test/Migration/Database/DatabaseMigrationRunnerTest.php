@@ -88,6 +88,40 @@ final class DatabaseMigrationRunnerTest extends TestCase {
 		$this->assertCount(2, $db->scalarQueries);
 	}
 
+	public function testMarkedAppliedMigrationSkipsOnlyTheChecksumComparison(): void {
+		$step = new LegacyMigrationStepFixture();
+		[$runner, $db] = $this->setupRunner([$step]);
+		$db->singleRow = ['checksum' => 'previously-applied-file-hash'];
+		$runner->migrate();
+		$this->assertSame(0, $step->calls);
+		$this->assertCount(1, $db->singleQueries);
+		$this->assertCount(1, $db->nonQueries);
+		$this->assertCount(2, $db->scalarQueries);
+	}
+
+	public function testMarkedPendingMigrationStillRunsAndRecordsItsSourceChecksum(): void {
+		$step = new LegacyMigrationStepFixture();
+		[$runner, $db] = $this->setupRunner([$step]);
+		$runner->migrate();
+		$this->assertSame(1, $step->calls);
+		$this->assertCount(2, $db->nonQueries);
+		$this->assertStringContainsString(
+			hash_file('sha256', __DIR__ . '/LegacyMigrationStepFixture.php'),
+			$db->nonQueries[1]
+		);
+	}
+
+	public function testLegacyMarkerWithoutMigrationContractIsRejected(): void {
+		[$runner, $db] = $this->setupRunner([new LegacyMarkerOnlyFixture()]);
+		$this->expectException(MigrationException::class);
+		$runner->migrate();
+	}
+
+	public function testLegacyMarkerDoesNotChangeMigrationContract(): void {
+		$this->assertFalse(is_subclass_of(\Base3\Migration\Api\ILegacyDatabaseMigration::class, \Base3\Migration\Api\IDatabaseMigration::class));
+		$this->assertFalse(method_exists(\Base3\Migration\Api\IDatabaseMigration::class, 'down'));
+	}
+
 	public function testDatabaseErrorAfterMigrationPreventsAppliedMarker(): void {
 		$step = new MigrationStepFixture('1');
 		[$runner, $db] = $this->setupRunner([$step]);
@@ -100,6 +134,8 @@ final class DatabaseMigrationRunnerTest extends TestCase {
 	}
 }
 
+require_once __DIR__ . '/LegacyMigrationStepFixture.php';
+require_once __DIR__ . '/LegacyMarkerOnlyFixture.php';
 require_once __DIR__ . '/MigrationStepFixture.php';
 require_once __DIR__ . '/MigrationProviderFixture.php';
 require_once __DIR__ . '/../../Support/RecordingDatabaseStub.php';

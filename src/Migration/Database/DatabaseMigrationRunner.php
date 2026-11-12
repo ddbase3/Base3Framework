@@ -22,6 +22,7 @@ use Base3\Api\IClassMap;
 use Base3\Database\Api\IDatabase;
 use Base3\Migration\Api\IDatabaseMigration;
 use Base3\Migration\Api\IDatabaseMigrationProvider;
+use Base3\Migration\Api\ILegacyDatabaseMigration;
 use Base3\Migration\Api\IMigrationRunner;
 use Base3\Migration\Exception\MigrationException;
 use ReflectionClass;
@@ -131,14 +132,16 @@ final class DatabaseMigrationRunner implements IMigrationRunner {
 
 	private function runMigration(string $providerName, IDatabaseMigration $migration): void {
 		$migrationName = $migration::getName();
-		$checksum = $this->createChecksum($migration);
 		$applied = $this->repository->getApplied($providerName, $migrationName);
 
 		if ($applied !== null) {
-			$this->assertChecksumMatches($providerName, $migration, $applied, $checksum);
+			if (!($migration instanceof ILegacyDatabaseMigration)) {
+				$this->assertChecksumMatches($providerName, $migration, $applied, $this->createChecksum($migration));
+			}
 			return;
 		}
 
+		$checksum = $this->createChecksum($migration);
 		$start = microtime(true);
 
 		$migration->up();
