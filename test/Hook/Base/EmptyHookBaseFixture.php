@@ -18,7 +18,7 @@
 
 namespace Base3\Test\Hook\Base;
 
-use Base3\Hook\Base\AbstractHookListener;
+use Base3\CoreFoundation\Hook\Base\AbstractHookListener;
 
 final class EmptyHookBaseFixture extends AbstractHookListener {
 }

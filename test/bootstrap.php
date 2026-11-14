@@ -13,7 +13,6 @@ putenv('DEBUG=1');
 
 // --- Directory constants ------------------------------------------------------
 define('DIR_ROOT', rtrim((string)realpath(__DIR__ . '/../'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
-define('DIR_SRC', DIR_ROOT . 'src' . DIRECTORY_SEPARATOR);
 define('DIR_PLUGIN', DIR_ROOT . 'plugin' . DIRECTORY_SEPARATOR);
 define('DIR_TEST', DIR_ROOT . 'test' . DIRECTORY_SEPARATOR);
 
@@ -50,8 +49,8 @@ if (is_file($rootComposerAutoload)) {
 }
 
 // --- Autoload: project autoloader --------------------------------------------
-require_once DIR_SRC . 'Core' . DIRECTORY_SEPARATOR . 'Autoloader.php';
-\Base3\Core\Autoloader::register();
+require_once DIR_ROOT . 'bootstrap' . DIRECTORY_SEPARATOR . 'Autoloader.php';
+\Base3\Bootstrap\Autoloader::register();
 
 // --- Autoload: Composer (per plugin, optional) --------------------------------
 // Only needed if some plugins have their own vendor/ folder with PSR-4 autoloading.

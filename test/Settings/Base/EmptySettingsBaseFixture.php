@@ -18,7 +18,7 @@
 
 namespace Base3\Test\Settings\Base;
 
-use Base3\Settings\Base\AbstractSettingsStore;
+use Base3\CoreFoundation\Settings\Base\AbstractSettingsStore;
 
 final class EmptySettingsBaseFixture extends AbstractSettingsStore {
 }

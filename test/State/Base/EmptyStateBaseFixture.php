@@ -18,7 +18,7 @@
 
 namespace Base3\Test\State\Base;
 
-use Base3\State\Base\AbstractStateStore;
+use Base3\CoreFoundation\State\Base\AbstractStateStore;
 
 final class EmptyStateBaseFixture extends AbstractStateStore {
 }

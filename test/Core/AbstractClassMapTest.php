@@ -1,11 +1,27 @@
 <?php declare(strict_types=1);
 
-namespace Base3Test\Core;
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
 
-use Base3\Api\IBase;
-use Base3\Api\ICheck;
-use Base3\Api\IContainer;
-use Base3\Core\AbstractClassMap;
+namespace Base3\Test\Core;
+
+use Base3\CoreFoundation\Api\IBase;
+use Base3\CoreFoundation\Api\ICheck;
+use Base3\CoreFoundation\Api\IContainer;
+use Base3\CoreFoundation\Base\AbstractClassMap;
 use PHPUnit\Framework\TestCase;
 
 final class AbstractClassMapTest extends TestCase {
@@ -60,7 +76,7 @@ final class AbstractClassMapTest extends TestCase {
 <?php declare(strict_types=1);
 namespace MyApp;
 
-use Base3\Api\IBase;
+use Base3\CoreFoundation\Api\IBase;
 
 class Foo implements IBase {
 	public static function getName(): string { return 'foo'; }
@@ -114,7 +130,7 @@ PHP);
 		$map = $cm->exposeGetMap();
 
 		$this->assertArrayHasKey('AppX', $map);
-		$this->assertSame(\Base3Test\Core\ClassMapDemo::class, $map['AppX']['name']['demo']);
+		$this->assertSame(\Base3\Test\Core\ClassMapDemo::class, $map['AppX']['name']['demo']);
 	}
 
 	public function testGetInstancesCriteriaAndRetryGenerate(): void {
@@ -130,7 +146,7 @@ PHP);
 <?php declare(strict_types=1);
 namespace AppA;
 
-use Base3\Api\IBase;
+use Base3\CoreFoundation\Api\IBase;
 require_once __DIR__ . '/IA.php';
 
 class NamedThing implements IBase, IA {
@@ -172,7 +188,7 @@ PHP);
 		// Retry path without autoload noise: use an existing interface that is not in the map.
 
 		$before = $cm->generateCalls;
-		$none = $cm->getInstances(['app' => 'AppA', 'interface' => \Base3Test\Core\IRetryMissing::class]);
+		$none = $cm->getInstances(['app' => 'AppA', 'interface' => \Base3\Test\Core\IRetryMissing::class]);
 		$this->assertIsArray($none);
 		$this->assertGreaterThanOrEqual($before + 1, $cm->generateCalls);
 	}
@@ -188,10 +204,10 @@ PHP);
 
 
 
-		$depA = new \Base3Test\Core\DepA();
+		$depA = new \Base3\Test\Core\DepA();
 
 		$container = $this->makeContainer([
-			\Base3Test\Core\DepA::class => $depA,
+			\Base3\Test\Core\DepA::class => $depA,
 			// for builtin by param name
 			'name' => 'n1',
 			// for paramName class resolution (non-sensical name "custom" key)
@@ -200,36 +216,36 @@ PHP);
 
 		$cm = new AbstractClassMapTestDouble6($container);
 
-		$noCtor = $cm->instantiate(\Base3Test\Core\NoCtor::class);
-		$this->assertInstanceOf(\Base3Test\Core\NoCtor::class, $noCtor);
+		$noCtor = $cm->instantiate(\Base3\Test\Core\NoCtor::class);
+		$this->assertInstanceOf(\Base3\Test\Core\NoCtor::class, $noCtor);
 
-		$needsBuiltin = $cm->instantiate(\Base3Test\Core\NeedsBuiltin::class);
-		$this->assertInstanceOf(\Base3Test\Core\NeedsBuiltin::class, $needsBuiltin);
+		$needsBuiltin = $cm->instantiate(\Base3\Test\Core\NeedsBuiltin::class);
+		$this->assertInstanceOf(\Base3\Test\Core\NeedsBuiltin::class, $needsBuiltin);
 
-		$needsClass = $cm->instantiate(\Base3Test\Core\NeedsClassType::class);
-		$this->assertInstanceOf(\Base3Test\Core\NeedsClassType::class, $needsClass);
+		$needsClass = $cm->instantiate(\Base3\Test\Core\NeedsClassType::class);
+		$this->assertInstanceOf(\Base3\Test\Core\NeedsClassType::class, $needsClass);
 		$this->assertSame($depA, $needsClass->a);
 
-		$needsParamName = $cm->instantiate(\Base3Test\Core\NeedsByParamName::class);
-		$this->assertInstanceOf(\Base3Test\Core\NeedsByParamName::class, $needsParamName);
+		$needsParamName = $cm->instantiate(\Base3\Test\Core\NeedsByParamName::class);
+		$this->assertInstanceOf(\Base3\Test\Core\NeedsByParamName::class, $needsParamName);
 
-		$union = $cm->instantiate(\Base3Test\Core\UnionNeeds::class);
-		$this->assertInstanceOf(\Base3Test\Core\UnionNeeds::class, $union);
-		$this->assertInstanceOf(\Base3Test\Core\DepA::class, $union->v);
+		$union = $cm->instantiate(\Base3\Test\Core\UnionNeeds::class);
+		$this->assertInstanceOf(\Base3\Test\Core\UnionNeeds::class, $union);
+		$this->assertInstanceOf(\Base3\Test\Core\DepA::class, $union->v);
 
-		$unionDefault = $cm->instantiate(\Base3Test\Core\UnionDefault::class);
-		$this->assertInstanceOf(\Base3Test\Core\UnionDefault::class, $unionDefault);
+		$unionDefault = $cm->instantiate(\Base3\Test\Core\UnionDefault::class);
+		$this->assertInstanceOf(\Base3\Test\Core\UnionDefault::class, $unionDefault);
 
-		$nullable = $cm->instantiate(\Base3Test\Core\NullableDefault::class);
-		$this->assertInstanceOf(\Base3Test\Core\NullableDefault::class, $nullable);
+		$nullable = $cm->instantiate(\Base3\Test\Core\NullableDefault::class);
+		$this->assertInstanceOf(\Base3\Test\Core\NullableDefault::class, $nullable);
 		$this->assertNull($nullable->v);
 
-		$needsMocked = $cm->instantiate(\Base3Test\Core\NeedsMockedInterface::class);
-		$this->assertInstanceOf(\Base3Test\Core\NeedsMockedInterface::class, $needsMocked);
+		$needsMocked = $cm->instantiate(\Base3\Test\Core\NeedsMockedInterface::class);
+		$this->assertInstanceOf(\Base3\Test\Core\NeedsMockedInterface::class, $needsMocked);
 		$this->assertIsObject($needsMocked->m);
 
 		// Abstract -> instantiate() should return null
-		$this->assertNull($cm->instantiate(\Base3Test\Core\AbstractX::class));
+		$this->assertNull($cm->instantiate(\Base3\Test\Core\AbstractX::class));
 	}
 
 	public function testCheckDependenciesReportsWritability(): void {

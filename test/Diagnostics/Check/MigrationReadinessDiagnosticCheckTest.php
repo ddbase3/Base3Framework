@@ -1,9 +1,25 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Diagnostics\Check;
 
-use Base3\Diagnostics\Check\MigrationReadinessDiagnosticCheck;
-use Base3\Diagnostics\Dto\DiagnosticCheckResult;
+use Base3\Core\Diagnostics\Check\MigrationReadinessDiagnosticCheck;
+use Base3\CoreFoundation\Diagnostics\Dto\DiagnosticCheckResult;
 use PHPUnit\Framework\TestCase;
 
 final class MigrationReadinessDiagnosticCheckTest extends TestCase {
@@ -28,7 +44,7 @@ final class MigrationReadinessDiagnosticCheckTest extends TestCase {
 
 	public function testMissingDownProducesStagedWarningWithoutFailure(): void {
 		$this->fixture->module('Alpha', 'Alpha', '1.0.0', [], [
-			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; use Base3\Migration\Api\IDatabaseMigration; final class AlphaMigration001 implements IDatabaseMigration { public function getVersion(): string { return "001"; } public function up(): void {} }'
+			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; use Base3\CoreFoundation\Migration\Api\IDatabaseMigration; final class AlphaMigration001 implements IDatabaseMigration { public function getVersion(): string { return "001"; } public function up(): void {} }'
 		]);
 		$result = $this->runCheck();
 		$this->assertSame(DiagnosticCheckResult::WARNING, $result->status);
@@ -38,7 +54,7 @@ final class MigrationReadinessDiagnosticCheckTest extends TestCase {
 
 	public function testLegacyMarkerDoesNotAffectDownReadiness(): void {
 		$this->fixture->module('Alpha', 'Alpha', '1.0.0', [], [
-			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; use Base3\Migration\Api\IDatabaseMigration as MigrationContract; use Base3\Migration\Api\ILegacyDatabaseMigration as Legacy; use Base3\Migration\Exception\MigrationException; final class AlphaMigration001 implements MigrationContract, Legacy { public function up(): void {} public function getVersion(): string { return "001"; } public function down(): void { throw new MigrationException("Not implemented"); } }'
+			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; use Base3\CoreFoundation\Migration\Api\IDatabaseMigration as MigrationContract; use Base3\CoreFoundation\Migration\Api\ILegacyDatabaseMigration as Legacy; use Base3\CoreFoundation\Migration\Exception\MigrationException; final class AlphaMigration001 implements MigrationContract, Legacy { public function up(): void {} public function getVersion(): string { return "001"; } public function down(): void { throw new MigrationException("Not implemented"); } }'
 		]);
 		$result = $this->runCheck();
 		$this->assertSame(DiagnosticCheckResult::PASSED, $result->status);
@@ -47,7 +63,7 @@ final class MigrationReadinessDiagnosticCheckTest extends TestCase {
 
 	public function testExplicitNotImplementedExceptionIsNotReportedAsDiagnosticFinding(): void {
 		$this->fixture->module('Alpha', 'Alpha', '1.0.0', [], [
-			'Migration/AlphaMigration003.php' => '<?php namespace Alpha\Migration; use Base3\Migration\Api\IDatabaseMigration; use Base3\Migration\Exception\MigrationException; final class AlphaMigration003 implements IDatabaseMigration { public function up(): void {} public function getVersion(): string { return "003"; } public function down(): void { throw new MigrationException("Not implemented"); } }'
+			'Migration/AlphaMigration003.php' => '<?php namespace Alpha\Migration; use Base3\CoreFoundation\Migration\Api\IDatabaseMigration; use Base3\CoreFoundation\Migration\Exception\MigrationException; final class AlphaMigration003 implements IDatabaseMigration { public function up(): void {} public function getVersion(): string { return "003"; } public function down(): void { throw new MigrationException("Not implemented"); } }'
 		]);
 		$result = $this->runCheck();
 		$this->assertSame(DiagnosticCheckResult::PASSED, $result->status);
@@ -56,14 +72,14 @@ final class MigrationReadinessDiagnosticCheckTest extends TestCase {
 
 	public function testValidNonLegacyDownSignatureIsStructurallyAccepted(): void {
 		$this->fixture->module('Alpha', 'Alpha', '1.0.0', [], [
-			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; final class AlphaMigration001 implements \Base3\Migration\Api\IDatabaseMigration { public function up(): void {} public function getVersion(): string { return "001"; } public function down(): void { $this->up(); } }'
+			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; final class AlphaMigration001 implements \Base3\CoreFoundation\Migration\Api\IDatabaseMigration { public function up(): void {} public function getVersion(): string { return "001"; } public function down(): void { $this->up(); } }'
 		]);
 		$this->assertSame(DiagnosticCheckResult::PASSED, $this->runCheck()->status);
 	}
 
 	public function testInvalidDownSignatureIsReportedWithoutLoadingSource(): void {
 		$this->fixture->module('Alpha', 'Alpha', '1.0.0', [], [
-			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; final class AlphaMigration001 implements \Base3\Migration\Api\IDatabaseMigration { public function up(): void {} public function getVersion(): string { return "001"; } private static function down(string $arg): int { return 1; } }'
+			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; final class AlphaMigration001 implements \Base3\CoreFoundation\Migration\Api\IDatabaseMigration { public function up(): void {} public function getVersion(): string { return "001"; } private static function down(string $arg): int { return 1; } }'
 		]);
 		$result = $this->runCheck();
 		$this->assertSame(DiagnosticCheckResult::WARNING, $result->status);
@@ -72,14 +88,14 @@ final class MigrationReadinessDiagnosticCheckTest extends TestCase {
 
 	public function testEmptyDownIsAcceptedAsStructurallyCorrect(): void {
 		$this->fixture->module('Alpha', 'Alpha', '1.0.0', [], [
-			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; final class AlphaMigration001 implements \Base3\Migration\Api\IDatabaseMigration { public function up(): void {} public function getVersion(): string { return "001"; } public function down(): void { /* empty */ } }'
+			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; final class AlphaMigration001 implements \Base3\CoreFoundation\Migration\Api\IDatabaseMigration { public function up(): void {} public function getVersion(): string { return "001"; } public function down(): void { /* empty */ } }'
 		]);
 		$this->assertSame(DiagnosticCheckResult::PASSED, $this->runCheck()->status);
 	}
 
 	public function testDownMethodOnlyInCommentDoesNotCount(): void {
 		$this->fixture->module('Alpha', 'Alpha', '1.0.0', [], [
-			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; final class AlphaMigration001 implements \Base3\Migration\Api\IDatabaseMigration { public function up(): void {} public function getVersion(): string { return "001"; } /* public function down(): void {} */ }'
+			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; final class AlphaMigration001 implements \Base3\CoreFoundation\Migration\Api\IDatabaseMigration { public function up(): void {} public function getVersion(): string { return "001"; } /* public function down(): void {} */ }'
 		]);
 		$result = $this->runCheck();
 		$this->assertSame(DiagnosticCheckResult::WARNING, $result->status);

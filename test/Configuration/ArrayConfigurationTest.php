@@ -1,5 +1,21 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Configuration;
 
 use PHPUnit\Framework\TestCase;
@@ -7,7 +23,7 @@ use PHPUnit\Framework\TestCase;
 final class ArrayConfigurationTest extends TestCase {
 
 	public function testTypedAccessAndJsonArrays(): void {
-		$config = new \Base3\Configuration\ArrayConfiguration(['group' => [
+		$config = new \Base3\Core\Configuration\ArrayConfiguration(['group' => [
 			'string' => 17, 'int' => '9', 'float' => '1.25', 'bool' => ' yes ',
 			'false' => 'off', 'json' => '{"a":2}', 'broken' => '{not-json}',
 			'null' => null, 'object' => new \stdClass()
@@ -27,7 +43,7 @@ final class ArrayConfigurationTest extends TestCase {
 	}
 
 	public function testWritesMergesReplacesAndPersistsValues(): void {
-		$config = new \Base3\Configuration\ArrayConfiguration(['one' => ['a' => 1, 'b' => 2]]);
+		$config = new \Base3\Core\Configuration\ArrayConfiguration(['one' => ['a' => 1, 'b' => 2]]);
 		$this->assertFalse($config->isDirty());
 		$this->assertTrue($config->saveIfDirty());
 		$config->setGroup('one', ['b' => 4, 'c' => 5]);
@@ -50,7 +66,7 @@ final class ArrayConfigurationTest extends TestCase {
 	}
 
 	public function testLegacyGetAndSetResetRoot(): void {
-		$config = new \Base3\Configuration\ArrayConfiguration(['a' => 1]);
+		$config = new \Base3\Core\Configuration\ArrayConfiguration(['a' => 1]);
 		$this->assertSame(['a' => 1], $config->get());
 		$config->set('hello', 'b');
 		$this->assertSame('hello', $config->get('b'));

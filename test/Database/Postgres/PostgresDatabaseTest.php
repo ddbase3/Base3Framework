@@ -1,6 +1,22 @@
 <?php declare(strict_types=1);
 
-namespace Base3\Database\Postgres;
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
+namespace Base3\Core\Database\Postgres;
 
 // --- pg_* function stubs ------------------------------------------------------
 // The class under test uses unqualified pg_* calls.
@@ -62,14 +78,14 @@ function pg_last_error($conn) {
 
 // -----------------------------------------------------------------------------
 
-namespace Base3Test\Database\Postgres;
+namespace Base3\Test\Database\Postgres;
 
-use Base3\Api\IContainer;
-use Base3\Configuration\Api\IConfiguration;
-use Base3\Configuration\ArrayConfiguration;
+use Base3\CoreFoundation\Api\IContainer;
+use Base3\CoreFoundation\Configuration\Api\IConfiguration;
+use Base3\Core\Configuration\ArrayConfiguration;
 use Base3\Core\ServiceLocator;
-use Base3\Database\Postgres\PgStubState;
-use Base3\Database\Postgres\PostgresDatabase;
+use Base3\Core\Database\Postgres\PgStubState;
+use Base3\Core\Database\Postgres\PostgresDatabase;
 use Base3\Test\Configuration\ConfigurationStub;
 use PHPUnit\Framework\TestCase;
 

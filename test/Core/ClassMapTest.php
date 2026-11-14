@@ -1,20 +1,30 @@
 <?php declare(strict_types=1);
 
-namespace Base3Test\Core;
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
+namespace Base3\Test\Core;
 
 use Base3\Core\ClassMap;
-use Base3\Api\IContainer;
+use Base3\CoreFoundation\Api\IContainer;
 use PHPUnit\Framework\TestCase;
 
 final class ClassMapTest extends TestCase {
 
 	protected function setUp(): void {
-		if (!defined('DIR_SRC')) {
-			// In your project bootstrap, DIR_SRC is usually defined.
-			// For safety in isolated runs, define it to the real src directory if possible.
-			$guess = rtrim((string)realpath(__DIR__ . '/../../src'), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-			define('DIR_SRC', is_dir($guess) ? $guess : sys_get_temp_dir() . DIRECTORY_SEPARATOR);
-		}
 
 		if (!defined('DIR_TMP')) {
 			$tmp = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'base3-tests' . DIRECTORY_SEPARATOR;
@@ -27,15 +37,17 @@ final class ClassMapTest extends TestCase {
 		return new ClassMapTestDouble1();
 	}
 
-	public function testGetScanTargetsConfiguredForSrcBase3Namespace(): void {
+	public function testGetScanTargetsUsesDeclaredCoreModules(): void {
 		$cm = new ClassMapTestDouble2($this->makeContainer());
-
 		$targets = $cm->exposeTargets();
-
-		$this->assertCount(1, $targets);
-		$this->assertSame(DIR_SRC, $targets[0]['basedir']);
-		$this->assertSame('', $targets[0]['subdir']);
-		$this->assertSame('Base3', $targets[0]['subns']);
+		$this->assertCount(2, $targets);
+		$found = [];
+		foreach ($targets as $target) {
+			$found[$target['module']] = $target;
+			$this->assertSame('src', $target['subdir']);
+		}
+		$this->assertSame('Base3\\Core', $found['Core']['subns']);
+		$this->assertSame('Base3\\CoreFoundation', $found['CoreFoundation']['subns']);
 	}
 }
 

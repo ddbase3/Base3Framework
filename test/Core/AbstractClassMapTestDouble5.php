@@ -1,11 +1,27 @@
 <?php declare(strict_types=1);
 
-namespace Base3Test\Core;
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
 
-use Base3\Api\IBase;
-use Base3\Api\ICheck;
-use Base3\Api\IContainer;
-use Base3\Core\AbstractClassMap;
+namespace Base3\Test\Core;
+
+use Base3\CoreFoundation\Api\IBase;
+use Base3\CoreFoundation\Api\ICheck;
+use Base3\CoreFoundation\Api\IContainer;
+use Base3\CoreFoundation\Base\AbstractClassMap;
 use PHPUnit\Framework\TestCase;
 
 final class AbstractClassMapTestDouble5 extends AbstractClassMap {

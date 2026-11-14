@@ -1,5 +1,21 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Accesscontrol\Selected;
 
 use PHPUnit\Framework\TestCase;
@@ -13,7 +29,7 @@ final class SelectedAccesscontrolTest extends TestCase {
 			$a=new \Base3\Test\Accesscontrol\RecordingAuthentication(null);
 			$b=new \Base3\Test\Accesscontrol\RecordingAuthentication('member');
 			$count=0;
-			$s=new \Base3\Accesscontrol\Selected\SelectedAccesscontrol([$a,static function() use (&$count,$b) { $count++;return $b; }]);
+			$s=new \Base3\Core\Accesscontrol\Selected\SelectedAccesscontrol([$a,static function() use (&$count,$b) { $count++;return $b; }]);
 			$this->assertSame(['authentication_methods_given'=>'Ok'],$s->checkDependencies());
 			$this->assertSame('member',$s->getUserId());
 			$this->assertSame('member',$s->getUserId());
@@ -25,13 +41,13 @@ final class SelectedAccesscontrolTest extends TestCase {
 	}
 
 	public function testWithNoAuthenticationMethodsHasNoUser(): void {
-		$s=new \Base3\Accesscontrol\Selected\SelectedAccesscontrol([]);
+		$s=new \Base3\Core\Accesscontrol\Selected\SelectedAccesscontrol([]);
 		$this->assertSame(['authentication_methods_given'=>'Fail'],$s->checkDependencies());
 		$this->assertNull($s->getUserId());
 	}
 
 	public function testInvalidMethodIsRejectedBeforeAnyLogin(): void {
-		$s=new \Base3\Accesscontrol\Selected\SelectedAccesscontrol([new \stdClass()]);
+		$s=new \Base3\Core\Accesscontrol\Selected\SelectedAccesscontrol([new \stdClass()]);
 		$this->expectException(\InvalidArgumentException::class);
 		$s->authenticate();
 	}
@@ -42,7 +58,7 @@ final class SelectedAccesscontrolTest extends TestCase {
 			unset($_REQUEST['checkaccesscontrol']);
 			$a=new \Base3\Test\Accesscontrol\RecordingAuthentication('first');
 			$b=new \Base3\Test\Accesscontrol\RecordingAuthentication('second');
-			$s=new \Base3\Accesscontrol\Selected\SelectedAccesscontrol([$a,$b]);
+			$s=new \Base3\Core\Accesscontrol\Selected\SelectedAccesscontrol([$a,$b]);
 			$this->assertSame('second',$s->getUserId());
 			$this->assertSame('finish:second',$a->lifecycle[3]);
 			$this->assertSame('finish:second',$b->lifecycle[3]);

@@ -18,10 +18,10 @@
 
 namespace Base3\Test\State\Base;
 
-use Base3\State\Api\IStateStore;
-use Base3\State\Base\AbstractStateStore;
-use Base3\State\Database\DatabaseStateStore;
-use Base3\State\No\NoStateStore;
+use Base3\CoreFoundation\State\Api\IStateStore;
+use Base3\CoreFoundation\State\Base\AbstractStateStore;
+use Base3\Core\State\Database\DatabaseStateStore;
+use Base3\Core\State\No\NoStateStore;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;

@@ -1,28 +1,26 @@
 <?php declare(strict_types=1);
 
-/**
- * IMPORTANT:
- * This test file MUST NOT change anything outside itself.
- * We suppress BootstrapLoggingHookListener output by overriding error_log()
- * in the Base3\Hook namespace (where the listener lives).
- */
-
-namespace Base3\Hook {
-	/**
-	 * Silence error_log calls originating from Base3\Hook classes during tests.
-	 * BootstrapLoggingHookListener calls error_log() unqualified, so PHP resolves to this.
-	 */
-	function error_log(string $message, int $message_type = 0, ?string $destination = null, ?string $extra_headers = null): bool
-	{
-		return true;
-	}
-}
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
 
 namespace Base3\Test\Hook {
 
 	use PHPUnit\Framework\TestCase;
-	use Base3\Hook\HookManager;
-	use Base3\Hook\Api\IHookListener;
+	use Base3\Core\Hook\HookManager;
+	use Base3\CoreFoundation\Hook\Api\IHookListener;
 
 	class HookManagerTest extends TestCase
 	{

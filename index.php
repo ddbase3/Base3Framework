@@ -22,7 +22,6 @@ putenv('DEBUG=1');
 /* define directories constants */
 define('DIR_ROOT', __DIR__ . DIRECTORY_SEPARATOR);
 define('DIR_CNF', DIR_ROOT . 'cnf' . DIRECTORY_SEPARATOR);
-define('DIR_SRC', DIR_ROOT . 'src' . DIRECTORY_SEPARATOR);
 define('DIR_LOCAL', DIR_ROOT . 'local' . DIRECTORY_SEPARATOR);
 define('DIR_PLUGIN', DIR_ROOT . 'plugin' . DIRECTORY_SEPARATOR);
 define('DIR_TEST', DIR_ROOT . 'test' . DIRECTORY_SEPARATOR);
@@ -43,8 +42,8 @@ $pluginComposerAutoload = DIR_ROOT . 'vendor/autoload.php';
 if (file_exists($pluginComposerAutoload)) require_once $pluginComposerAutoload;
 
 /* autoloader */
-require DIR_SRC . 'Core/Autoloader.php';
-\Base3\Core\Autoloader::register();
+require DIR_ROOT . 'bootstrap/Autoloader.php';
+\Base3\Bootstrap\Autoloader::register();
 
 /* go */
 (new \Base3\Core\Bootstrap())->run();

@@ -1,20 +1,36 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Logger\FileLogger;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Base3\Logger\FileLogger\FileLogger;
+use Base3\Core\Logger\FileLogger\FileLogger;
 
 /**
  * Define DIR_LOCAL for FileLogger constructor usage inside tests.
  * FileLogger reads it as an unqualified constant inside its namespace.
  */
-if (!defined('Base3\\Logger\\FileLogger\\DIR_LOCAL')) {
-	define('Base3\\Logger\\FileLogger\\DIR_LOCAL', '');
+if (!defined('Base3\\Core\\Logger\\FileLogger\\DIR_LOCAL')) {
+	define('Base3\\Core\\Logger\\FileLogger\\DIR_LOCAL', '');
 }
 
-#[CoversClass(\Base3\Logger\FileLogger\FileLogger::class)]
+#[CoversClass(\Base3\Core\Logger\FileLogger\FileLogger::class)]
 class FileLoggerTest extends TestCase {
 
 	private string $tmpDir = '';

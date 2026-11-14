@@ -1,7 +1,24 @@
 <?php declare(strict_types=1);
 
-namespace Base3\Configuration\ConfigFile;
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
 
+namespace Base3\Test\Configuration\ConfigFile;
+
+use Base3\Core\Configuration\ConfigFile\ConfigFile;
 use PHPUnit\Framework\TestCase;
 
 final class ConfigFileTest extends TestCase {
@@ -51,8 +68,8 @@ final class ConfigFileTest extends TestCase {
 		$cnfDir = rtrim($cnfDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
 		// ConfigFile resolves DIR_CNF inside its namespace first:
-		// Base3\Configuration\ConfigFile\DIR_CNF
-		$namespaced = __NAMESPACE__ . '\\DIR_CNF';
+		// Base3\Core\Configuration\ConfigFile\DIR_CNF
+		$namespaced = 'Base3\\Core\\Configuration\\ConfigFile\\DIR_CNF';
 		if (!defined($namespaced)) {
 			define($namespaced, $cnfDir);
 		}

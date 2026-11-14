@@ -18,10 +18,10 @@
 
 namespace Base3\Test\Database\Base;
 
-use Base3\Database\Api\IDatabase;
-use Base3\Database\Base\AbstractDatabase;
-use Base3\Database\Mysql\MysqlDatabase;
-use Base3\Database\Postgres\PostgresDatabase;
+use Base3\CoreFoundation\Database\Api\IDatabase;
+use Base3\CoreFoundation\Database\Base\AbstractDatabase;
+use Base3\Core\Database\Mysql\MysqlDatabase;
+use Base3\Core\Database\Postgres\PostgresDatabase;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;

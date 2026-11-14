@@ -1,9 +1,25 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Migration\Database;
 
-use Base3\Migration\Database\DatabaseMigrationRunner;
-use Base3\Migration\Exception\MigrationException;
+use Base3\Core\Migration\Database\DatabaseMigrationRunner;
+use Base3\CoreFoundation\Migration\Exception\MigrationException;
 use Base3\Test\Support\RecordingDatabaseStub;
 use Base3\Test\Support\StaticClassMapStub;
 use PHPUnit\Framework\TestCase;
@@ -118,8 +134,8 @@ final class DatabaseMigrationRunnerTest extends TestCase {
 	}
 
 	public function testLegacyMarkerDoesNotChangeMigrationContract(): void {
-		$this->assertFalse(is_subclass_of(\Base3\Migration\Api\ILegacyDatabaseMigration::class, \Base3\Migration\Api\IDatabaseMigration::class));
-		$this->assertFalse(method_exists(\Base3\Migration\Api\IDatabaseMigration::class, 'down'));
+		$this->assertFalse(is_subclass_of(\Base3\CoreFoundation\Migration\Api\ILegacyDatabaseMigration::class, \Base3\CoreFoundation\Migration\Api\IDatabaseMigration::class));
+		$this->assertFalse(method_exists(\Base3\CoreFoundation\Migration\Api\IDatabaseMigration::class, 'down'));
 	}
 
 	public function testDatabaseErrorAfterMigrationPreventsAppliedMarker(): void {

@@ -18,7 +18,7 @@
 
 namespace Base3\Test\Database\Base;
 
-use Base3\Database\Base\AbstractDatabase;
+use Base3\CoreFoundation\Database\Base\AbstractDatabase;
 
 final class EmptyDatabaseBaseFixture extends AbstractDatabase {
 }

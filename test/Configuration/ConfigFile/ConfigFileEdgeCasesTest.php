@@ -1,8 +1,24 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Configuration\ConfigFile;
 
-use Base3\Configuration\ConfigFile\ConfigFile;
+use Base3\Core\Configuration\ConfigFile\ConfigFile;
 use PHPUnit\Framework\TestCase;
 
 final class ConfigFileEdgeCasesTest extends TestCase {
@@ -10,8 +26,8 @@ final class ConfigFileEdgeCasesTest extends TestCase {
 	private function inTempConfiguration(callable $run): void {
 		$directory = sys_get_temp_dir() . '/base3-config-edges-' . bin2hex(random_bytes(8));
 		if (!mkdir($directory, 0700)) self::fail('Unable to create temporary configuration directory');
-		if (!defined('Base3\\Configuration\\ConfigFile\\DIR_CNF')) {
-			define('Base3\\Configuration\\ConfigFile\\DIR_CNF', $directory . DIRECTORY_SEPARATOR);
+		if (!defined('Base3\\Core\\Configuration\\ConfigFile\\DIR_CNF')) {
+			define('Base3\\Core\\Configuration\\ConfigFile\\DIR_CNF', $directory . DIRECTORY_SEPARATOR);
 		}
 		$previous = getenv('CONFIG_FILE');
 		putenv('CONFIG_FILE=' . $directory . '/config.ini');

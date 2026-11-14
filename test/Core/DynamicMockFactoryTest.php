@@ -1,8 +1,24 @@
 <?php declare(strict_types=1);
 
-namespace Base3Test\Core;
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
 
-use Base3\Core\DynamicMockFactory;
+namespace Base3\Test\Core;
+
+use Base3\CoreFoundation\Util\DynamicMockFactory;
 use PHPUnit\Framework\TestCase;
 
 final class DynamicMockFactoryTest extends TestCase {
@@ -49,18 +65,18 @@ final class DynamicMockFactoryTest extends TestCase {
 
 	public function testCreateMockForConcreteClassWithConstructorCreatesArgs(): void {
 
-		$obj = DynamicMockFactory::createMock(\Base3Test\Core\NeedsIntString::class);
+		$obj = DynamicMockFactory::createMock(\Base3\Test\Core\NeedsIntString::class);
 
-		$this->assertInstanceOf(\Base3Test\Core\NeedsIntString::class, $obj);
+		$this->assertInstanceOf(\Base3\Test\Core\NeedsIntString::class, $obj);
 		$this->assertSame(0, $obj->a);
 		$this->assertIsString($obj->b);
 	}
 
 	public function testCreateMockForInterfaceGeneratesImplementationWithReturnTypes(): void {
 
-		$m = DynamicMockFactory::createMock(\Base3Test\Core\ITestIface::class);
+		$m = DynamicMockFactory::createMock(\Base3\Test\Core\ITestIface::class);
 
-		$this->assertInstanceOf(\Base3Test\Core\ITestIface::class, $m);
+		$this->assertInstanceOf(\Base3\Test\Core\ITestIface::class, $m);
 		$this->assertSame(0, $m->i());
 		$this->assertIsString($m->s());
 		$this->assertSame([], $m->a());
@@ -70,9 +86,9 @@ final class DynamicMockFactoryTest extends TestCase {
 
 	public function testCreateMockForAbstractClassImplementsAbstractMethods(): void {
 
-		$m = DynamicMockFactory::createMock(\Base3Test\Core\AbsWithMethod::class);
+		$m = DynamicMockFactory::createMock(\Base3\Test\Core\AbsWithMethod::class);
 
-		$this->assertInstanceOf(\Base3Test\Core\AbsWithMethod::class, $m);
+		$this->assertInstanceOf(\Base3\Test\Core\AbsWithMethod::class, $m);
 		$this->assertSame(0, $m->n());
 		$this->assertSame('ok', $m->ok());
 	}

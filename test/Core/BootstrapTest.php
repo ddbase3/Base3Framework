@@ -1,14 +1,30 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Core;
 
-use Base3\Api\IClassMap;
-use Base3\Api\IContainer;
-use Base3\Api\IRequest;
-use Base3\Accesscontrol\Api\IAccesscontrol;
-use Base3\Configuration\Api\IConfiguration;
-use Base3\Hook\Api\IHookManager;
-use Base3\ServiceSelector\Api\IServiceSelector;
+use Base3\CoreFoundation\Api\IClassMap;
+use Base3\CoreFoundation\Api\IContainer;
+use Base3\CoreFoundation\Api\IRequest;
+use Base3\CoreFoundation\Accesscontrol\Api\IAccesscontrol;
+use Base3\CoreFoundation\Configuration\Api\IConfiguration;
+use Base3\CoreFoundation\Hook\Api\IHookManager;
+use Base3\CoreFoundation\ServiceSelector\Api\IServiceSelector;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
@@ -95,7 +111,7 @@ final class BootstrapTest extends TestCase {
 		putenv('CONFIG_FILE=' . $configIni);
 
 		// also avoid potential namespaced DIR_CNF fatal in ConfigFile constructor if it ever gets used elsewhere
-		$this->defineConstIfMissing('Base3\\Configuration\\ConfigFile\\DIR_CNF', rtrim($cnfDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
+		$this->defineConstIfMissing('Base3\\Core\\Configuration\\ConfigFile\\DIR_CNF', rtrim($cnfDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
 	}
 
 	private function writeEmptyClassMapToUsedTmp(string $baseDir): void {
@@ -119,7 +135,8 @@ final class BootstrapTest extends TestCase {
 		$dir = $baseDir . DIRECTORY_SEPARATOR . 'local' . DIRECTORY_SEPARATOR;
 		@mkdir($dir, 0777, true);
 
-		$this->defineConstIfMissing('Base3\\Token\\FileToken\\DIR_LOCAL', $dir);
+		$this->defineConstIfMissing('Base3\\Core\\Token\\FileToken\\DIR_LOCAL', $dir);
+		$this->defineConstIfMissing('Base3\\ModuledPage\\Page\\DIR_LOCAL', $dir);
 	}
 
 	public function testRunRegistersContainerServicesAndEchoesResponse(): void {
@@ -128,7 +145,6 @@ final class BootstrapTest extends TestCase {
 		$frameworkRoot = dirname(__DIR__, 2);
 		$pluginRoot = is_dir($frameworkRoot . '/plugin') ? $frameworkRoot . '/plugin' : dirname($frameworkRoot);
 		$this->defineConstIfMissing('DIR_ROOT', rtrim($frameworkRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
-		$this->defineConstIfMissing('DIR_SRC', $frameworkRoot . '/src/');
 		$this->defineConstIfMissing('DIR_TEST', $frameworkRoot . '/test/');
 		$this->defineConstIfMissing('DIR_PLUGIN', rtrim($pluginRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR);
 
@@ -138,17 +154,24 @@ final class BootstrapTest extends TestCase {
 		$this->ensureMinimalConfigViaEnv($baseDir);
 		$this->writeEmptyClassMapToUsedTmp($baseDir);
 
-		$bootstrap = new Bootstrap();
+		// Run the bootstrap lifecycle without rendering a host application's index page.
+		// A help request exercises the service selector but does not render page content.
+		$previousGet = $_GET;
+		$previousRequest = $_REQUEST;
+		$_GET = ['name' => '__base3_bootstrap_test__', 'out' => 'help'];
+		$_REQUEST = $_GET;
 
 		$obLevelBefore = ob_get_level();
 		ob_start();
 		try {
-			$bootstrap->run();
+			(new Bootstrap())->run();
 			$output = (string)ob_get_contents();
 		} finally {
 			while (ob_get_level() > $obLevelBefore) {
 				ob_end_clean();
 			}
+			$_GET = $previousGet;
+			$_REQUEST = $previousRequest;
 		}
 
 		$container = ServiceLocator::getInstance();

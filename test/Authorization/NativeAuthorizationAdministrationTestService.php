@@ -1,12 +1,28 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Authorization;
 
-use Base3\Authorization\Api\IAuthorizationAdministrationService;
-use Base3\Authorization\Dto\AuthorizationCapabilities;
-use Base3\Authorization\Dto\ResourceReference;
-use Base3\Authorization\Dto\SubjectReference;
-use Base3\Usermanager\Permission;
+use Base3\CoreFoundation\Authorization\Api\IAuthorizationAdministrationService;
+use Base3\CoreFoundation\Authorization\Dto\AuthorizationCapabilities;
+use Base3\CoreFoundation\Authorization\Dto\ResourceReference;
+use Base3\CoreFoundation\Authorization\Dto\SubjectReference;
+use Base3\CoreFoundation\Usermanager\Permission;
 
 final class NativeAuthorizationAdministrationTestService implements IAuthorizationAdministrationService {
 

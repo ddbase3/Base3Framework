@@ -1,5 +1,21 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Configuration\Database;
 
 use PHPUnit\Framework\TestCase;
@@ -18,14 +34,14 @@ final class DatabaseConfigurationTest extends TestCase {
 			['group'=>'base','name'=>'empty','type'=>'array','value'=>''],
 			['group'=>'base','name'=>'nil','type'=>'null','value'=>''],
 		];
-		$s=new \Base3\Configuration\Database\DatabaseConfiguration($db);
+		$s=new \Base3\Core\Configuration\Database\DatabaseConfiguration($db);
 		$this->assertSame(['text'=>'hey','number'=>17,'decimal'=>1.25,'yes'=>true,'no'=>false,'items'=>['a'=>1],'empty'=>[],'nil'=>null],$s->get('base'));
 		$this->assertCount(1,$db->nonQueries);
 		$this->assertSame(1,count($db->multiQueries));
 	}
 
 	public function testPersistsScalarAndStructuredValues(): void {
-		$db=new \Base3\Test\Support\RecordingDatabaseStub();$s=new \Base3\Configuration\Database\DatabaseConfiguration($db);
+		$db=new \Base3\Test\Support\RecordingDatabaseStub();$s=new \Base3\Core\Configuration\Database\DatabaseConfiguration($db);
 		foreach (['text'=>"Joe's", 'count'=>17,'rate'=>1.5,'enabled'=>true,'disabled'=>false,'nil'=>null,'obj'=>(object)['a'=>2],'list'=>['b'=>3]] as $name=>$value) {
 			$this->assertTrue($s->persistValue('g',$name,$value));
 		}
@@ -43,7 +59,7 @@ final class DatabaseConfigurationTest extends TestCase {
 	public function testSaveSynchronizesObsoleteRecordsWithoutDroppingValidKeys(): void {
 		$db=new \Base3\Test\Support\RecordingDatabaseStub();
 		$db->multiRows=[['group'=>'g','name'=>'obsolete','type'=>'int','value'=>'1']];
-		$s=new \Base3\Configuration\Database\DatabaseConfiguration($db);
+		$s=new \Base3\Core\Configuration\Database\DatabaseConfiguration($db);
 		$this->assertSame(1,$s->getValue('g','obsolete'));
 		$s->removeValue('g','obsolete');
 		$s->setValue('g','replacement',2);
@@ -56,7 +72,7 @@ final class DatabaseConfigurationTest extends TestCase {
 	public function testInvalidDatabaseRowAndInvalidEncodedArrayFailClosed(): void {
 		$db=new \Base3\Test\Support\RecordingDatabaseStub();
 		$db->multiRows=[['group'=>'base','name'=>'list','type'=>'array','value'=>'{"broken"]']];
-		$s=new \Base3\Configuration\Database\DatabaseConfiguration($db);
+		$s=new \Base3\Core\Configuration\Database\DatabaseConfiguration($db);
 		try { $s->get();$this->fail('Expected invalid JSON failure'); }
 		catch (\RuntimeException $e) { $this->assertStringContainsString('Failed to decode configuration value',$e->getMessage()); }
 		$db->multiRows=[['group'=>'base','name'=>'list','type'=>'array','value'=>'"scalar"']];
@@ -66,7 +82,7 @@ final class DatabaseConfigurationTest extends TestCase {
 
 	public function testConnectionIsRequiredAndDatabaseErrorsAreNotIgnored(): void {
 		$db=new \Base3\Test\Support\RecordingDatabaseStub();$db->connectedFlag=false;
-		$s=new \Base3\Configuration\Database\DatabaseConfiguration($db);
+		$s=new \Base3\Core\Configuration\Database\DatabaseConfiguration($db);
 		try { $s->get();$this->fail('Expected missing database connection'); }
 		catch (\RuntimeException $e) { $this->assertStringContainsString('Failed to connect to database',$e->getMessage()); }
 		$db->connectedFlag=true;$db->error=true;$db->errorCode=7;$db->errorText='permission denied';
@@ -75,7 +91,7 @@ final class DatabaseConfigurationTest extends TestCase {
 	}
 
 	public function testInvalidKeysAndUnserializableValuesAreRejected(): void {
-		$db=new \Base3\Test\Support\RecordingDatabaseStub();$s=new \Base3\Configuration\Database\DatabaseConfiguration($db);
+		$db=new \Base3\Test\Support\RecordingDatabaseStub();$s=new \Base3\Core\Configuration\Database\DatabaseConfiguration($db);
 		try { $s->persistValue('', 'key', 1);$this->fail('Expected invalid group'); }
 		catch (\RuntimeException $e) { $this->assertStringContainsString('group must not be empty',$e->getMessage()); }
 		$this->expectException(\RuntimeException::class);

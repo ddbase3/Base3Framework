@@ -1,5 +1,21 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Microservice;
 
 use PHPUnit\Framework\TestCase;
@@ -7,7 +23,7 @@ use PHPUnit\Framework\TestCase;
 final class AbstractMicroserviceConnectorTest extends TestCase {
 
 	private function makeConnector(int $flags = 0): RecordingMicroserviceConnector {
-		return new RecordingMicroserviceConnector('https://micro.example.test/endpoint.json', ['methods'=>[['name'=>'run','params'=>['left','right']]]],$flags);
+		return new RecordingMicroserviceConnector('https://micro.example.test/endpoint.json', ['methods'=>[['name'=>'run','params'=>['left','right']]]],new \Base3\Core\ServiceLocator(),$flags);
 	}
 
 	public function testMapsArgumentsByMethodMetadataAndDecodesJson(): void {
@@ -30,7 +46,7 @@ final class AbstractMicroserviceConnectorTest extends TestCase {
 	}
 
 	public function testSerializedBooleanFalseIsNotMistakenForCorruptPayload(): void {
-		$c=$this->makeConnector(\Base3\Microservice\Api\IMicroserviceFlags::SERIALIZED);
+		$c=$this->makeConnector(\Base3\CoreFoundation\Microservice\Api\IMicroserviceFlags::SERIALIZED);
 		$c->reply='b:0;';
 		$this->assertFalse($c->run(1));
 		$c->reply='not-serialized';
@@ -40,7 +56,7 @@ final class AbstractMicroserviceConnectorTest extends TestCase {
 	}
 
 	public function testBinaryStreamDoesNotDecodePayload(): void {
-		$c=$this->makeConnector(\Base3\Microservice\Api\IMicroserviceFlags::BINARYSTREAM);
+		$c=$this->makeConnector(\Base3\CoreFoundation\Microservice\Api\IMicroserviceFlags::BINARYSTREAM);
 		$c->reply="\0raw-binary";
 		$this->assertSame("\0raw-binary",$c->run('a'));
 	}

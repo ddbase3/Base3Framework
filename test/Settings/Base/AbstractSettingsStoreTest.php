@@ -18,10 +18,10 @@
 
 namespace Base3\Test\Settings\Base;
 
-use Base3\Settings\Api\ISettingsStore;
-use Base3\Settings\Base\AbstractSettingsStore;
-use Base3\Settings\Database\DatabaseSettingsStore;
-use Base3\Settings\Json\JsonSettingsStore;
+use Base3\CoreFoundation\Settings\Api\ISettingsStore;
+use Base3\CoreFoundation\Settings\Base\AbstractSettingsStore;
+use Base3\Core\Settings\Database\DatabaseSettingsStore;
+use Base3\Core\Settings\Json\JsonSettingsStore;
 use LogicException;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;

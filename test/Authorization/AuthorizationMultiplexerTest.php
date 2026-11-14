@@ -1,19 +1,35 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Authorization;
 
 use PHPUnit\Framework\TestCase;
 
 final class AuthorizationMultiplexerTest extends TestCase {
 
-	private function request(string $authority): \Base3\Authorization\Dto\AuthorizationRequest {
-		return new \Base3\Authorization\Dto\AuthorizationRequest($authority, \Base3\Usermanager\Permission::for('course', 'read'));
+	private function request(string $authority): \Base3\CoreFoundation\Authorization\Dto\AuthorizationRequest {
+		return new \Base3\CoreFoundation\Authorization\Dto\AuthorizationRequest($authority, \Base3\CoreFoundation\Usermanager\Permission::for('course', 'read'));
 	}
 
 	public function testDispatchesExactAuthoritiesWithoutAllowingUnknown(): void {
 		$a = new \Base3\Test\Authorization\NativeAuthorizationTestService('a');
 		$b = new \Base3\Test\Authorization\NativeAuthorizationTestService('b');
-		$m = new \Base3\Authorization\AuthorizationMultiplexer('a', ['a'=>$a, 'b'=>$b]);
+		$m = new \Base3\Core\Authorization\AuthorizationMultiplexer('a', ['a'=>$a, 'b'=>$b]);
 		$this->assertSame('a', $m->getDefaultAuthority());
 		$this->assertSame('a', $m->decide($this->request('a'))->reasonCode);
 		$this->assertSame('b', $m->decide($this->request('b'))->reasonCode);
@@ -25,7 +41,7 @@ final class AuthorizationMultiplexerTest extends TestCase {
 	public function testGroupsBatchByAuthorityPreservingOriginalKeys(): void {
 		$a = new \Base3\Test\Authorization\NativeAuthorizationTestService('a');
 		$b = new \Base3\Test\Authorization\NativeAuthorizationTestService('b');
-		$m = new \Base3\Authorization\AuthorizationMultiplexer('a', ['a'=>$a, 'b'=>$b]);
+		$m = new \Base3\Core\Authorization\AuthorizationMultiplexer('a', ['a'=>$a, 'b'=>$b]);
 		$results = $m->decideMany(['b'=> $this->request('b'), 'unknown'=> $this->request('other'), 'a'=> $this->request('a')]);
 		$this->assertSame(['b','unknown','a'], array_keys($results));
 		$this->assertSame('b', $results['b']->reasonCode);
@@ -39,7 +55,7 @@ final class AuthorizationMultiplexerTest extends TestCase {
 		$a = new \Base3\Test\Authorization\NativeAuthorizationTestService('a');
 		$a->throwSingle = true;
 		$a->throwBatch = true;
-		$m = new \Base3\Authorization\AuthorizationMultiplexer('a', ['a'=>$a]);
+		$m = new \Base3\Core\Authorization\AuthorizationMultiplexer('a', ['a'=>$a]);
 		$this->assertSame('authority_unavailable', $m->decide($this->request('a'))->reasonCode);
 		$this->assertFalse($m->decideMany(['one'=>$this->request('a')])['one']->isAllowed());
 		$this->assertSame('authority_unavailable', $m->decideMany(['one'=>$this->request('a')])['one']->reasonCode);
@@ -48,7 +64,7 @@ final class AuthorizationMultiplexerTest extends TestCase {
 	public function testInvalidNativeBatchResponseIsIndeterminate(): void {
 		$a = new \Base3\Test\Authorization\NativeAuthorizationTestService('a');
 		$a->batchReturn = ['one' => true];
-		$m = new \Base3\Authorization\AuthorizationMultiplexer('a', ['a'=>$a]);
+		$m = new \Base3\Core\Authorization\AuthorizationMultiplexer('a', ['a'=>$a]);
 		$results = $m->decideMany(['one'=>$this->request('a'), 'two'=>$this->request('a')]);
 		$this->assertSame('invalid_authority_response', $results['one']->reasonCode);
 		$this->assertSame('invalid_authority_response', $results['two']->reasonCode);
@@ -57,9 +73,9 @@ final class AuthorizationMultiplexerTest extends TestCase {
 	public function testNativeAdministrationDelegatesWithExactResource(): void {
 		$a = new \Base3\Test\Authorization\NativeAuthorizationTestService('a');
 		$admin = new \Base3\Test\Authorization\NativeAuthorizationAdministrationTestService();
-		$m = new \Base3\Authorization\AuthorizationMultiplexer('a', ['a'=>$a], ['a'=>$admin]);
-		$resource = new \Base3\Authorization\Dto\ResourceReference('a','course',1);
-		$subject = new \Base3\Authorization\Dto\SubjectReference('a','role',2);
+		$m = new \Base3\Core\Authorization\AuthorizationMultiplexer('a', ['a'=>$a], ['a'=>$admin]);
+		$resource = new \Base3\CoreFoundation\Authorization\Dto\ResourceReference('a','course',1);
+		$subject = new \Base3\CoreFoundation\Authorization\Dto\SubjectReference('a','role',2);
 		$this->assertTrue($m->describe('a', $resource)->canRead);
 		$this->assertSame('read', $m->getPermissions('a', $resource)[0]->permission);
 		$this->assertSame([], $m->getSubjects($resource));
@@ -69,25 +85,25 @@ final class AuthorizationMultiplexerTest extends TestCase {
 	}
 
 	public function testMissingNativeAdministrationRejectsWrite(): void {
-		$m = new \Base3\Authorization\AuthorizationMultiplexer('a', ['a'=>new \Base3\Test\Authorization\NativeAuthorizationTestService('a')]);
+		$m = new \Base3\Core\Authorization\AuthorizationMultiplexer('a', ['a'=>new \Base3\Test\Authorization\NativeAuthorizationTestService('a')]);
 		$this->expectException(\RuntimeException::class);
-		$m->replaceGrants(new \Base3\Authorization\Dto\ResourceReference('a','course',1), new \Base3\Authorization\Dto\SubjectReference('a','role',1), []);
+		$m->replaceGrants(new \Base3\CoreFoundation\Authorization\Dto\ResourceReference('a','course',1), new \Base3\CoreFoundation\Authorization\Dto\SubjectReference('a','role',1), []);
 	}
 
 	public function testRejectsNonRequestBatchEntry(): void {
-		$m = new \Base3\Authorization\AuthorizationMultiplexer('a', ['a'=>new \Base3\Test\Authorization\NativeAuthorizationTestService('a')]);
+		$m = new \Base3\Core\Authorization\AuthorizationMultiplexer('a', ['a'=>new \Base3\Test\Authorization\NativeAuthorizationTestService('a')]);
 		$this->expectException(\InvalidArgumentException::class);
 		$m->decideMany(['bad' => null]);
 	}
 
 	public function testRejectsUnknownDefaultAuthority(): void {
 		$this->expectException(\InvalidArgumentException::class);
-		new \Base3\Authorization\AuthorizationMultiplexer('other', ['a'=>new \Base3\Test\Authorization\NativeAuthorizationTestService('a')]);
+		new \Base3\Core\Authorization\AuthorizationMultiplexer('other', ['a'=>new \Base3\Test\Authorization\NativeAuthorizationTestService('a')]);
 	}
 
 	public function testRejectsAdminWithoutDecisionAuthority(): void {
 		$this->expectException(\InvalidArgumentException::class);
-		new \Base3\Authorization\AuthorizationMultiplexer('a', ['a'=>new \Base3\Test\Authorization\NativeAuthorizationTestService('a')], ['other'=>new \Base3\Test\Authorization\NativeAuthorizationAdministrationTestService()]);
+		new \Base3\Core\Authorization\AuthorizationMultiplexer('a', ['a'=>new \Base3\Test\Authorization\NativeAuthorizationTestService('a')], ['other'=>new \Base3\Test\Authorization\NativeAuthorizationAdministrationTestService()]);
 	}
 
 }

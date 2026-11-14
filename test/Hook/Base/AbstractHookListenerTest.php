@@ -18,10 +18,10 @@
 
 namespace Base3\Test\Hook\Base;
 
-use Base3\Hook\Api\IHookListener;
-use Base3\Hook\Base\AbstractHookListener;
-use Base3\Hook\BootstrapLoggingHookListener;
-use Base3\Hook\HookManager;
+use Base3\CoreFoundation\Hook\Api\IHookListener;
+use Base3\CoreFoundation\Hook\Base\AbstractHookListener;
+use Base3\Core\Hook\BootstrapLoggingHookListener;
+use Base3\Core\Hook\HookManager;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;

@@ -1,11 +1,27 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Core;
 
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use PHPUnit\Framework\Attributes\PreserveGlobalState;
-use Base3\Core\Autoloader;
+use Base3\Bootstrap\Autoloader;
 
 #[RunTestsInSeparateProcesses]
 #[PreserveGlobalState(false)]
@@ -15,7 +31,6 @@ class AutoloaderSmokeTest extends TestCase {
 		$frameworkRoot = dirname(__DIR__, 2);
 		$pluginRoot = is_dir($frameworkRoot . '/plugin') ? $frameworkRoot . '/plugin' : dirname($frameworkRoot);
 		foreach ([
-			'DIR_SRC' => $frameworkRoot . '/src/',
 			'DIR_TEST' => $frameworkRoot . '/test/',
 			'DIR_PLUGIN' => rtrim($pluginRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR
 		] as $name => $value) {
@@ -23,27 +38,6 @@ class AutoloaderSmokeTest extends TestCase {
 		}
 		Autoloader::register();
 
-		// Add plugins dynamically (explicitly)
-		self::addPlugins();
-	}
-
-	/**
-	 * Add plugins dynamically to the autoloader.
-	 */
-	private static function addPlugins(): void {
-		foreach (glob(DIR_PLUGIN . '*', GLOB_ONLYDIR) as $pluginPath) {
-			$pluginName = basename($pluginPath);
-			$srcPath = realpath($pluginPath . '/src');
-			$testPath = realpath($pluginPath . '/test');
-
-			if ($srcPath !== false) {
-				Autoloader::registerPlugin($pluginName . '\\', $srcPath . '/');
-			}
-
-			if ($testPath !== false) {
-				Autoloader::registerPlugin($pluginName . '\\Test\\', $testPath . '/');
-			}
-		}
 	}
 
 	public function testAutoloaderLoadsDummyClass(): void {

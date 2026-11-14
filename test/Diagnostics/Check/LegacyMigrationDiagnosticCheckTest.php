@@ -1,9 +1,25 @@
 <?php declare(strict_types=1);
 
+/***********************************************************************
+ * This file is part of BASE3 Framework.
+ *
+ * BASE3 Framework is a lightweight, modular PHP framework for scalable
+ * and maintainable web applications. Built for extensibility,
+ * performance, and modern development, it can run standalone or
+ * integrate as a subsystem within a host system.
+ *
+ * Developed by Daniel Dahme
+ * Licensed under GPL-3.0
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * https://base3.de
+ * https://github.com/ddbase3/Base3Framework
+ **********************************************************************/
+
 namespace Base3\Test\Diagnostics\Check;
 
-use Base3\Diagnostics\Check\LegacyMigrationDiagnosticCheck;
-use Base3\Diagnostics\Dto\DiagnosticCheckResult;
+use Base3\Core\Diagnostics\Check\LegacyMigrationDiagnosticCheck;
+use Base3\CoreFoundation\Diagnostics\Dto\DiagnosticCheckResult;
 use PHPUnit\Framework\TestCase;
 
 final class LegacyMigrationDiagnosticCheckTest extends TestCase {
@@ -28,8 +44,8 @@ final class LegacyMigrationDiagnosticCheckTest extends TestCase {
 
 	public function testCountsMarkersAsOneAggregatedFinding(): void {
 		$this->fixture->module('Alpha', 'Alpha', '1.0.0', [], [
-			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; use Base3\Migration\Api\IDatabaseMigration; use Base3\Migration\Api\ILegacyDatabaseMigration; final class AlphaMigration001 implements IDatabaseMigration, ILegacyDatabaseMigration { public function getVersion(): string { return "001"; } public function up(): void {} public function down(): void {} }',
-			'Migration/AlphaMigration002.php' => '<?php namespace Alpha\Migration; use Base3\Migration\Api\IDatabaseMigration; use Base3\Migration\Api\ILegacyDatabaseMigration; final class AlphaMigration002 implements IDatabaseMigration, ILegacyDatabaseMigration { public function getVersion(): string { return "002"; } public function up(): void {} public function down(): void {} }'
+			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; use Base3\CoreFoundation\Migration\Api\IDatabaseMigration; use Base3\CoreFoundation\Migration\Api\ILegacyDatabaseMigration; final class AlphaMigration001 implements IDatabaseMigration, ILegacyDatabaseMigration { public function getVersion(): string { return "001"; } public function up(): void {} public function down(): void {} }',
+			'Migration/AlphaMigration002.php' => '<?php namespace Alpha\Migration; use Base3\CoreFoundation\Migration\Api\IDatabaseMigration; use Base3\CoreFoundation\Migration\Api\ILegacyDatabaseMigration; final class AlphaMigration002 implements IDatabaseMigration, ILegacyDatabaseMigration { public function getVersion(): string { return "002"; } public function up(): void {} public function down(): void {} }'
 		]);
 		$result = $this->runCheck();
 		$this->assertSame(DiagnosticCheckResult::WARNING, $result->status);
@@ -41,7 +57,7 @@ final class LegacyMigrationDiagnosticCheckTest extends TestCase {
 
 	public function testReportsGreenWhenNoLegacyMarkersRemain(): void {
 		$this->fixture->module('Alpha', 'Alpha', '1.0.0', [], [
-			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; use Base3\Migration\Api\IDatabaseMigration; final class AlphaMigration001 implements IDatabaseMigration { public function getVersion(): string { return "001"; } public function up(): void {} public function down(): void {} }'
+			'Migration/AlphaMigration001.php' => '<?php namespace Alpha\Migration; use Base3\CoreFoundation\Migration\Api\IDatabaseMigration; final class AlphaMigration001 implements IDatabaseMigration { public function getVersion(): string { return "001"; } public function up(): void {} public function down(): void {} }'
 		]);
 		$result = $this->runCheck();
 		$this->assertSame(DiagnosticCheckResult::PASSED, $result->status);
