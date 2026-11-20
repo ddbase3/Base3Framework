@@ -2,8 +2,8 @@
 	"manifestVersion": 1,
 	"name": "Base3Framework",
 	"namespace": "Base3",
-	"version": "4.10.0",
-	"description": "BASE3 core framework.",
+	"version": "5.0.0",
+	"description": "BASE3 framework standalone launcher.",
 	"license": "GPL-3.0-or-later",
 	"maintainers": [
 		{
